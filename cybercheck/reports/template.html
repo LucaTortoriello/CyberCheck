@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="{{ language }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>CyberCheck — {{ a.domain }} — {{ t('report_title') }}</title>
+  <style>
+    :root {color-scheme:light; font-family:system-ui,-apple-system,sans-serif; color:#17243a;background:#edf1f6}
+    *{box-sizing:border-box} body{max-width:1020px;margin:32px auto;padding:48px;background:white;line-height:1.65}
+    .brand{font-size:24px;font-weight:750;letter-spacing:-1px;color:#183649}.brand span{color:#188261}
+    h1{font-size:38px;line-height:1.2;margin:20px 0}h2{margin-top:38px;border-bottom:1px solid #dce3eb;padding-bottom:10px}
+    h3{margin:0 0 12px}dt{font-weight:650}dd{margin:0 0 10px}small,.muted{color:#57657a}
+    .summary{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0}.metric{padding:16px 24px;background:#f1f5f9;border-radius:8px;flex:1}.metric b{display:block;font-size:26px}
+    .finding{border:1px solid #dce3eb;border-left:4px solid #7c899b;border-radius:6px;padding:22px;margin:20px 0;break-inside:avoid}
+    .failed{border-left-color:#be4048}.warning{border-left-color:#ad781d}.passed{border-left-color:#218664}
+    .badge{font-size:12px;text-transform:uppercase;font-weight:650;background:#edf1f6;padding:4px 8px;border-radius:4px}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;background:#f4f6f9;padding:14px;border-radius:5px}
+    a{color:#186b88;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:10px;border-bottom:1px solid #dce3eb}
+    .notice{background:#f3f6f9;padding:18px;border-radius:6px}footer{margin-top:40px;border-top:1px solid #dce3eb;padding-top:16px;font-size:12px}
+    @page{size:A4;margin:16mm}@media print{body{margin:0;padding:0;max-width:none}.finding{break-inside:auto}h2,h3{break-after:avoid}a{color:inherit}pre{font-size:9px}}
+    @media(max-width:600px){body{margin:0;padding:22px}h1{font-size:28px}}
+  </style>
+</head>
+<body>
+  <div class="brand">Cyber<span>Check</span></div>
+  <p class="muted">COMMUNITY · {{ a.id }}</p>
+  <h1>{{ t('report_title') }}</h1>
+  <dl><dt>{{ t('domain') }}</dt><dd>{{ a.domain }}</dd><dt>{{ t('date') }}</dt><dd>{{ a.completed_at or a.started_at }}</dd></dl>
+  <p class="notice">{{ t('scope_note') }}</p>
+  {% if a.metadata.get('synthetic_fixture') %}<p class="notice"><strong>SYNTHETIC TEST FIXTURE — NOT A LIVE ASSESSMENT</strong></p>{% endif %}
+  <h2>{{ t('executive') }}</h2><p>{{ t('report_executive') }}</p>
+  <div class="summary">
+    <div class="metric"><b>{{ a.counts.passed }}</b>{{ t('checks_passed') }}</div>
+    <div class="metric"><b>{{ a.counts.warning }}</b>{{ t('warnings') }}</div>
+    <div class="metric"><b>{{ a.counts.failed }}</b>{{ t('confirmed') }}</div>
+    <div class="metric"><b>{{ a.counts.unknown + a.counts.error }}</b>{{ t('incomplete') }}</div>
+  </div>
+  {% if include_score %}<h3>{{ t('health') }}: {{ a.health.score if a.health.score is not none else '—' }}{% if a.health.score is not none %}/100{% endif %}</h3>
+  <p>{{ t('score_formula') }}</p><p>{{ t('coverage', evaluated=a.health.evaluated, excluded=a.health.excluded) }}</p>{% endif %}
+  <h2>{{ t('summary') }}</h2>
+  <table><thead><tr><th>{{ t('category') }}</th><th>{{ t('passed') }}</th><th>{{ t('warning') }}</th><th>{{ t('failed') }}</th><th>{{ t('incomplete') }}</th><th>{{ t('not_applicable') }}</th></tr></thead><tbody>
+    {% for category, findings in groups.items() %}<tr><td>{{ t(category) }}</td><td>{{ findings|selectattr('status','equalto','passed')|list|length }}</td><td>{{ findings|selectattr('status','equalto','warning')|list|length }}</td><td>{{ findings|selectattr('status','equalto','failed')|list|length }}</td><td>{{ (findings|selectattr('status','equalto','unknown')|list|length) + (findings|selectattr('status','equalto','error')|list|length) }}</td><td>{{ findings|selectattr('status','equalto','not_applicable')|list|length }}</td></tr>{% endfor %}
+  </tbody></table>
+  <h2>{{ t('remediation') }}</h2>
+  <ol>{% for f in a.findings if f.status in ['failed','warning'] %}<li><strong>{{ f.check_name.get(language) }}</strong>: {{ f.remediation.get(language) }}</li>{% else %}<li>{{ t('no_attention') }}</li>{% endfor %}</ol>
+  {% for category, findings in groups.items() %}<h2>{{ t(category) }}</h2>
+    {% for f in findings %}<article class="finding {{ f.status }}">
+      <h3>{{ f.check_name.get(language) }}</h3><span class="badge">{{ t(f.status) }} · {{ t(f.severity) }}</span>
+      <p>{{ f.explanation.get(language) }}</p><dl><dt>{{ t('impact') }}</dt><dd>{{ f.business_impact.get(language) }}</dd><dt>{{ t('remediation') }}</dt><dd>{{ f.remediation.get(language) }}</dd></dl>
+      <strong>{{ t('evidence') }}</strong><pre>{{ f.evidence|tojson(indent=2) }}</pre>
+      <small>{{ t('verified') }}: {{ f.timestamp }} · {{ f.check_id }} · {{ f.id }}</small>
+      {% for reference in f.references %}<p><a href="{{ reference }}" rel="noreferrer">{{ t('references') }}: {{ reference }}</a></p>{% endfor %}
+    </article>{% endfor %}
+  {% endfor %}
+  <h2>{{ t('methodology') }}</h2><p>{{ t('methodology_body') }}</p>
+  <pre>{{ a.metadata|tojson(indent=2) }}</pre>
+  <h2>{{ t('scope_note') }}</h2><p class="notice">{{ t('disclaimer') }}</p>
+  <footer>CyberCheck Community · schema {{ a.schema_version }} · {{ a.id }}</footer>
+</body>
+</html>
