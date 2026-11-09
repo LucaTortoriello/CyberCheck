@@ -16,7 +16,7 @@ Executed on **2026-11-09**, macOS/arm64, Python **3.13.14**, branch `improvement
 | Real browser UI | Chrome **156.0.8078.80**, Playwright **1.64.1**, isolated localhost preview with synthetic data: Italian/English and all six navigation views exercised, zero browser page errors. |
 | Responsive layout | **1365 × 900** desktop and **390 × 844** mobile: no page-level horizontal overflow; screenshots visually inspected. |
 | Browser print/PDF | Synthetic report printed to A4 by Chrome: valid PDF, **18 pages**, **462,861 bytes**; print-preview screenshot inspected. No runtime PDF dependency added. |
-| GitHub Actions | Locked Python 3.12/3.13/3.14 jobs plus advisory job prepared. Check the PR's actual run result; local success is not a remote CI result. |
+| GitHub Actions | [Run 42600436024](https://github.com/LucaTortoriello/CyberCheck/actions/runs/42600436024) **succeeded** for source commit `1ee3052974a62d03eceb0029b7c71dc1d8c12867`: `test (3.12)`, `test (3.13)`, `test (3.14)` and `dependency-audit` all succeeded. The PR also displays checks for subsequent documentation-only commits. |
 | Live target assessment | **Not run.** Developer confirmed no owned domain is currently available; no third-party target authorized. |
 
 The final clean-environment command was:
@@ -42,6 +42,8 @@ The custom transport uses documented public HTTPX/httpcore interfaces. A memory-
 Reviewed screenshots are [desktop](screenshots/v02-overview-desktop.png) and [mobile](screenshots/v02-overview-mobile.png). Transient artifacts are under `/tmp/cybercheck-v02-browser/`, including `browser-validation.json`, print preview and `synthetic-report.pdf`. They are synthetic QA outputs, not live security evidence. Chrome automation and selected viewport inspection are not a full accessibility, browser-compatibility or print-pagination audit.
 
 ## Remaining boundaries and release decision
+
+Changes are submitted for review in [draft PR #1](https://github.com/LucaTortoriello/CyberCheck/pull/1), targeting main from `improvement/cybercheck-v0.2`. The branch was pushed normally; main and the license remain unchanged. No release was published. The GitHub app integration could read the repository but returned 403 for PR creation, so the draft was created through the local CLI after confirming its authenticated account was LucaTortoriello.
 
 No confirmed Critical or High application vulnerability remains unresolved within the reviewed localhost boundary, and the advisory lookup found no known vulnerabilities for the locked versions at execution time. This is not a comprehensive supply-chain review or a third-party certification. Bootstrap/build tools, unknown advisories, OS routing, resolver and trust-store integrity remain outside that result.
 
