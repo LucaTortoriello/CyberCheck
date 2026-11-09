@@ -6,6 +6,21 @@ from urllib.parse import urlsplit
 
 import idna
 
+_SPECIAL_NETWORKS = tuple(
+    ipaddress.ip_network(value)
+    for value in (
+        "192.0.0.0/24",
+        "192.88.99.0/24",
+        "64:ff9b::/96",
+        "64:ff9b:1::/48",
+        "2001::/23",
+        "2001:db8::/32",
+        "2002::/16",
+        "3fff::/20",
+    )
+)
+_IPV6_GLOBAL_UNICAST = ipaddress.ip_network("2000::/3")
+
 
 class UnsafeTarget(ValueError):
     pass
@@ -60,6 +75,8 @@ def normalize_selectors(value: str | list[str]) -> list[str]:
 
 
 def public_ip(value: str) -> str:
+    if not isinstance(value, str) or "%" in value:
+        raise UnsafeTarget("Scoped or non-text destination address blocked")
     try:
         address = ipaddress.ip_address(value)
     except ValueError as exc:
@@ -67,12 +84,16 @@ def public_ip(value: str) -> str:
     # Reject transition mechanisms and mapped IPv4 to avoid alternate private routes.
     if (
         not address.is_global
+        or address.is_reserved
+        or address.is_loopback
+        or address.is_link_local
         or address.is_multicast
         or address.is_unspecified
         or getattr(address, "ipv4_mapped", None)
         or getattr(address, "sixtofour", None)
         or getattr(address, "teredo", None)
-        or address in ipaddress.ip_network("64:ff9b::/96")
+        or any(address.version == network.version and address in network for network in _SPECIAL_NETWORKS)
+        or (address.version == 6 and address not in _IPV6_GLOBAL_UNICAST)
     ):
         raise UnsafeTarget("Non-public or transition destination blocked")
     return str(address)

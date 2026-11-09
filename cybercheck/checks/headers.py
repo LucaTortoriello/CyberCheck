@@ -2,6 +2,7 @@
 
 import re
 
+from cybercheck.core.evidence import redact_url
 from cybercheck.core.network import WebResponse
 from cybercheck.locales.findings import finding
 from cybercheck.models import Finding
@@ -18,7 +19,7 @@ HEADER_KEYS = (
 )
 
 
-def check_headers(response: WebResponse | None, error: str | None = None) -> list[Finding]:
+def check_headers(response: WebResponse | None, error: dict | str | None = None) -> list[Finding]:
     if response is None or not 200 <= response.status_code < 300:
         evidence = response.evidence() if response else {"error": error}
         return [
@@ -48,7 +49,7 @@ def check_headers(response: WebResponse | None, error: str | None = None) -> lis
                 en,
                 it,
                 {
-                    "url": response.url,
+                    "url": redact_url(response.url),
                     "method": "HEAD",
                     "status_code": response.status_code,
                     "content_type": content_type,

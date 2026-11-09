@@ -12,6 +12,7 @@ import tldextract
 
 from cybercheck.core.config import Budget, LimitReached
 from cybercheck.core.dns import DNSClient
+from cybercheck.core.evidence import redact_url, safe_headers
 from cybercheck.core.transport import PinnedTransport
 from cybercheck.core.validation import UnsafeTarget, validate_url
 
@@ -37,13 +38,18 @@ class WebResponse:
     method: str = "HEAD"
 
     def evidence(self) -> dict:
-        return asdict(self)
+        values = asdict(self)
+        values["url"] = redact_url(self.url)
+        values["headers"] = safe_headers(self.headers)
+        values["hops"] = [dict(hop, url=redact_url(hop["url"])) for hop in self.hops]
+        return values
 
 
 class WebClient:
     def __init__(self, dns: DNSClient, budget: Budget, transport: httpx.BaseTransport | None = None):
         self.dns = dns
         self.budget = budget
+        self.last_hops: list[dict] = []
         self.client = httpx.Client(
             transport=transport or PinnedTransport(budget),
             trust_env=False,
@@ -56,13 +62,15 @@ class WebClient:
 
     def fetch(self, url: str, scope: str) -> WebResponse:
         hops: list[dict] = []
-        initial_scheme, _, _ = validate_url(url)
+        self.last_hops = hops
+        seen_https = False
         for _ in range(self.budget.settings.max_redirects + 1):
             scheme, hostname, path = validate_url(url)
             if organizational_domain(hostname) != organizational_domain(scope):
                 raise UnsafeTarget("Redirect outside the authorized organizational domain blocked")
-            if initial_scheme == "https" and scheme != "https":
+            if seen_https and scheme != "https":
                 raise UnsafeTarget("HTTPS downgrade redirect blocked")
+            seen_https |= scheme == "https"
             # Reject the entire DNS answer if any address is non-public.
             address = self.dns.public_addresses(hostname)[0]
             literal = f"[{address}]" if ":" in address else address
@@ -79,9 +87,9 @@ class WebClient:
             ) as response:
                 headers = dict(response.headers)
                 status = response.status_code
-            hops.append({"url": url, "address": address, "status_code": status})
+            hops.append({"url": redact_url(url), "address": address, "status_code": status})
             if status not in {301, 302, 303, 307, 308}:
-                return WebResponse(url, status, headers, address, hops)
+                return WebResponse(url, status, safe_headers(headers), address, hops)
             location = headers.get("location")
             if not location:
                 raise OSError("Redirect response has no Location header")

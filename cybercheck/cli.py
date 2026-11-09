@@ -9,6 +9,7 @@ from cybercheck.core.config import Settings
 from cybercheck.core.engine import run_assessment
 from cybercheck.core.logging import configure_logging
 from cybercheck.reports.render import render_html, render_json
+from cybercheck.storage.files import write_private_text
 from cybercheck.storage.sqlite import Repository
 
 
@@ -41,8 +42,7 @@ def main() -> int:
             ("json", render_json(assessment)),
         ):
             path = args.output / f"{stem}.{extension}"
-            path.write_text(content, encoding="utf-8")
-            path.chmod(0o600)
+            write_private_text(path, content)
         Repository(settings.db_path).save(assessment)
     except (ValueError, PermissionError, OSError, sqlite3.Error) as exc:
         logging.getLogger("cybercheck.cli").error("cli_error", extra={"error_type": type(exc).__name__})

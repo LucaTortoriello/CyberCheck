@@ -6,6 +6,7 @@ import httpx
 
 from cybercheck.checks.headers import check_headers
 from cybercheck.core.config import LimitReached
+from cybercheck.core.evidence import network_error
 from cybercheck.core.network import WebClient
 from cybercheck.core.validation import UnsafeTarget
 from cybercheck.locales.findings import finding
@@ -31,7 +32,7 @@ def check_web(domain: str, web: WebClient) -> list[Finding]:
             )
         )
     except (httpx.HTTPError, OSError, UnsafeTarget, LimitReached) as exc:
-        error = f"{type(exc).__name__}: {exc}"
+        error = network_error(exc)
         findings.append(
             finding(
                 "http.https",
@@ -39,7 +40,7 @@ def check_web(domain: str, web: WebClient) -> list[Finding]:
                 S.INFO,
                 "HTTPS request could not be completed; HTTPS is not proven absent or insecure.",
                 "Richiesta HTTPS non completata; non prova che HTTPS sia assente o insicuro.",
-                {"error": error},
+                error | {"hops": list(web.last_hops)},
             )
         )
     findings.extend(check_headers(response, error))
@@ -74,7 +75,7 @@ def check_web(domain: str, web: WebClient) -> list[Finding]:
                 S.INFO,
                 "HTTP redirect behavior could not be established. Closed port 80 can be intentional.",
                 "Comportamento del redirect HTTP non accertato. La porta 80 chiusa può essere intenzionale.",
-                {"error": f"{type(exc).__name__}: {exc}"},
+                network_error(exc) | {"hops": list(web.last_hops)},
             )
         )
     return findings
