@@ -16,9 +16,10 @@
     .failed{border-left-color:#be4048}.warning{border-left-color:#ad781d}.passed{border-left-color:#218664}
     .badge{font-size:12px;text-transform:uppercase;font-weight:650;background:#edf1f6;padding:4px 8px;border-radius:4px}
     pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;background:#f4f6f9;padding:14px;border-radius:5px}
-    a{color:#186b88;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:10px;border-bottom:1px solid #dce3eb}
+    a{color:#186b88;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{text-align:left;padding:10px;border-bottom:1px solid #dce3eb;overflow-wrap:anywhere}thead{display:table-header-group}
+    .issue-list{padding-left:22px}.issue-list li{margin-bottom:8px}.inconclusive{background:#f3f6f9;border-left:4px solid #7c899b;padding:16px 20px}
     .notice{background:#f3f6f9;padding:18px;border-radius:6px}footer{margin-top:40px;border-top:1px solid #dce3eb;padding-top:16px;font-size:12px}
-    @page{size:A4;margin:16mm}@media print{body{margin:0;padding:0;max-width:none}.finding{break-inside:auto}h2,h3{break-after:avoid}a{color:inherit}pre{font-size:9px}}
+    @page{size:A4;margin:16mm}@media print{html{background:white}body{margin:0;padding:0;max-width:none;font-size:10pt;print-color-adjust:exact;-webkit-print-color-adjust:exact}.finding{break-inside:auto}h2,h3,dt{break-after:avoid}p,li{orphans:3;widows:3}tr{break-inside:avoid}a{color:inherit}pre{font-size:8pt;line-height:1.45;max-width:100%}.summary{gap:6px}.metric{padding:10px;min-width:0}.metric b{font-size:20px}th,td{padding:6px;font-size:8pt}h2{font-size:16pt}h3{font-size:12pt}}
     @media(max-width:600px){body{margin:0;padding:22px}h1{font-size:28px}}
   </style>
 </head>
@@ -29,6 +30,8 @@
   <dl><dt>{{ t('domain') }}</dt><dd>{{ a.domain }}</dd><dt>{{ t('date') }}</dt><dd>{{ a.completed_at or a.started_at }}</dd></dl>
   <p class="notice">{{ t('scope_note') }}</p>
   {% if a.metadata.get('synthetic_fixture') %}<p class="notice"><strong>SYNTHETIC TEST FIXTURE — NOT A LIVE ASSESSMENT</strong></p>{% endif %}
+  <h2>{{ t('report_scope') }}</h2><p>{{ t('report_scope_body') }}</p>
+  <dl><dt>DKIM</dt><dd>{{ a.selectors|join(', ') if a.selectors else t('unknown') }}</dd></dl>
   <h2>{{ t('executive') }}</h2><p>{{ t('report_executive') }}</p>
   <div class="summary">
     <div class="metric"><b>{{ a.counts.passed }}</b>{{ t('checks_passed') }}</div>
@@ -36,6 +39,10 @@
     <div class="metric"><b>{{ a.counts.failed }}</b>{{ t('confirmed') }}</div>
     <div class="metric"><b>{{ a.counts.unknown + a.counts.error }}</b>{{ t('incomplete') }}</div>
   </div>
+  <h3>{{ t('report_confirmed') }}</h3>
+  <ul class="issue-list">{% for f in a.findings if f.status == 'failed' %}<li><a href="#finding-{{ f.id }}">{{ f.check_name.get(language) }}</a> · {{ t(f.severity) }}</li>{% else %}<li>{{ t('no_confirmed') }}</li>{% endfor %}</ul>
+  <div class="inconclusive"><h3>{{ t('report_inconclusive') }}</h3>
+  <ul class="issue-list">{% for f in a.findings if f.status in ['unknown','error'] %}<li><a href="#finding-{{ f.id }}">{{ f.check_name.get(language) }}</a> · {{ t(f.status) }}</li>{% else %}<li>{{ t('no_inconclusive') }}</li>{% endfor %}</ul></div>
   {% if include_score %}<h3>{{ t('health') }}: {{ a.health.score if a.health.score is not none else '—' }}{% if a.health.score is not none %}/100{% endif %}</h3>
   <p>{{ t('score_formula') }}</p><p>{{ t('coverage', evaluated=a.health.evaluated, excluded=a.health.excluded) }}</p>{% endif %}
   <h2>{{ t('summary') }}</h2>
@@ -45,7 +52,7 @@
   <h2>{{ t('remediation') }}</h2>
   <ol>{% for f in a.findings if f.status in ['failed','warning'] %}<li><strong>{{ f.check_name.get(language) }}</strong>: {{ f.remediation.get(language) }}</li>{% else %}<li>{{ t('no_attention') }}</li>{% endfor %}</ol>
   {% for category, findings in groups.items() %}<h2>{{ t(category) }}</h2>
-    {% for f in findings %}<article class="finding {{ f.status }}">
+    {% for f in findings %}<article id="finding-{{ f.id }}" class="finding {{ f.status }}">
       <h3>{{ f.check_name.get(language) }}</h3><span class="badge">{{ t(f.status) }} · {{ t(f.severity) }}</span>
       <p>{{ f.explanation.get(language) }}</p><dl><dt>{{ t('impact') }}</dt><dd>{{ f.business_impact.get(language) }}</dd><dt>{{ t('remediation') }}</dt><dd>{{ f.remediation.get(language) }}</dd></dl>
       <strong>{{ t('evidence') }}</strong><pre>{{ f.evidence|tojson(indent=2) }}</pre>

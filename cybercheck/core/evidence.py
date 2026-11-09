@@ -50,6 +50,28 @@ def safe_headers(headers: dict[str, str]) -> dict[str, str]:
     }
 
 
+def safe_web_evidence(value: object, key: str = "") -> object:
+    """Also protect exports of v0.1 history without modifying the stored source."""
+    if isinstance(value, dict):
+        if key == "headers":
+            return safe_headers(value)
+        if key == "header_values":
+            return {
+                name.lower(): [safe_headers({name: item})[name.lower()] for item in items]
+                for name, items in value.items()
+                if name.lower() in EVIDENCE_HEADERS
+            }
+        return {name: safe_web_evidence(item, name) for name, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [safe_web_evidence(item) for item in value]
+    if isinstance(value, str):
+        if key in {"url", "location"}:
+            return redact_url(value)
+        if key == "error":
+            return "Legacy diagnostic message omitted; re-assess for classified error details"
+    return value
+
+
 def network_error(exc: Exception) -> dict[str, str]:
     """Keep useful error classification without arbitrary exception messages."""
     reason = (

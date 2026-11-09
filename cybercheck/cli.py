@@ -5,6 +5,7 @@ import logging
 import sqlite3
 from pathlib import Path
 
+from cybercheck import __version__
 from cybercheck.core.config import Settings
 from cybercheck.core.engine import run_assessment
 from cybercheck.core.logging import configure_logging
@@ -15,6 +16,7 @@ from cybercheck.storage.sqlite import Repository
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="CyberCheck: authorized public-domain configuration checks")
+    parser.add_argument("--version", action="version", version=f"CyberCheck {__version__}")
     parser.add_argument("domain", help="Domain name only, without URL or port")
     parser.add_argument("--selectors", default="", help="Comma-separated explicit DKIM selectors (maximum 5)")
     parser.add_argument(
@@ -43,11 +45,20 @@ def main() -> int:
         ):
             path = args.output / f"{stem}.{extension}"
             write_private_text(path, content)
-        Repository(settings.db_path).save(assessment)
     except (ValueError, PermissionError, OSError, sqlite3.Error) as exc:
         logging.getLogger("cybercheck.cli").error("cli_error", extra={"error_type": type(exc).__name__})
         parser.exit(1, f"CyberCheck could not complete: {exc}\n")
     print(f"Assessment {assessment.id}: {assessment.domain}")
     print(f"Results: {assessment.counts}")
     print(f"Reports: {args.output / stem}.html / .json")
+    try:
+        Repository(settings.db_path).save(assessment)
+    except (OSError, sqlite3.Error, ValueError) as exc:
+        logging.getLogger("cybercheck.cli").error(
+            "history_save_error", extra={"error_type": type(exc).__name__}
+        )
+        parser.exit(
+            1,
+            "Assessment completed and reports saved, but local history could not be updated. Check the database path, permissions and schema.\n",
+        )
     return 0

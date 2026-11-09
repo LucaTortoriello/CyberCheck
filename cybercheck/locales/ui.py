@@ -1,6 +1,60 @@
 """Presentation strings shared by the app and report renderer."""
 
 STRINGS = {
+    "synthetic_notice": (
+        "SYNTHETIC TEST FIXTURE — This is not a live assessment.",
+        "DATI SINTETICI DI TEST — Questo non è un assessment live.",
+    ),
+    "config_error": (
+        "Startup configuration is invalid. Check the numeric environment variables and documented ranges, then restart the app.",
+        "Configurazione di avvio non valida. Controlla le variabili d'ambiente numeriche e gli intervalli documentati, quindi riavvia l'app.",
+    ),
+    "storage_error": (
+        "The local database could not be opened or uses an unsupported schema. Check its path and permissions; preserve it and restore a backup or choose a separate database path.",
+        "Impossibile aprire il database locale, oppure schema non supportato. Controlla percorso e permessi; conservalo e ripristina un backup o scegli un percorso separato.",
+    ),
+    "stored_invalid": (
+        "This stored assessment cannot be read. Its data has been preserved. Select another assessment or recover a database backup.",
+        "Questo assessment salvato non è leggibile. I dati sono stati conservati. Seleziona un altro assessment o recupera un backup del database.",
+    ),
+    "checks_done": (
+        "Checks completed; saving results locally…",
+        "Verifiche completate; salvataggio locale in corso…",
+    ),
+    "checks_not_saved": (
+        "Checks completed; local saving needs attention.",
+        "Verifiche completate; salvataggio locale da verificare.",
+    ),
+    "unsaved": (
+        "An assessment is available only in this session. Save it again or download it from Reports before closing the app.",
+        "Un assessment è disponibile solo in questa sessione. Riprova il salvataggio o scaricalo da Report prima di chiudere l'app.",
+    ),
+    "retry_save": ("Retry saving results", "Riprova il salvataggio"),
+    "incomplete_notice": (
+        "{count} checks could not establish a result. Review Unknown/Error findings before drawing conclusions; these are not confirmed vulnerabilities.",
+        "{count} verifiche non hanno prodotto un risultato accertabile. Esamina gli esiti Sconosciuto/Errore prima di trarre conclusioni; non sono vulnerabilità confermate.",
+    ),
+    "attention_count": (
+        "Showing {displayed} of {total} items by priority. Open Findings to view and filter all results.",
+        "Mostrati {displayed} di {total} elementi in ordine di priorità. Apri Risultati per visualizzarli e filtrarli tutti.",
+    ),
+    "previous_severity": ("Previous severity", "Gravità precedente"),
+    "current_severity": ("Current severity", "Gravità attuale"),
+    "report_scope": ("Assessment scope", "Ambito dell'assessment"),
+    "report_scope_body": (
+        "DNS and email configuration for the stated domain; one certificate endpoint and bounded root-page HTTP HEAD requests on ports 80/443. Related redirects are limited to the same organizational domain. Only explicitly supplied DKIM selectors are queried.",
+        "Configurazione DNS ed email del dominio indicato; un endpoint del certificato e richieste HTTP HEAD limitate alla pagina iniziale sulle porte 80/443. I redirect correlati sono limitati allo stesso dominio organizzativo. Vengono interrogati solo i selettori DKIM esplicitamente forniti.",
+    ),
+    "report_confirmed": ("Confirmed configuration issues", "Problemi di configurazione confermati"),
+    "report_inconclusive": ("Unknown and incomplete checks", "Verifiche sconosciute e incomplete"),
+    "no_confirmed": (
+        "No confirmed configuration issue was recorded within the evaluated scope.",
+        "Nessun problema di configurazione confermato registrato nell'ambito valutato.",
+    ),
+    "no_inconclusive": (
+        "No unknown or execution-error result was recorded.",
+        "Nessun risultato sconosciuto o errore di esecuzione registrato.",
+    ),
     "overview": ("Overview", "Panoramica"),
     "new": ("New Assessment", "Nuovo assessment"),
     "history": ("Assessment History", "Cronologia assessment"),
@@ -139,8 +193,8 @@ STRINGS = {
     ),
     "methodology": ("Methodology and limitations", "Metodologia e limiti"),
     "methodology_body": (
-        "DNS uses the configured recursive resolver, bounded TXT/A/AAAA/NS/MX/CAA queries and only supplied DKIM selectors. DMARC inheritance uses a bundled public suffix list; sender alignment and reporting delivery are not tested. SPF checks common syntax and potential lookup paths, not a full sender-dependent evaluation. CAA is inspected at the exact name, not as an effective inherited policy. One TLS handshake verifies the requested hostname and chain against the local trust store. No obsolete-protocol probing, revocation or CT validation is performed. HTTP uses HEAD on ports 80/443, validated public IPs and bounded same-organizational-domain redirects; response bodies and HTML meta policies are not inspected. Headers reflect the final successful response, possibly a CDN or error-specific endpoint. A single selected IP is sampled. Network failures and blocked requests are unknown, not confirmed vulnerabilities. This tool does not verify asset ownership beyond the user's declaration.",
-        "Il DNS usa il resolver ricorsivo configurato, query TXT/A/AAAA/NS/MX/CAA limitate e solo i selettori DKIM forniti. L'ereditarietà DMARC usa una lista dei suffissi pubblici inclusa; allineamento e consegna dei report non sono verificati. SPF verifica sintassi comune e percorsi DNS potenziali, senza valutazione completa per mittente. CAA è esaminato al nome esatto, non come policy ereditata effettiva. Un handshake TLS verifica nome host e catena con il trust store locale. Non vengono sondate versioni obsolete né verificate revoca o CT. HTTP usa HEAD sulle porte 80/443, IP pubblici validati e redirect limitati allo stesso dominio organizzativo; corpi e policy meta HTML non sono ispezionati. Le intestazioni riflettono la risposta finale riuscita, eventualmente di un CDN. Viene campionato un solo IP. Errori di rete e richieste bloccate sono sconosciuti, non vulnerabilità confermate. Lo strumento non verifica la proprietà oltre alla dichiarazione dell'utente.",
+        "DNS uses the configured recursive resolver, bounded queries and only supplied DKIM selectors. DMARC uses explicitly labeled legacy RFC 7489 PSL/pct interpretation; current RFC 9989 tree-walk/testing semantics are not implemented. Records with np/psd/t remain inconclusive. Sender alignment and reporting delivery are not tested. SPF checks common syntax and potential lookup paths, not full sender-dependent evaluation. CAA is inspected only at the exact name. One TLS handshake verifies the requested hostname and chain using the local trust store; obsolete protocol support, revocation and CT are not probed. HTTP uses HEAD on ports 80/443, validated public IPs and bounded same-organizational-domain redirects. Bodies and HTML meta policies are not inspected. Headers reflect the final successful response, possibly a CDN. Only one selected IP is sampled. Saved web evidence uses a header allowlist and redacts URL queries, credentials and fragments; paths and DNS records can still be sensitive. Failures and blocked requests are unknown, not confirmed vulnerabilities. Ownership is a user declaration, not independently verified.",
+        "Il DNS usa il resolver ricorsivo configurato, query limitate e solo i selettori DKIM forniti. DMARC usa l'interpretazione legacy RFC 7489 PSL/pct esplicitamente indicata; ricerca nell'albero DNS e modalità di test RFC 9989 non sono implementate. Record con np/psd/t restano inconcludenti. Allineamento e consegna dei report non sono verificati. SPF verifica sintassi comune e percorsi potenziali, senza valutazione completa per mittente. CAA è esaminato solo al nome esatto. Un handshake TLS verifica nome host e catena con il trust store locale; supporto di protocolli obsoleti, revoca e CT non sono sondati. HTTP usa HEAD sulle porte 80/443, IP pubblici validati e redirect limitati allo stesso dominio organizzativo. Corpi e policy meta HTML non sono ispezionati. Le intestazioni riflettono la risposta finale riuscita, eventualmente di un CDN. È campionato un solo IP. Le evidenze web salvate usano un elenco di intestazioni consentite e oscurano query URL, credenziali e frammenti; percorsi e record DNS possono restare sensibili. Errori e blocchi sono sconosciuti, non vulnerabilità confermate. La proprietà è dichiarata dall'utente, non verificata indipendentemente.",
     ),
     "disclaimer": (
         "This assessment is not a penetration test, audit certification, compliance attestation, or guarantee of security. It cannot establish the security of an organization or the probability of compromise. Assess only assets you own or are explicitly authorized to review.",

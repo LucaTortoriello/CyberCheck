@@ -32,4 +32,5 @@ def test_cli_persists_and_exports_without_network(monkeypatch, tmp_path):
         assert main() == 0
     assert len(list((tmp_path / "exports").glob("*.html"))) == 1
     assert len(list((tmp_path / "exports").glob("*.json"))) == 1
+    assert all(path.stat().st_mode & 0o077 == 0 for path in (tmp_path / "exports").iterdir())
     assert (tmp_path / "db.sqlite3").exists()

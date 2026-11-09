@@ -116,3 +116,40 @@ def test_network_exception_message_not_persisted(fake_dns):
     finally:
         web.close()
     assert "secret-network-sentinel" not in json.dumps([f.evidence for f in observations])
+
+
+def test_database_path_cannot_follow_a_final_symlink(tmp_path):
+    from cybercheck.storage.sqlite import Repository
+
+    victim = tmp_path / "unrelated.txt"
+    victim.write_text("preserve me")
+    link = tmp_path / "history.sqlite3"
+    link.symlink_to(victim)
+    with pytest.raises(OSError):
+        Repository(link)
+    assert victim.read_text() == "preserve me"
+
+
+def test_legacy_web_history_is_redacted_on_export_without_rewriting_source():
+    from cybercheck.locales.findings import finding
+    from cybercheck.models import Severity, Status
+
+    a = Assessment(
+        "example.com",
+        findings=[
+            finding(
+                "http.https",
+                Status.PASSED,
+                Severity.INFO,
+                "en",
+                "it",
+                {
+                    "url": "https://user:secret-legacy-credentials@example.com/path?token=secret-legacy-query#secret-legacy-fragment",
+                    "headers": {"set-cookie": "secret-legacy-cookie", "content-type": "text/html"},
+                },
+            )
+        ],
+    )
+    output = render_json(a) + render_html(a)
+    assert "secret-legacy" not in output
+    assert a.findings[0].evidence["headers"]["set-cookie"] == "secret-legacy-cookie"
