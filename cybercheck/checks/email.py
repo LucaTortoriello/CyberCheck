@@ -7,7 +7,7 @@ import re
 
 from cybercheck.core.dns import DNSClient, DNSResult
 from cybercheck.core.network import organizational_domain
-from cybercheck.core.validation import UnsafeTarget, normalize_domain
+from cybercheck.core.validation import UnsafeTarget, normalize_dns_name
 from cybercheck.locales.findings import finding
 from cybercheck.models import Finding, Text
 from cybercheck.models import Severity as S
@@ -19,8 +19,12 @@ def unavailable(key: str, result: DNSResult, *, suffix: str = "") -> Finding:
         key,
         T.UNKNOWN,
         S.INFO,
-        "DNS lookup could not be completed; configuration is unknown.",
-        "La query DNS non è stata completata; la configurazione è sconosciuta.",
+        "DNS name does not exist; this configuration cannot be established."
+        if result.state == "nxdomain"
+        else "DNS lookup could not be completed; configuration is unknown.",
+        "Il nome DNS non esiste; questa configurazione non è accertabile."
+        if result.state == "nxdomain"
+        else "La query DNS non è stata completata; la configurazione è sconosciuta.",
         result.evidence(),
         suffix=suffix,
     )
@@ -47,7 +51,7 @@ def check_dns(domain: str, dns: DNSClient) -> list[Finding]:
     records = {kind: dns.query(domain, kind) for kind in ("A", "AAAA", "NS", "MX", "CAA")}
     inventory = finding(
         "dns.records",
-        T.UNKNOWN if any(v.state == "error" for v in records.values()) else T.PASSED,
+        T.UNKNOWN if any(v.state in {"error", "nxdomain"} for v in records.values()) else T.PASSED,
         S.INFO,
         "Exact-name DNS inventory; NS records can legitimately exist only at the zone apex.",
         "Inventario DNS del nome esatto; i record NS possono legittimamente esistere solo all'apice della zona.",
@@ -55,7 +59,7 @@ def check_dns(domain: str, dns: DNSClient) -> list[Finding]:
     )
     mx, caa = records["MX"], records["CAA"]
     findings = [inventory]
-    if mx.state == "error":
+    if mx.state in {"error", "nxdomain"}:
         findings.append(unavailable("dns.mx", mx))
     else:
         null = any(re.fullmatch(r"0\s+\.", value) for value in mx.records)
@@ -83,7 +87,7 @@ def check_dns(domain: str, dns: DNSClient) -> list[Finding]:
                 scoreable=contradictory,
             )
         )
-    if caa.state == "error":
+    if caa.state in {"error", "nxdomain"}:
         findings.append(unavailable("dns.caa", caa))
     else:
         findings.append(
@@ -109,7 +113,7 @@ def spf_records(result: DNSResult) -> list[str]:
 
 def check_spf(domain: str, dns: DNSClient) -> list[Finding]:
     result = dns.query(domain, "TXT")
-    if result.state == "error":
+    if result.state in {"error", "nxdomain"}:
         return [unavailable("email.spf", result)]
     records = spf_records(result)
     evidence = result.evidence() | {"spf_records": records}
@@ -142,14 +146,17 @@ def check_spf(domain: str, dns: DNSClient) -> list[Finding]:
     all_qualifier: str | None = None
     macros = False
     for term in terms:
-        macros |= "%" in term
-        if "=" in term:
-            name, value = term.split("=", 1)
+        modifier = re.fullmatch(r"([a-zA-Z][a-zA-Z0-9_.-]*)=(.*)", term)
+        if modifier:
+            name, value = modifier.groups()
             name = name.lower()
-            if not re.fullmatch(r"[a-zA-Z][a-zA-Z0-9_.-]*", name) or not value or name in modifiers:
-                errors.append(f"Malformed or duplicate modifier: {term}")
-            modifiers[name.lower()] = value
+            if name in {"redirect", "exp"} and (not value or name in modifiers):
+                errors.append(f"Malformed or duplicate defined modifier: {term}")
+            if name in {"redirect", "exp"}:
+                macros |= "%" in value
+            modifiers[name] = value
             continue
+        macros |= "%" in term
         qualifier = term[0] if term and term[0] in "+-~?" else "+"
         mechanism = term[1:] if term and term[0] in "+-~?" else term
         name = re.split(r"[:/]", mechanism, maxsplit=1)[0].lower()
@@ -162,9 +169,26 @@ def check_spf(domain: str, dns: DNSClient) -> list[Finding]:
                 all_qualifier = qualifier
         if name in {"include", "exists"} and (":" not in mechanism or not mechanism.partition(":")[2]):
             errors.append(f"Missing domain: {term}")
+        if name in {"a", "mx"} and "%" not in mechanism:
+            match = re.fullmatch(
+                r"(?:a|mx)(?::[^/]+)?(?:/(0|[1-9][0-9]?))?(?://(0|[1-9][0-9]{0,2}))?", mechanism, re.I
+            )
+            if (
+                not match
+                or (match[1] is not None and int(match[1]) > 32)
+                or (match[2] is not None and int(match[2]) > 128)
+            ):
+                errors.append(f"Invalid A/MX CIDR syntax: {term}")
+        if name == "ptr" and "%" not in mechanism and not re.fullmatch(r"ptr(?::[^/]+)?", mechanism, re.I):
+            errors.append(f"Invalid PTR syntax: {term}")
         if name in {"ip4", "ip6"}:
             try:
-                network = ipaddress.ip_network(mechanism.partition(":")[2], strict=False)
+                address = mechanism.partition(":")[2]
+                if "%" in address or (
+                    "/" in address and not re.fullmatch(r"[^/]+/(0|[1-9][0-9]{0,2})", address)
+                ):
+                    raise ValueError("Invalid SPF prefix")
+                network = ipaddress.ip_network(address, strict=False)
                 if network.version != (4 if name == "ip4" else 6):
                     raise ValueError("Address family mismatch")
             except ValueError:
@@ -184,8 +208,8 @@ def check_spf(domain: str, dns: DNSClient) -> list[Finding]:
     elif all_qualifier == "+":
         status, severity = T.FAILED, S.HIGH
         en, it = (
-            "The first all mechanism uses +all and authorizes every sender.",
-            "Il primo meccanismo all usa +all e autorizza qualsiasi mittente.",
+            "The first all mechanism uses +all and authorizes every sender not already matched by an earlier mechanism.",
+            "Il primo meccanismo all usa +all e autorizza ogni mittente non già intercettato da un meccanismo precedente.",
         )
     elif all_qualifier == "?" or (all_qualifier is None and "redirect" not in modifiers):
         status, severity = T.WARNING, S.LOW
@@ -217,6 +241,11 @@ def check_spf(domain: str, dns: DNSClient) -> list[Finding]:
         local_all = False
         redirect = None
         for term in policy.split()[1:]:
+            modifier = re.fullmatch(r"([a-zA-Z][a-zA-Z0-9_.-]*)=(.*)", term)
+            if modifier and modifier[1].lower() not in {"redirect", "exp"}:
+                continue
+            if "%" in term:
+                notes.append("Sender-dependent macro; lookup path cannot be fully evaluated")
             term = term.lstrip("+-~?")
             if term.lower() == "all":
                 local_all = True
@@ -239,7 +268,7 @@ def check_spf(domain: str, dns: DNSClient) -> list[Finding]:
         if count > 10:
             return
         try:
-            target = normalize_domain(name)
+            target = normalize_dns_name(name)
         except UnsafeTarget:
             notes.append("Macro, unsupported, or invalid include/redirect target")
             return
@@ -264,19 +293,23 @@ def check_spf(domain: str, dns: DNSClient) -> list[Finding]:
     return findings
 
 
+def dmarc_records(result: DNSResult) -> list[str]:
+    return [r for r in result.records if re.match(r"^v[ \t]*=[ \t]*DMARC1(?:[ \t]*;|[ \t]*$)", r)]
+
+
 def check_dmarc(domain: str, dns: DNSClient) -> list[Finding]:
     policy_domain = domain
     result = dns.query(f"_dmarc.{domain}", "TXT")
     if result.state == "error":
         return [unavailable("email.dmarc", result)]
-    records = [r for r in result.records if re.match(r"^v=DMARC1(?:\s*;|$)", r)]
+    records = dmarc_records(result)
     org = organizational_domain(domain)
     if not records and org != domain:
         policy_domain = org
         result = dns.query(f"_dmarc.{org}", "TXT")
         if result.state == "error":
             return [unavailable("email.dmarc", result)]
-        records = [r for r in result.records if re.match(r"^v=DMARC1(?:\s*;|$)", r)]
+        records = dmarc_records(result)
     evidence = result.evidence() | {"policy_domain": policy_domain, "inherited": policy_domain != domain}
     if not records:
         return [
@@ -306,7 +339,14 @@ def check_dmarc(domain: str, dns: DNSClient) -> list[Finding]:
     if not 0 <= pct <= 100:
         errors.append("Invalid pct")
     policy = parsed.get("sp", parsed.get("p")) if policy_domain != domain else parsed.get("p")
-    evidence |= {"tags": parsed, "effective_policy": policy, "pct": pct, "syntax_errors": errors}
+    evidence |= {
+        "tags": parsed,
+        "effective_policy": policy,
+        "pct": pct,
+        "syntax_errors": errors,
+        "policy_model": "RFC 7489 legacy discovery and percentage semantics",
+        "limitations": "RFC 9989 DNS tree walk, np, psd and t semantics are not implemented",
+    }
     if errors:
         return [
             finding(
@@ -319,24 +359,29 @@ def check_dmarc(domain: str, dns: DNSClient) -> list[Finding]:
                 scoreable=True,
             )
         ]
+    unsupported = bool({"np", "psd", "t"} & parsed.keys())
     monitoring = policy == "none" or pct == 0
     partial = not monitoring and pct < 100
     findings = [
         finding(
             "email.dmarc",
-            T.WARNING if monitoring or partial else T.PASSED,
-            S.LOW if monitoring or partial else S.INFO,
-            f"Policy {policy}, pct={pct}. "
+            T.UNKNOWN if unsupported else T.WARNING if monitoring or partial else T.PASSED,
+            S.INFO if unsupported else S.LOW if monitoring or partial else S.INFO,
+            f"Legacy RFC 7489 policy {policy}, pct={pct}. "
             + (
-                "Monitoring without requested enforcement; appropriate during a managed rollout."
+                "Current-standard tags were observed; effective RFC 9989 receiver policy was not determined."
+                if unsupported
+                else "Monitoring without requested enforcement; appropriate during a managed rollout."
                 if monitoring
                 else "Partial enforcement requested; receiver behavior can differ."
                 if partial
                 else "Enforcement requested; this does not verify message alignment or receiver compliance."
             ),
-            f"Policy {policy}, pct={pct}. "
+            f"Policy legacy RFC 7489 {policy}, pct={pct}. "
             + (
-                "Monitoraggio senza applicazione richiesta; può essere appropriato durante un rilascio controllato."
+                "Osservati tag del nuovo standard; la policy effettiva RFC 9989 non è determinata."
+                if unsupported
+                else "Monitoraggio senza applicazione richiesta; può essere appropriato durante un rilascio controllato."
                 if monitoring
                 else "Applicazione parziale richiesta; il comportamento dei destinatari può variare."
                 if partial

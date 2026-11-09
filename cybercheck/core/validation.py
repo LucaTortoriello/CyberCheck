@@ -74,6 +74,25 @@ def normalize_selectors(value: str | list[str]) -> list[str]:
     return result
 
 
+def normalize_dns_name(value: str) -> str:
+    """Validate a literal DNS dependency, allowing service labels such as _spf.
+
+    This is only for DNS queries, never for HTTP/TCP destinations. Macro
+    expansion and arbitrary escaped DNS names are deliberately unsupported.
+    """
+    name = value.rstrip(".").lower()
+    labels = name.split(".")
+    if (
+        len(name) > 253
+        or len(labels) < 2
+        or any(not re.fullmatch(r"[a-z0-9_-]{1,63}", label) for label in labels)
+        or not re.fullmatch(r"[a-z][a-z0-9-]*", labels[-1])
+        or labels[-1] in {"localhost", "local", "internal", "lan", "home", "invalid", "test", "onion"}
+    ):
+        raise UnsafeTarget("Unsupported literal DNS dependency name")
+    return name
+
+
 def public_ip(value: str) -> str:
     if not isinstance(value, str) or "%" in value:
         raise UnsafeTarget("Scoped or non-text destination address blocked")

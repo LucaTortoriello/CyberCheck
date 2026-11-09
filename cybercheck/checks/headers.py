@@ -19,6 +19,50 @@ HEADER_KEYS = (
 )
 
 
+def active_hsts_policy(value: str | None) -> bool:
+    directives: dict[str, str | None] = {}
+    parts: list[str] = []
+    current: list[str] = []
+    quoted = escaped = False
+    for character in value or "":
+        if character == ";" and not quoted:
+            parts.append("".join(current))
+            current = []
+            continue
+        current.append(character)
+        if escaped:
+            escaped = False
+        elif character == "\\" and quoted:
+            escaped = True
+        elif character == '"':
+            quoted = not quoted
+    if quoted or escaped:
+        return False
+    parts.append("".join(current))
+    for part in parts:
+        if not part.strip():
+            continue
+        match = re.fullmatch(
+            r'([!#$%&\'*+.^_`|~0-9a-z-]+)(?:\s*=\s*([!#$%&\'*+.^_`|~0-9a-z-]+|"(?:\\.|[^"\\])*"))?',
+            part.strip(),
+            re.I,
+        )
+        if not match:
+            return False
+        name, argument = match.groups()
+        name = name.lower()
+        if name in directives:
+            return False
+        directives[name] = argument
+    age = directives.get("max-age")
+    if age is None or not re.fullmatch(r'(?:[0-9]+|"[0-9]+")', age):
+        return False
+    if "includesubdomains" in directives and directives["includesubdomains"] is not None:
+        return False
+    # A positive decimal needs no unbounded int conversion.
+    return bool(age.strip('"').lstrip("0"))
+
+
 def check_headers(response: WebResponse | None, error: dict | str | None = None) -> list[Finding]:
     if response is None or not 200 <= response.status_code < 300:
         evidence = response.evidence() if response else {"error": error}
@@ -59,14 +103,9 @@ def check_headers(response: WebResponse | None, error: dict | str | None = None)
             )
         )
 
-    hsts = h.get("strict-transport-security")
-    parts = [part.strip() for part in hsts.split(";")] if hsts else []
-    ages = [
-        re.fullmatch(r'max-age\s*=\s*"?([0-9]+)"?', part, re.I)
-        for part in parts
-        if part.lower().startswith("max-age")
-    ]
-    active_hsts = len(ages) == 1 and ages[0] is not None and int(ages[0][1]) > 0
+    hsts_values = response.values("strict-transport-security")
+    hsts = hsts_values[0] if hsts_values else None  # RFC 6797: only the first field is processed.
+    active_hsts = active_hsts_policy(hsts)
     add(
         "headers.hsts",
         T.PASSED if active_hsts else T.WARNING,
@@ -164,24 +203,23 @@ def check_headers(response: WebResponse | None, error: dict | str | None = None)
         permissions,
     )
     xfo = h.get("x-frame-options", "")
-    frame_tokens: list[str] = []
-    for directive in (csp or "").split(";"):
-        tokens = directive.strip().split()
-        if tokens and tokens[0].lower() == "frame-ancestors":
-            frame_tokens = tokens[1:]
-            break  # Browsers use the first duplicate directive.
-    valid_frames = (
-        bool(frame_tokens)
-        and "*" not in frame_tokens
-        and all(
-            token in {"'self'", "'none'"} or re.fullmatch(r"https?://[^\s;]+", token)
-            for token in frame_tokens
-        )
-        and ("'none'" not in frame_tokens or len(frame_tokens) == 1)
+    frame_policies: list[list[str]] = []
+    for policy in (csp or "").split(","):
+        for directive in policy.split(";"):
+            tokens = directive.strip().split()
+            if tokens and tokens[0].lower() == "frame-ancestors":
+                frame_policies.append(tokens[1:])
+                break  # First duplicate directive wins within each policy.
+    valid_frames = any(
+        bool(tokens)
+        and "*" not in tokens
+        and all(token in {"'self'", "'none'"} or re.fullmatch(r"https?://[^\s;]+", token) for token in tokens)
+        and ("'none'" not in tokens or len(tokens) == 1)
+        for tokens in frame_policies
     )
     valid_xfo = xfo.upper() in {"DENY", "SAMEORIGIN"}
     # An effective frame-ancestors directive takes precedence over XFO.
-    protected = valid_frames if frame_tokens else valid_xfo
+    protected = valid_frames if frame_policies else valid_xfo
     add(
         "headers.framing",
         T.PASSED if protected else T.WARNING,
@@ -192,6 +230,6 @@ def check_headers(response: WebResponse | None, error: dict | str | None = None)
         "Trovata una policy frame-ancestors restrittiva o X-Frame-Options valida. Verifica le origini consentite rispetto alle esigenze applicative."
         if protected
         else "Nessuna policy di framing restrittiva riconosciuta. La rilevanza del clickjacking dipende dai contenuti interattivi e dall'incorporamento previsto.",
-        f"frame-ancestors={' '.join(frame_tokens)}; X-Frame-Options={xfo}",
+        f"frame-ancestors={frame_policies}; X-Frame-Options={xfo}",
     )
     return findings
