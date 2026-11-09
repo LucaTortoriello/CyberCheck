@@ -49,6 +49,12 @@ Untrusted evidence and exception messages should not be copied into logs indiscr
 - HTML print layout and responsive Streamlit behavior need explicit verification; AppTest coverage alone is not a browser visual review.
 - Docker is optional; evaluate its operating burden before adding another supported deployment route.
 
+## Resolution after implementation
+
+SEC-01 through SEC-05, COR-01 through COR-04, STO-01/STO-02, UX-01 and DOC-01 have code/documentation changes and regression coverage. Additional export tests protect old v0.1 web history without mutating the stored source. Transport tests verified literal-IP connection, original hostname/SNI and mandatory certificate validation through the actual HTTPX/httpcore adapter, as well as bounded fragmented headers and cleanup.
+
+STD-01 remains a deliberately scoped **Medium limitation**, with explicit legacy labeling and inconclusive modern-tag handling; full current-standard behavior is a v0.3 priority. DEP-01's final advisory scan covered all 65 locked entries with zero skips and zero known advisories. The application remains a local evaluation tool, with live validation pending because no authorized domain is available. No confirmed Critical or High finding remains unresolved within the reviewed local boundary; neither this review nor a clean advisory result is a guarantee of security.
+
 ## References
 
-[SPF RFC 7208](https://www.rfc-editor.org/rfc/rfc7208), [DMARC RFC 7489](https://www.rfc-editor.org/rfc/rfc7489), [HSTS RFC 6797](https://www.rfc-editor.org/rfc/rfc6797), [Python IP classifications](https://docs.python.org/3/library/ipaddress.html), [HTTPX extensions](https://www.python-httpx.org/advanced/extensions/), [httpcore backends](https://www.encode.io/httpcore/network-backends/), [pip-audit](https://github.com/pypa/pip-audit).
+[SPF RFC 7208](https://www.rfc-editor.org/rfc/rfc7208), [legacy DMARC RFC 7489](https://www.rfc-editor.org/rfc/rfc7489), [current DMARC RFC 9989](https://datatracker.ietf.org/doc/html/rfc9989), [HSTS RFC 6797](https://www.rfc-editor.org/rfc/rfc6797), [Python IP classifications](https://docs.python.org/3/library/ipaddress.html), [HTTPX extensions](https://www.python-httpx.org/advanced/extensions/), [httpcore backends](https://www.encode.io/httpcore/network-backends/), [pip-audit](https://github.com/pypa/pip-audit).

@@ -20,8 +20,20 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
-      - run: python -m pip install -e '.[dev]'
+      - run: python -m pip install -r requirements.lock
+      - run: python -m pip install --no-deps -e .
       - run: ruff check .
       - run: ruff format --check .
       - run: python -m pytest -q --cov=cybercheck --cov-report=term-missing
       - run: python -m pip check
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements.lock
+      - run: python -m pip install -r requirements.lock
+      - run: pip-audit -r requirements.lock --no-deps --disable-pip --progress-spinner off

@@ -4,12 +4,14 @@
 
 CyberCheck is a working local assessment application for small businesses, freelancers and IT providers. It performs low-impact DNS, email, TLS and web configuration checks, stores assessment history in SQLite, and exports actionable HTML and JSON reports. The interface and HTML reports support Italian (default) and English.
 
+**v0.2 is a reliability and security review of the existing MVP.** See the [technical audit](docs/TECHNICAL_AUDIT_V02.md), [executed validation](docs/VALIDATION.md) and [real-world validation procedure/status](docs/REAL_WORLD_VALIDATION.md). No live domain validation has been performed: the developer has no authorized domain available. DMARC results explicitly use the legacy RFC 7489 profile; full current RFC 9989 support is deferred.
+
 This is a configuration assessment, **not a penetration test, certification, compliance attestation or guarantee of security**. Assess only domains you own or have explicit authorization to review.
 
 ## What is included
 
 - SPF discovery, multiple-record and common syntax checks, qualifier inspection, and a bounded static estimate of include/redirect lookup paths.
-- DMARC policy, percentage, aggregate-report configuration and organizational-domain inheritance using a bundled public suffix list.
+- Legacy RFC 7489 DMARC policy/percentage, reporting configuration and PSL-based inheritance. Current-standard np/psd/t markers remain inconclusive; this is not a complete RFC 9989 receiver implementation.
 - DKIM queries for up to five **explicitly supplied** selectors. No selector guessing; unknown does not mean disabled.
 - A/AAAA, NS, MX/null-MX and exact-name CAA observations.
 - One verified TLS handshake: trust-chain acceptance, hostname, issuer, validity, expiration and negotiated protocol.
@@ -30,20 +32,20 @@ brew install python@3.13
 cd /path/to/Cybercheck
 python3.13 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e '.[dev]'
+python -m pip install -r requirements.lock
+python -m pip install --no-deps -e .
 streamlit run streamlit_app.py
 ```
 
-Open **http://127.0.0.1:8501**. On this prepared workspace, `.venv` and dependencies already exist: activate the venv and run the last command. The server binds to loopback and disables analytics by default. Stop it with `Ctrl+C`.
+Open **http://127.0.0.1:8501**. If the virtual environment already exists, activate it and run the Streamlit command. The server binds to loopback and disables analytics by default. Stop it with `Ctrl+C`. Python 3.13 installation from a fresh temporary venv was executed for this release; see the validation record.
 
-For the versions resolved and tested on macOS/Python 3.13:
+For development using supported dependency ranges instead of the tested version snapshot:
 
 ```sh
-python -m pip install -r requirements.lock
-python -m pip install --no-deps -e .
+python -m pip install -e '.[dev,audit]'
 ```
 
-`requirements.lock` includes development tools and exact resolved versions. It is a baseline snapshot, not a cross-platform or hash-verified lock; `pyproject.toml` defines supported dependency ranges. No environment file is required. Optional shell settings are shown in [.env.example](.env.example); `.env` is not automatically loaded.
+`requirements.lock` includes development/security tools and exact resolved versions. It is a tested version snapshot, not a hash-verified supply-chain lock; CI uses it on its Python matrix. Streamlit's minimum is now 1.67, matching the API baseline actually tested. `pyproject.toml` defines supported ranges. No environment file is required. Optional shell settings are shown in [.env.example](.env.example); `.env` is not automatically loaded.
 
 ## Use the application
 
@@ -67,6 +69,8 @@ cybercheck your-owned-domain.tld --authorized --selectors selector1,selector2 --
 
 The authorization flag is mandatory. Omit selectors if unknown. Add `--include-score` to include the optional health score in HTML. A completed assessment can contain unknown/error findings; the CLI prints counts and exports evidence, rather than treating network uncertainty as a confirmed vulnerability.
 
+`cybercheck --version` prints the installed version. If history persistence fails after export, the CLI returns a nonzero exit status and explicitly reports that the HTML/JSON files are available. Export files are created owner-only and never overwrite an existing file or follow its symlink.
+
 ## Statuses and score
 
 | Status | Meaning |
@@ -84,7 +88,9 @@ The optional score is **100 × passed / (passed + failed)** among explicitly sco
 
 ## Local data and configuration
 
-Results are stored in `data/cybercheck.sqlite3`, excluded from Git. The containing directory is created privately where new, and the database is set to owner-only permissions on supported local filesystems. Reports contain infrastructure details; treat them as sensitive. Back up the database while the application is stopped. There is no retention scheduler or authentication layer in this local release.
+Results are stored in `data/cybercheck.sqlite3`, excluded from Git. New database/report files are created owner-only before content is written; final symlinks are refused. Parent directories are trusted local configuration. Future database schemas are rejected without downgrading their version. Unreadable assessments are preserved with a recovery message. Back up the database while the application is stopped. There is no retention scheduler or authentication layer in this local release.
+
+New HTTP evidence retains only relevant header fields; cookies, arbitrary response headers, credentials, URL query values and fragments are omitted/redacted. Exports and UI also redact web evidence read from v0.1 history without rewriting the stored source. Paths, DNS and original v0.1 databases/reports can still be sensitive; do not commit or share raw customer artifacts. If a UI save fails, download the result or use **Retry saving results**, which does not rerun network checks.
 
 | Variable | Default | Allowed range |
 |---|---:|---|
@@ -99,7 +105,7 @@ Queries are sequential and bounded; DNS answers are cached per assessment. HTTP 
 
 ## Security boundaries
 
-- Public targets only. Localhost, IP-literal inputs, private, loopback, link-local, reserved, multicast and selected transition addresses are rejected.
+- Public targets only. Localhost, IP-literal inputs, private, loopback, link-local, reserved, multicast, IPv6 zone identifiers and transition/special-purpose ranges are rejected. Special ranges are blocked consistently across supported Python versions, including conservative exclusion of a few special-purpose global exceptions.
 - Every HTTP redirect is validated, including DNS resolution and port checks, before connection. Cross-organizational-domain redirects and HTTPS downgrades are blocked.
 - All A/AAAA results must be public; partial DNS-family failures fail closed. Connections use a validated literal IP, with the original Host header and TLS SNI/hostname verification. No second hostname resolution can change the network destination.
 - Proxy environment variables are ignored. No insecure certificate retry, GET body download, arbitrary shell command, user-defined port, exploitation, port scan or subdomain enumeration.
@@ -116,9 +122,12 @@ python -m pytest -q --cov=cybercheck --cov-report=term-missing
 ruff check .
 ruff format --check .
 python -m pip check
+pip-audit -r requirements.lock --no-deps --disable-pip --progress-spinner off
 ```
 
-Tests prohibit outbound socket/DNS connections. They cover validation and SSRF cases, DNS failure states, email policies, mocked TLS verification, HTTP redirect limits and IP pinning, report escaping, database persistence, the complete engine-to-report workflow, and Streamlit navigation/forms in both languages. GitHub Actions runs the suite on supported CI Python versions; local execution does not establish remote CI status.
+Tests prohibit outbound socket/DNS connections. They cover validation/SSRF, DNS failures, email policies, TLS verification, the real transport adapter through a memory backend, slow/oversized headers, redirects, cookie/token redaction, report escaping, schema preservation, stable history comparison, CLI output/save failures and Streamlit navigation/forms in both languages. Resource leaks fail the tests. GitHub Actions runs the locked environment on Python 3.12/3.13/3.14 plus an advisory-audit job; local execution does not establish remote CI status.
+
+`pip check` verifies dependency compatibility; `pip-audit` performs a separate network-backed advisory lookup. A service outage is not a clean audit. The successful scan is a point-in-time result, not a guarantee against unknown vulnerabilities. See [developer verification](docs/DEVELOPMENT.md) for optional Chrome/print checks, which do not add a runtime browser or PDF dependency.
 
 No live assessment of third-party domains is required for tests. The local application server can be checked without assessing a domain:
 
@@ -130,6 +139,10 @@ See [the local validation record](docs/VALIDATION.md) for executed checks and th
 
 ## Example output and screenshots
 
+The following screenshot is from the real v0.2 dashboard using an isolated, **labeled synthetic fixture**. It is not a live domain assessment. [Mobile screenshot](docs/screenshots/v02-overview-mobile.png).
+
+![CyberCheck v0.2 overview with labeled synthetic test data](docs/screenshots/v02-overview-desktop.png)
+
 [Example HTML](docs/examples/assessment.html) and [example JSON](docs/examples/assessment.json) are **explicitly synthetic test fixtures, not live observations**. TLS is deliberately unavailable in the fixture; no certificate is fabricated. They are generated offline through the real engine and report renderers:
 
 ```sh
@@ -140,8 +153,8 @@ For README/product screenshots, start the app, use your own authorized domain, h
 
 ## License and commercial direction
 
-The project includes **AGPL-3.0-or-later** as the recommended community license; review this choice before publishing. It encourages contribution of covered modifications, including the source offer for modified versions used over a network. It **does not prevent competitors from hosting, distributing or selling compliant copies**. MIT is a simpler permissive alternative if broad adoption outweighs reciprocal source obligations. Neither license grants a monopoly on the business model. See the [licensing strategy](docs/LICENSING.md), the [official AGPL text](https://www.gnu.org/licenses/agpl-3.0.html) and [MIT text](https://opensource.org/license/mit).
+The public project uses **AGPL-3.0-or-later**, unchanged in v0.2. It encourages contribution of covered modifications, including the source offer for modified versions used over a network. It **does not prevent competitors from hosting, distributing or selling compliant copies**. MIT would be a different, permissive licensing choice requiring the maintainer's approval and the necessary rights; this audit does not relicense anything. See the [licensing considerations](docs/LICENSING.md) and [official AGPL text](https://www.gnu.org/licenses/agpl-3.0.html).
 
 The complete community assessment engine remains usable. Future paid value can come from monitoring, operational workflows, managed hosting, support and branding. No paid feature, payment service or multi-tenant architecture is implemented. See [roadmap and commercial validation](docs/ROADMAP.md).
 
-Nothing has been published to GitHub and no cloud or paid service is created by installation.
+The repository is public at [LucaTortoriello/CyberCheck](https://github.com/LucaTortoriello/CyberCheck). Installing or running it does not provision a cloud or paid service. Feature branches and draft pull requests are separate from approving a release or deploying an application.

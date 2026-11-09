@@ -2,6 +2,7 @@
 
 import json
 import sqlite3
+from contextlib import closing
 
 import pytest
 
@@ -99,11 +100,11 @@ def test_nxdomain_inventory_is_inconclusive_not_passed(fake_dns):
 
 def test_future_database_schema_is_never_downgraded(tmp_path):
     path = tmp_path / "future.sqlite3"
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db:
         db.execute("PRAGMA user_version=99")
     with pytest.raises(ValueError, match="schema"):
         Repository(path)
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db:
         assert db.execute("PRAGMA user_version").fetchone()[0] == 99
 
 

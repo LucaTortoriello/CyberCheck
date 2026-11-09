@@ -1,31 +1,43 @@
-# Roadmap and commercial validation
+# Roadmap and commercial readiness
 
-## Community MVP
+## v0.2: reliability review of the community MVP
 
-Implemented: single-domain public configuration checks, Italian/English UI, local history and comparison, honest unknown/error handling, HTML/JSON evidence reports, CLI, security boundaries and offline automated tests. The code is prepared for GitHub; publishing remains a separate founder decision.
+The single-domain engine, Streamlit UI, SQLite history, CLI and renderer remain in place. v0.2 adds security regressions/corrections, evidence minimization, parser fixes, stable comparisons, save-retry/recovery UX, explicit inconclusive report sections, clean installation and an advisory gate. See `TECHNICAL_AUDIT_V02.md` and `VALIDATION.md` for executed work.
 
-## Validation before adding SaaS
+The repository is public at [LucaTortoriello/CyberCheck](https://github.com/LucaTortoriello/CyberCheck). Review branches/draft PRs do not approve a release, deployment or paid service.
 
-1. Select three to five SMEs or IT providers with written authorization for their domains. Run the MVP with them, observe whether they understand warnings and can identify the first action.
-2. Have a mail/hosting administrator review a sample of findings for technical accuracy and false positives. Record unknown-check rates and reasons on authorized targets.
-3. Measure time to first actionable finding, report comprehension, remediation completed after seven days, and willingness to pay for recurring review or assistance. Do not substitute a high health score for customer outcomes.
-4. Offer a founder-delivered assessment/remediation walkthrough before building payment infrastructure. Ask which repeated task would justify a monthly fee and at what budget.
-5. Prioritize only the most requested repeat workflow. Monitoring and report branding are hypotheses, not validated demand.
+## Commercial readiness assessment
 
-## Deferred improvements
+Suitable for developer-controlled local evaluation and interviews about the report workflow. It is not yet a validated managed security product: no owned/authorized domain is available, so independent live comparisons and administrator review remain pending. Full current RFC 9989 support is a priority gap; v0.2's legacy profile is explicitly scoped. The optional health score must accompany coverage and actual findings.
 
-- Full sender-context SPF evaluation, advanced syntax/macros and complete lookup/void/fan-out semantics.
-- Broader DMARC discovery semantics and external report authorization checks.
-- DKIM cryptographic key validation and authorized message-level signing/alignment verification.
-- Effective CAA inheritance, DNSSEC validation and revocation/CT checks.
-- Optional carefully bounded GET/header behavior comparison, additional paths or multiple IP samples.
-- Native branded PDF generation; current HTML works with browser print-to-PDF.
-- Retention management, encrypted storage and schema migrations when contracts evolve.
+Before a paid pilot, independently verify an authorized domain and have its mail/hosting administrator review remediation relevance. Hosted multi-user deployment has further unsatisfied gates. Neither willingness to pay nor market demand follows from completion of code.
 
-## Potential Pro/service modules
+## Reusable commercial architecture
 
-Multi-domain monitoring, scheduled reassessments, alerts, historical trends, report branding, MSP workflows, organizations, team accounts and commercial support. Keep the working community engine complete. Add separate service adapters only when a validated need appears.
+| Capability | Reusable components | Additional work / boundary |
+|---|---|---|
+| Scheduled monitoring | Engine, budgets, SQLite | Separate scheduler adapter, per-domain authorization, overlap prevention, global quotas, retention/cancellation. |
+| Certificate alerts | TLS validity evidence and statuses | Renewal-aware thresholds, alert state/deduplication and recovery; Unknown must not become a false expiry incident. |
+| Configuration changes | Stable IDs and normalized comparison | Distinguish configuration, coverage and methodology changes; administrator review before risk labels. |
+| Multiple domains | Domain-indexed storage, single-domain engine | Thin authorized inventory and bounded queue; multiple rows are not tenant isolation. |
+| Branded reports | Escaped HTML and bilingual text | Safe branding inputs, permission for customer details and print acceptance checks; preserve evidence/disclaimers. |
+| MSP workflows | Core/report pipeline and history | Organizations, access control, isolation and support only after demand; do not expose this localhost UI publicly. |
+
+Keep orchestration/notifications outside check interpretation. Do not add a generic plugin system, billing, tenants or cloud authentication until a concrete need is validated. AGPL obligations depend on the actual integration; see `LICENSING.md` rather than assuming proprietary modules are automatically permitted.
+
+## Proposed v0.3: staged work for a solo developer
+
+1. **Standards and live correctness first.** Migrate and test bounded RFC 9989 discovery/interpretation, historic pct, np/psd/t and legacy-receiver differences. Obtain an authorized domain, follow `REAL_WORLD_VALIDATION.md` and review false positives before automation.
+2. **Validate the report workflow.** Interview three to five authorized SMEs/IT providers. Measure time to useful action, understanding of warnings/unknowns, corrections after a week and stated budget for recurring help. Offer founder-led walkthroughs before payments.
+3. **Only if requested: bounded local monitoring.** Begin with a few authorized domains, no overlapping runs, certificate alerts and stable change summaries. Keep notification credentials local/excluded from reports. Define global quotas and deduplication first.
+4. **Branding/support before large SaaS.** Add customer report branding and operational support if pilots request them. Determine whether customers need hosting or an MSP-operated local tool.
+
+These are ordered decision gates, not simultaneous commitments or fixed-date estimates. Keep the community core complete. Docker is deferred: the clean-venv route is verified; Desktop adds a VM, networking/trust-store differences and another support surface.
+
+## Later technical candidates
+
+Full SPF sender/macros/void/MX-PTR evaluation; cryptographic DKIM/message alignment; inherited CAA, DNSSEC and revocation/CT; carefully bounded GET/multi-endpoint comparisons; retention/encryption and explicit migrations. Browser print-to-PDF remains sufficient without a validated native-rendering need.
 
 ## Required before hosted multi-user deployment
 
-Ownership challenges, authentication, tenant isolation, encrypted secrets, per-user and per-target rate limits, isolated egress, job execution quotas, safe cancellation, retention policy, privacy review, security testing and monitoring. Payments and commercial licensing should follow actual demand and explicit founder approval. Do not publish this localhost application directly as a public scanner.
+Ownership challenges, authentication, tenant isolation, secrets handling, global/per-user/per-target quotas, isolated egress, cancellation, retention/privacy review, security testing and monitoring. Local test success does not satisfy those gates. Deployments, paid services, licensing changes and releases require explicit approval; do not merge into main automatically.
