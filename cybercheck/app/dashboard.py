@@ -10,11 +10,12 @@ import streamlit as st
 from cybercheck import __version__
 from cybercheck.core.config import Settings
 from cybercheck.core.engine import run_assessment
+from cybercheck.core.evidence import safe_web_evidence
 from cybercheck.core.logging import configure_logging
 from cybercheck.locales.ui import tr
 from cybercheck.models import Assessment, Finding, Severity, Status
 from cybercheck.reports.render import render_html, render_json
-from cybercheck.storage.sqlite import Repository, compare
+from cybercheck.storage.sqlite import Repository, StorageDataError, compare
 
 CSS = """
 <style>
@@ -47,7 +48,9 @@ def show_finding(f: Finding, language: str, *, expanded: bool = False) -> None:
         st.markdown(f"**{t('remediation')}**")
         st.text(f.remediation.get(language))
         st.markdown(f"**{t('evidence')}**")
-        st.json(f.evidence, expanded=False)
+        st.json(
+            safe_web_evidence(f.evidence) if f.category in {"http", "headers"} else f.evidence, expanded=False
+        )
         st.caption(f"{t('verified')}: {f.timestamp}")
         for reference in f.references:
             st.link_button(t("references"), reference)
@@ -63,6 +66,8 @@ def overview(a: Assessment | None, language: str) -> None:
     if not a:
         empty_state(language)
         return
+    if a.metadata.get("synthetic_fixture"):
+        st.warning(t("synthetic_notice"))
     st.markdown(
         f'<div class="cc-hero"><div class="cc-muted">{escape(t("overview").upper())}</div>'
         f"<h1>{escape(a.domain)}</h1><p>{escape(t('date'))}: {escape(a.completed_at or a.started_at)}</p></div>",
@@ -77,6 +82,8 @@ def overview(a: Assessment | None, language: str) -> None:
     ):
         column.metric(t(key), value)
     st.caption(t("scope_note"))
+    if counts["unknown"] + counts["error"]:
+        st.info(tr("incomplete_notice", language, count=counts["unknown"] + counts["error"]))
     if st.session_state.get("show_score", False):
         health = a.health
         st.metric(t("health"), "—" if health["score"] is None else f"{health['score']}/100")
@@ -97,6 +104,8 @@ def overview(a: Assessment | None, language: str) -> None:
     order = {s: i for i, s in enumerate(Severity)}
     for f in sorted(items, key=lambda f: (f.status != Status.FAILED, order[f.severity]))[:6]:
         show_finding(f, language)
+    if items:
+        st.caption(tr("attention_count", language, displayed=min(6, len(items)), total=len(items)))
     if not items:
         st.info(t("no_attention"))
 
@@ -128,9 +137,9 @@ def new_assessment(repository: Repository, settings: Settings, language: str) ->
             "dns": "DNS",
             "tls": "TLS",
             "http": "HTTP",
-            "done": t("done"),
+            "done": t("checks_done"),
         }
-        progress_bar.progress(current / total, text=labels[module])
+        progress_bar.progress(current / total, text=f"{current}/{total} — {labels[module]}")
 
     try:
         assessment = run_assessment(domain, selectors, authorized=True, settings=settings, progress=progress)
@@ -139,6 +148,7 @@ def new_assessment(repository: Repository, settings: Settings, language: str) ->
         st.error(t("validation_error"))
         return
     except Exception:
+        progress_bar.empty()
         logging.getLogger("cybercheck.app").exception("assessment_ui_error")
         st.error(t("execution_error"))
         return
@@ -148,10 +158,12 @@ def new_assessment(repository: Repository, settings: Settings, language: str) ->
     except (OSError, sqlite3.Error):
         logging.getLogger("cybercheck.app").exception("assessment_save_error")
         st.warning(t("save_error"))
+        progress_bar.progress(1.0, text=t("checks_not_saved"))
     else:
         st.session_state.pop("unsaved_assessment", None)
         st.session_state["active_id"] = assessment.id
         st.success(t("done"))
+        progress_bar.progress(1.0, text=t("done"))
     st.session_state["last_assessment"] = assessment
     st.download_button(
         t("download_html"),
@@ -217,7 +229,11 @@ def history_view(repository: Repository, a: Assessment | None, language: str) ->
     if a:
         st.subheader(t("compare"))
         st.caption(a.domain + " · " + (a.completed_at or a.started_at))
-        previous = repository.previous(a)
+        try:
+            previous = repository.previous(a)
+        except StorageDataError:
+            st.error(t("stored_invalid"))
+            return
         if not previous:
             st.info(t("no_previous"))
         else:
@@ -229,6 +245,8 @@ def history_view(repository: Repository, a: Assessment | None, language: str) ->
                             t("check"): c["check_id"],
                             t("previous_status"): t(c["previous_status"] or "not_assessed"),
                             t("current_status"): t(c["current_status"] or "not_assessed"),
+                            t("previous_severity"): t(c["previous_severity"] or "not_assessed"),
+                            t("current_severity"): t(c["current_severity"] or "not_assessed"),
                             t("evidence_changed"): t("yes" if c["evidence_changed"] else "no"),
                         }
                         for c in changes
@@ -317,11 +335,16 @@ def main() -> None:
     st.caption(t("local") + f" · v{__version__}")
     try:
         settings = Settings.from_env()
+    except ValueError:
+        logging.getLogger("cybercheck.app").exception("configuration_error")
+        st.error(t("config_error"))
+        st.stop()
+    try:
         repository = Repository(settings.db_path)
         records = repository.list()
     except (ValueError, OSError, sqlite3.Error):
         logging.getLogger("cybercheck.app").exception("startup_error")
-        st.error(t("execution_error"))
+        st.error(t("storage_error"))
         st.stop()
     pages = ["overview", "new", "history", "findings", "reports", "settings"]
     page = st.radio(
@@ -329,11 +352,26 @@ def main() -> None:
     )
     st.divider()
     assessment = st.session_state.get("unsaved_assessment")
+    if assessment is not None:
+        st.warning(t("unsaved"))
+        if st.button(t("retry_save"), key="retry_save"):
+            try:
+                repository.save(assessment)
+            except (OSError, sqlite3.Error):
+                logging.getLogger("cybercheck.app").exception("assessment_retry_save_error")
+                st.error(t("save_error"))
+            else:
+                st.session_state.pop("unsaved_assessment", None)
+                st.session_state["active_id"] = assessment.id
+                st.rerun()
     if records and assessment is None:
         labels = {r["id"]: f"{r['domain']} · {r['started_at'][:19]} · {r['id'][:8]}" for r in records}
         active_id = st.session_state.get("active_id")
         if active_id and active_id not in labels:
-            older = repository.get(active_id)
+            try:
+                older = repository.get(active_id)
+            except StorageDataError:
+                older = None
             if older:
                 labels[active_id] = f"{older.domain} · {older.started_at[:19]} · {older.id[:8]}"
         ids = list(labels)
@@ -353,7 +391,10 @@ def main() -> None:
         )
         st.session_state["active_id"] = selected_id
         st.session_state["_picker_active_id"] = selected_id
-        assessment = repository.get(selected_id)
+        try:
+            assessment = repository.get(selected_id)
+        except StorageDataError:
+            st.error(t("stored_invalid"))
     if page == "overview":
         if not assessment:
             st.title(t("tagline"))

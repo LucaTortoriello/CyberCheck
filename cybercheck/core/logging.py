@@ -2,7 +2,9 @@
 
 import json
 import logging
+import traceback
 from datetime import UTC, datetime
+from pathlib import Path
 
 
 class JSONFormatter(logging.Formatter):
@@ -17,7 +19,12 @@ class JSONFormatter(logging.Formatter):
             if hasattr(record, key):
                 payload[key] = getattr(record, key)
         if record.exc_info:
-            payload["exception"] = self.formatException(record.exc_info)
+            exception_type, _, tb = record.exc_info
+            payload["error_type"] = exception_type.__name__ if exception_type else "Unknown"
+            payload["stack"] = [
+                {"file": Path(frame.filename).name, "line": frame.lineno, "function": frame.name}
+                for frame in traceback.extract_tb(tb)
+            ]
         return json.dumps(payload)
 
 

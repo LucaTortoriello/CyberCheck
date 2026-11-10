@@ -16,19 +16,22 @@
     .failed{border-left-color:#be4048}.warning{border-left-color:#ad781d}.passed{border-left-color:#218664}
     .badge{font-size:12px;text-transform:uppercase;font-weight:650;background:#edf1f6;padding:4px 8px;border-radius:4px}
     pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;background:#f4f6f9;padding:14px;border-radius:5px}
-    a{color:#186b88;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:10px;border-bottom:1px solid #dce3eb}
+    a{color:#186b88;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{text-align:left;padding:10px;border-bottom:1px solid #dce3eb;overflow-wrap:anywhere}thead{display:table-header-group}
+    .issue-list{padding-left:22px}.issue-list li{margin-bottom:8px}.inconclusive{background:#f3f6f9;border-left:4px solid #7c899b;padding:16px 20px}
     .notice{background:#f3f6f9;padding:18px;border-radius:6px}footer{margin-top:40px;border-top:1px solid #dce3eb;padding-top:16px;font-size:12px}
-    @page{size:A4;margin:16mm}@media print{body{margin:0;padding:0;max-width:none}.finding{break-inside:auto}h2,h3{break-after:avoid}a{color:inherit}pre{font-size:9px}}
+    @page{size:A4;margin:16mm}@media print{html{background:white}body{margin:0;padding:0;max-width:none;font-size:10pt;print-color-adjust:exact;-webkit-print-color-adjust:exact}.finding{break-inside:auto}h2,h3,dt{break-after:avoid}p,li{orphans:3;widows:3}tr{break-inside:avoid}a{color:inherit}pre{font-size:8pt;line-height:1.45;max-width:100%}.summary{gap:6px}.metric{padding:10px;min-width:0}.metric b{font-size:20px}th,td{padding:6px;font-size:8pt}h2{font-size:16pt}h3{font-size:12pt}}
     @media(max-width:600px){body{margin:0;padding:22px}h1{font-size:28px}}
   </style>
 </head>
 <body>
   <div class="brand">Cyber<span>Check</span></div>
-  <p class="muted">COMMUNITY · 2c44a457-b239-44d6-8ca7-e8402c20212f</p>
+  <p class="muted">COMMUNITY · 375929c6-7440-48c9-959f-a9fea525991d</p>
   <h1>Security Assessment Report</h1>
-  <dl><dt>Domain</dt><dd>example.com</dd><dt>Assessment date (UTC)</dt><dd>2026-11-08T21:39:46.484156+00:00</dd></dl>
+  <dl><dt>Domain</dt><dd>example.com</dd><dt>Assessment date (UTC)</dt><dd>2026-11-09T10:02:51.628188+00:00</dd></dl>
   <p class="notice">Point-in-time, low-impact configuration checks. Unknown results are not failures. This is not a penetration test or certification.</p>
   <p class="notice"><strong>SYNTHETIC TEST FIXTURE — NOT A LIVE ASSESSMENT</strong></p>
+  <h2>Assessment scope</h2><p>DNS and email configuration for the stated domain; one certificate endpoint and bounded root-page HTTP HEAD requests on ports 80/443. Related redirects are limited to the same organizational domain. Only explicitly supplied DKIM selectors are queried.</p>
+  <dl><dt>DKIM</dt><dd>Unknown</dd></dl>
   <h2>Executive summary</h2><p>This report records observable domain, email and web configurations. Prioritize confirmed issues and contextual warnings; incomplete checks require further verification.</p>
   <div class="summary">
     <div class="metric"><b>9</b>Checks passed</div>
@@ -36,6 +39,10 @@
     <div class="metric"><b>0</b>Confirmed findings</div>
     <div class="metric"><b>6</b>Unknown / errors</div>
   </div>
+  <h3>Confirmed configuration issues</h3>
+  <ul class="issue-list"><li>No confirmed configuration issue was recorded within the evaluated scope.</li></ul>
+  <div class="inconclusive"><h3>Unknown and incomplete checks</h3>
+  <ul class="issue-list"><li><a href="#finding-64012012-a1f1-42a6-b629-3c108049e0dc">DKIM selector</a> · Unknown</li><li><a href="#finding-de1f18c3-d713-4096-bf6f-bbd86b71b105">Verified HTTPS handshake</a> · Unknown</li><li><a href="#finding-b8d5c6ab-2bd0-481a-87a7-0d0c74fb5b19">Certificate chain</a> · Unknown</li><li><a href="#finding-69678f15-0fc5-4394-a3f5-fa01791c98e4">Certificate hostname</a> · Unknown</li><li><a href="#finding-c9a8efef-0d3f-47cd-8971-7afd63620443">Certificate validity and expiry</a> · Unknown</li><li><a href="#finding-05795227-84eb-4718-9ba9-12f061ed9297">Negotiated TLS protocol</a> · Unknown</li></ul></div>
   
   <h2>Configuration overview</h2>
   <table><thead><tr><th>Category</th><th>Passed</th><th>Warning</th><th>Failed</th><th>Unknown / errors</th><th>Not applicable</th></tr></thead><tbody>
@@ -44,7 +51,7 @@
   <h2>Recommended remediation</h2>
   <ol><li><strong>Certificate authorities (CAA)</strong>: Review effective parent/CNAME CAA and your certificate issuers before restricting issuance. CAA is optional; avoid blocking automatic certificate renewal.</li><li><strong>DMARC policy</strong>: Publish one valid DMARC record. Use aggregate reports to confirm legitimate sender alignment before progressively requesting quarantine/reject enforcement; review pct and inherited sp.</li><li><strong>HTTP Strict Transport Security</strong>: After HTTPS works consistently, deploy Strict-Transport-Security with a tested positive max-age. Start with a short duration; add includeSubDomains or preload only after reviewing every affected service.</li><li><strong>Referrer policy</strong>: Consider Referrer-Policy: strict-origin-when-cross-origin or a stricter tested policy, and avoid placing sensitive data in URLs.</li><li><strong>Content Security Policy</strong>: Inventory scripts, styles and external resources. Trial a restrictive CSP in report-only mode, then enforce a tested policy using nonces or hashes where appropriate.</li><li><strong>Browser permissions policy</strong>: Identify required browser features and restrict unused sensitive features, for example camera=(), microphone=(), geolocation=(), after compatibility testing.</li></ol>
   <h2>DNS infrastructure</h2>
-    <article class="finding passed">
+    <article id="finding-12c83ecd-b531-43df-99f7-dd6fda34d96f" class="finding passed">
       <h3>DNS record inventory</h3><span class="badge">Passed · Informational</span>
       <p>Exact-name DNS inventory; NS records can legitimately exist only at the zone apex.</p><dl><dt>Business impact</dt><dd>DNS records control service discovery and routing; absence alone need not be insecure.</dd><dt>Recommended remediation</dt><dd>Review the evidence with the DNS administrator and change only records relevant to your services.</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -90,9 +97,9 @@
     "state": "ok"
   }
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.458601+00:00 · dns.records · defaa0e4-ca1c-4975-8e50-e75447d7cfc7</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.597464+00:00 · dns.records · 12c83ecd-b531-43df-99f7-dd6fda34d96f</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc1035" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc1035</a></p>
-    </article><article class="finding passed">
+    </article><article id="finding-e489af54-0122-4c94-9784-b7ab843d224d" class="finding passed">
       <h3>Mail routing (MX)</h3><span class="badge">Passed · Informational</span>
       <p>MX records found; mail server reachability was not tested.</p><dl><dt>Business impact</dt><dd>DNS records control service discovery and routing; absence alone need not be insecure.</dd><dt>Recommended remediation</dt><dd>If mail is received, configure the provider&#39;s MX records. If no inbound mail is intended, use a single null MX (0 .) without other MX records. Do not change mail routing without confirming service requirements.</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -104,9 +111,9 @@
   ],
   "state": "ok"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.458662+00:00 · dns.mx · 618b7626-dabb-42e0-8f55-a08f53107a7a</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.597530+00:00 · dns.mx · e489af54-0122-4c94-9784-b7ab843d224d</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc7505" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc7505</a></p>
-    </article><article class="finding warning">
+    </article><article id="finding-e88c1b12-cc0a-40a3-b55d-6a0cbbb64d06" class="finding warning">
       <h3>Certificate authorities (CAA)</h3><span class="badge">Warning · Informational</span>
       <p>No CAA at this exact name. Parent/CNAME policies may apply; effective CAA was not evaluated.</p><dl><dt>Business impact</dt><dd>DNS records control service discovery and routing; absence alone need not be insecure.</dd><dt>Recommended remediation</dt><dd>Review effective parent/CNAME CAA and your certificate issuers before restricting issuance. CAA is optional; avoid blocking automatic certificate renewal.</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -116,11 +123,11 @@
   "records": [],
   "state": "absent"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.458675+00:00 · dns.caa · 6b782e8d-0df3-4c12-9c63-1b8d961a5e9c</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.597544+00:00 · dns.caa · e88c1b12-cc0a-40a3-b55d-6a0cbbb64d06</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc8659" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc8659</a></p>
     </article>
   <h2>Email authentication</h2>
-    <article class="finding passed">
+    <article id="finding-ac7e308e-126f-491a-8c80-abb837b20266" class="finding passed">
       <h3>SPF configuration</h3><span class="badge">Passed · Informational</span>
       <p>Common SPF checks passed. Softfail and fail policies serve different rollout needs; -all is not universally required.</p><dl><dt>Business impact</dt><dd>Email authentication configuration can affect impersonation resistance and message delivery. DNS alone does not prove successful authentication.</dd><dt>Recommended remediation</dt><dd>Keep exactly one v=spf1 TXT record. Inventory every legitimate sender, correct invalid mechanisms, and choose a fail/softfail policy appropriate to your rollout; never use +all.</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -139,9 +146,9 @@
   "syntax_errors": [],
   "terminal_all_qualifier": "~"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.459171+00:00 · email.spf · cf960c53-c971-4217-9ba0-37cfb08adafc</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.598591+00:00 · email.spf · ac7e308e-126f-491a-8c80-abb837b20266</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc7208" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc7208</a></p>
-    </article><article class="finding passed">
+    </article><article id="finding-8fa45def-1ffe-4b83-a03e-1d297b782b63" class="finding passed">
       <h3>SPF lookup complexity</h3><span class="badge">Passed · Informational</span>
       <p>Static lookup-path estimate only. More than ten potential DNS terms can exceed RFC limits on some sender paths; this is not a confirmed runtime permerror. MX/PTR fan-out, void lookups and macros are not fully evaluated.</p><dl><dt>Business impact</dt><dd>Email authentication configuration can affect impersonation resistance and message delivery. DNS alone does not prove successful authentication.</dd><dt>Recommended remediation</dt><dd>Ask the mail administrator to evaluate representative sender paths against the ten-lookup limit. Remove obsolete includes; avoid blindly flattening provider-managed records.</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -151,18 +158,20 @@
     "example.com"
   ]
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.459186+00:00 · email.spf_lookups · 289b1d1e-4008-46b5-8c82-fffc499cff85</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.598609+00:00 · email.spf_lookups · 8fa45def-1ffe-4b83-a03e-1d297b782b63</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc7208#section-4.6.4" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc7208#section-4.6.4</a></p>
-    </article><article class="finding warning">
+    </article><article id="finding-480fd1f6-6a0c-40a5-b6c4-58b0f67c9b71" class="finding warning">
       <h3>DMARC policy</h3><span class="badge">Warning · Low</span>
-      <p>Policy none, pct=100. Monitoring without requested enforcement; appropriate during a managed rollout.</p><dl><dt>Business impact</dt><dd>Email authentication configuration can affect impersonation resistance and message delivery. DNS alone does not prove successful authentication.</dd><dt>Recommended remediation</dt><dd>Publish one valid DMARC record. Use aggregate reports to confirm legitimate sender alignment before progressively requesting quarantine/reject enforcement; review pct and inherited sp.</dd></dl>
+      <p>Legacy RFC 7489 policy none, pct=100. Monitoring without requested enforcement; appropriate during a managed rollout.</p><dl><dt>Business impact</dt><dd>Email authentication configuration can affect impersonation resistance and message delivery. DNS alone does not prove successful authentication.</dd><dt>Recommended remediation</dt><dd>Publish one valid DMARC record. Use aggregate reports to confirm legitimate sender alignment before progressively requesting quarantine/reject enforcement; review pct and inherited sp.</dd></dl>
       <strong>Evidence</strong><pre>{
   "effective_policy": "none",
   "error": null,
   "inherited": false,
+  "limitations": "RFC 9989 DNS tree walk, np, psd and t semantics are not implemented",
   "name": "_dmarc.example.com",
   "pct": 100,
   "policy_domain": "example.com",
+  "policy_model": "RFC 7489 legacy discovery and percentage semantics",
   "record_type": "TXT",
   "records": [
     "v=DMARC1; p=none; rua=mailto:reports@example.com"
@@ -175,9 +184,9 @@
     "v": "DMARC1"
   }
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.476968+00:00 · email.dmarc · 0cfb28a8-736d-4c92-86e6-6baf39686739</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.620108+00:00 · email.dmarc · 480fd1f6-6a0c-40a5-b6c4-58b0f67c9b71</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc7489" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc7489</a></p>
-    </article><article class="finding passed">
+    </article><article id="finding-88a1d01e-a325-4f5f-86a8-007fe56da79f" class="finding passed">
       <h3>DMARC aggregate reporting</h3><span class="badge">Passed · Informational</span>
       <p>Aggregate reporting destinations are configured. Delivery, external-destination authorization and mailbox ownership are not verified.</p><dl><dt>Business impact</dt><dd>Email authentication configuration can affect impersonation resistance and message delivery. DNS alone does not prove successful authentication.</dd><dt>Recommended remediation</dt><dd>Use a monitored aggregate-report mailbox or reporting service. Consider privacy before enabling forensic reports (ruf).</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -185,83 +194,99 @@
   "rua": "mailto:reports@example.com",
   "ruf": null
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.477070+00:00 · email.dmarc_reporting · 5999b48e-c80d-4cbe-bc21-a0dc51276d11</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.620231+00:00 · email.dmarc_reporting · 88a1d01e-a325-4f5f-86a8-007fe56da79f</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc7489#section-7" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc7489#section-7</a></p>
-    </article><article class="finding unknown">
+    </article><article id="finding-64012012-a1f1-42a6-b629-3c108049e0dc" class="finding unknown">
       <h3>DKIM selector</h3><span class="badge">Unknown · Informational</span>
       <p>DKIM cannot be reliably determined from a domain alone. No selector was supplied; no selector discovery was attempted. Unknown does not mean disabled.</p><dl><dt>Business impact</dt><dd>Email authentication configuration can affect impersonation resistance and message delivery. DNS alone does not prove successful authentication.</dd><dt>Recommended remediation</dt><dd>Get selectors from your mail provider or the s= tag of a DKIM-Signature header.</dd></dl>
       <strong>Evidence</strong><pre>{}</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.477080+00:00 · email.dkim · dde84ee8-d389-445f-8560-ca083b05a53f</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.620245+00:00 · email.dkim · 64012012-a1f1-42a6-b629-3c108049e0dc</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc6376" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc6376</a></p>
     </article>
   <h2>HTTPS &amp; TLS</h2>
-    <article class="finding unknown">
+    <article id="finding-de1f18c3-d713-4096-bf6f-bbd86b71b105" class="finding unknown">
       <h3>Verified HTTPS handshake</h3><span class="badge">Unknown · Informational</span>
       <p>TLS check could not complete. A connection failure is not proof of an insecure certificate or absent HTTPS.</p><dl><dt>Business impact</dt><dd>Browsers rely on trusted certificates and encrypted transport. Results represent one endpoint and the local trust store at this time.</dd><dt>Recommended remediation</dt><dd>Review the certificate, DNS name, full intermediate chain, and automatic renewal with the hosting provider.</dd></dl>
       <strong>Evidence</strong><pre>{
   "address": "8.8.8.8",
-  "error": "TimeoutError: Synthetic fixture: no TLS connection attempted",
+  "error_type": "TimeoutError",
   "hostname": "example.com",
   "port": 443,
+  "reason": "network_timeout",
   "verification": "local system trust store"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483004+00:00 · tls.connection · bbb04988-0f41-4876-8315-c157a93a8dbe</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.626788+00:00 · tls.connection · de1f18c3-d713-4096-bf6f-bbd86b71b105</small>
       <p><a href="https://docs.python.org/3/library/ssl.html" rel="noreferrer">Reference: https://docs.python.org/3/library/ssl.html</a></p>
-    </article><article class="finding unknown">
+    </article><article id="finding-b8d5c6ab-2bd0-481a-87a7-0d0c74fb5b19" class="finding unknown">
       <h3>Certificate chain</h3><span class="badge">Unknown · Informational</span>
       <p>TLS check could not complete. A connection failure is not proof of an insecure certificate or absent HTTPS.</p><dl><dt>Business impact</dt><dd>Browsers rely on trusted certificates and encrypted transport. Results represent one endpoint and the local trust store at this time.</dd><dt>Recommended remediation</dt><dd>Install the correct leaf certificate and full intermediate chain. Check the local machine clock and trust store; never disable verification to hide the error.</dd></dl>
       <strong>Evidence</strong><pre>{
   "address": "8.8.8.8",
-  "error": "TimeoutError: Synthetic fixture: no TLS connection attempted",
+  "error_type": "TimeoutError",
   "hostname": "example.com",
   "port": 443,
+  "reason": "network_timeout",
   "verification": "local system trust store"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483014+00:00 · tls.chain · f4d82a04-266e-435e-abbf-462ec136bbce</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.626802+00:00 · tls.chain · b8d5c6ab-2bd0-481a-87a7-0d0c74fb5b19</small>
       <p><a href="https://docs.python.org/3/library/ssl.html" rel="noreferrer">Reference: https://docs.python.org/3/library/ssl.html</a></p>
-    </article><article class="finding unknown">
+    </article><article id="finding-69678f15-0fc5-4394-a3f5-fa01791c98e4" class="finding unknown">
       <h3>Certificate hostname</h3><span class="badge">Unknown · Informational</span>
       <p>TLS check could not complete. A connection failure is not proof of an insecure certificate or absent HTTPS.</p><dl><dt>Business impact</dt><dd>Browsers rely on trusted certificates and encrypted transport. Results represent one endpoint and the local trust store at this time.</dd><dt>Recommended remediation</dt><dd>Deploy a certificate whose subject alternative names cover the assessed hostname and verify the correct virtual host/SNI configuration.</dd></dl>
       <strong>Evidence</strong><pre>{
   "address": "8.8.8.8",
-  "error": "TimeoutError: Synthetic fixture: no TLS connection attempted",
+  "error_type": "TimeoutError",
   "hostname": "example.com",
   "port": 443,
+  "reason": "network_timeout",
   "verification": "local system trust store"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483022+00:00 · tls.hostname · c352a6c1-d645-4629-a6db-15255437da2c</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.626810+00:00 · tls.hostname · 69678f15-0fc5-4394-a3f5-fa01791c98e4</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc9525" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc9525</a></p>
-    </article><article class="finding unknown">
+    </article><article id="finding-c9a8efef-0d3f-47cd-8971-7afd63620443" class="finding unknown">
       <h3>Certificate validity and expiry</h3><span class="badge">Unknown · Informational</span>
       <p>TLS check could not complete. A connection failure is not proof of an insecure certificate or absent HTTPS.</p><dl><dt>Business impact</dt><dd>Browsers rely on trusted certificates and encrypted transport. Results represent one endpoint and the local trust store at this time.</dd><dt>Recommended remediation</dt><dd>Renew certificates before expiry, automate renewal and monitor failures. Check the machine clock if the validity period appears incorrect.</dd></dl>
       <strong>Evidence</strong><pre>{
   "address": "8.8.8.8",
-  "error": "TimeoutError: Synthetic fixture: no TLS connection attempted",
+  "error_type": "TimeoutError",
   "hostname": "example.com",
   "port": 443,
+  "reason": "network_timeout",
   "verification": "local system trust store"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483029+00:00 · tls.validity · 346e4911-f767-456a-8341-df55ddf957a9</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.626817+00:00 · tls.validity · c9a8efef-0d3f-47cd-8971-7afd63620443</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc5280" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc5280</a></p>
-    </article><article class="finding unknown">
+    </article><article id="finding-05795227-84eb-4718-9ba9-12f061ed9297" class="finding unknown">
       <h3>Negotiated TLS protocol</h3><span class="badge">Unknown · Informational</span>
       <p>TLS check could not complete. A connection failure is not proof of an insecure certificate or absent HTTPS.</p><dl><dt>Business impact</dt><dd>Browsers rely on trusted certificates and encrypted transport. Results represent one endpoint and the local trust store at this time.</dd><dt>Recommended remediation</dt><dd>Review the certificate, DNS name, full intermediate chain, and automatic renewal with the hosting provider.</dd></dl>
       <strong>Evidence</strong><pre>{
   "address": "8.8.8.8",
-  "error": "TimeoutError: Synthetic fixture: no TLS connection attempted",
+  "error_type": "TimeoutError",
   "hostname": "example.com",
   "port": 443,
+  "reason": "network_timeout",
   "verification": "local system trust store"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483035+00:00 · tls.protocol · 480b40fa-0f11-4df5-8487-4b2f44f4cbb6</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.626825+00:00 · tls.protocol · 05795227-84eb-4718-9ba9-12f061ed9297</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc8446" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc8446</a></p>
     </article>
   <h2>Web transport</h2>
-    <article class="finding passed">
+    <article id="finding-6ad45169-0386-49fa-a159-7171389ad1fd" class="finding passed">
       <h3>HTTPS endpoint</h3><span class="badge">Passed · Informational</span>
       <p>An HTTPS HEAD response was received. HTTP status is evidence of application behavior, not a security rating.</p><dl><dt>Business impact</dt><dd>Transport behavior affects browser access and exposure of an initial unencrypted request.</dd><dt>Recommended remediation</dt><dd>Serve the site over valid HTTPS and redirect port 80 to its HTTPS canonical URL.</dd></dl>
       <strong>Evidence</strong><pre>{
   "address": "8.8.8.8",
+  "header_values": {
+    "content-type": [
+      "text/html"
+    ],
+    "x-content-type-options": [
+      "nosniff"
+    ],
+    "x-frame-options": [
+      "DENY"
+    ]
+  },
   "headers": {
     "content-type": "text/html",
     "x-content-type-options": "nosniff",
@@ -278,13 +303,24 @@
   "status_code": 200,
   "url": "https://example.com/"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483575+00:00 · http.https · 1bf45f3f-2cde-4999-afe7-0707ecff4b0e</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.627552+00:00 · http.https · 6ad45169-0386-49fa-a159-7171389ad1fd</small>
       <p><a href="https://www.rfc-editor.org/rfc/rfc9110" rel="noreferrer">Reference: https://www.rfc-editor.org/rfc/rfc9110</a></p>
-    </article><article class="finding passed">
+    </article><article id="finding-44d8405b-e378-4810-b71c-29e33b2f81ae" class="finding passed">
       <h3>HTTP to HTTPS redirect</h3><span class="badge">Passed · Informational</span>
       <p>HTTP redirected to verified HTTPS within the permitted scope.</p><dl><dt>Business impact</dt><dd>Transport behavior affects browser access and exposure of an initial unencrypted request.</dd><dt>Recommended remediation</dt><dd>Serve the site over valid HTTPS and redirect port 80 to its HTTPS canonical URL.</dd></dl>
       <strong>Evidence</strong><pre>{
   "address": "8.8.8.8",
+  "header_values": {
+    "content-type": [
+      "text/html"
+    ],
+    "x-content-type-options": [
+      "nosniff"
+    ],
+    "x-frame-options": [
+      "DENY"
+    ]
+  },
   "headers": {
     "content-type": "text/html",
     "x-content-type-options": "nosniff",
@@ -306,11 +342,11 @@
   "status_code": 200,
   "url": "https://example.com/"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.484151+00:00 · http.redirect · 0cf7d80b-ef3a-4468-b5f1-4d899d2a8b20</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.628183+00:00 · http.redirect · 44d8405b-e378-4810-b71c-29e33b2f81ae</small>
       <p><a href="https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html" rel="noreferrer">Reference: https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html</a></p>
     </article>
   <h2>Browser security headers</h2>
-    <article class="finding warning">
+    <article id="finding-9ec80832-9b98-43c7-83a2-c7ca8f764956" class="finding warning">
       <h3>HTTP Strict Transport Security</h3><span class="badge">Warning · Low</span>
       <p>HSTS is missing, disabled, or malformed. This hardening gap matters for browser HTTPS enforcement; assess rollout before enabling subdomains/preload.</p><dl><dt>Business impact</dt><dd>Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.</dd><dt>Recommended remediation</dt><dd>After HTTPS works consistently, deploy Strict-Transport-Security with a tested positive max-age. Start with a short duration; add includeSubDomains or preload only after reviewing every affected service.</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -320,9 +356,9 @@
   "status_code": 200,
   "url": "https://example.com/"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483591+00:00 · headers.hsts · 838d0080-6b68-451f-acf6-34d17d0927ed</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.627577+00:00 · headers.hsts · 9ec80832-9b98-43c7-83a2-c7ca8f764956</small>
       <p><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security" rel="noreferrer">Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security</a></p>
-    </article><article class="finding passed">
+    </article><article id="finding-54a02299-3779-466f-8b24-91717e56d2b9" class="finding passed">
       <h3>MIME type protection</h3><span class="badge">Passed · Informational</span>
       <p>nosniff prevents some browser MIME type guessing.</p><dl><dt>Business impact</dt><dd>Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.</dd><dt>Recommended remediation</dt><dd>Serve correct Content-Type values and set X-Content-Type-Options: nosniff at the application or reverse proxy. Verify script and stylesheet loading.</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -332,9 +368,9 @@
   "status_code": 200,
   "url": "https://example.com/"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483601+00:00 · headers.nosniff · 44fa34ed-ce93-4d1c-8f4c-71783233f065</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.627591+00:00 · headers.nosniff · 54a02299-3779-466f-8b24-91717e56d2b9</small>
       <p><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options" rel="noreferrer">Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options</a></p>
-    </article><article class="finding warning">
+    </article><article id="finding-18b87929-ec5f-4a9b-9278-67a821ff76a2" class="finding warning">
       <h3>Referrer policy</h3><span class="badge">Warning · Low</span>
       <p>Referrer policy is absent, unrecognized, or permissive. Modern browser defaults may already limit disclosure.</p><dl><dt>Business impact</dt><dd>Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.</dd><dt>Recommended remediation</dt><dd>Consider Referrer-Policy: strict-origin-when-cross-origin or a stricter tested policy, and avoid placing sensitive data in URLs.</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -344,9 +380,9 @@
   "status_code": 200,
   "url": "https://example.com/"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483610+00:00 · headers.referrer · f8b3f07c-44d5-439c-9de0-65fc29fb848f</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.627604+00:00 · headers.referrer · 18b87929-ec5f-4a9b-9278-67a821ff76a2</small>
       <p><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy" rel="noreferrer">Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy</a></p>
-    </article><article class="finding warning">
+    </article><article id="finding-e6e06a8a-dc2d-4aaf-b4db-64392041c3e3" class="finding warning">
       <h3>Content Security Policy</h3><span class="badge">Warning · Low</span>
       <p>No enforcing CSP header found. CSP reduces content injection impact; report-only and HTML meta policies are not equivalent to this header check.</p><dl><dt>Business impact</dt><dd>Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.</dd><dt>Recommended remediation</dt><dd>Inventory scripts, styles and external resources. Trial a restrictive CSP in report-only mode, then enforce a tested policy using nonces or hashes where appropriate.</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -356,9 +392,9 @@
   "status_code": 200,
   "url": "https://example.com/"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483617+00:00 · headers.csp · d82a52f1-401b-4a47-8d60-3dc9322921d1</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.627616+00:00 · headers.csp · e6e06a8a-dc2d-4aaf-b4db-64392041c3e3</small>
       <p><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy" rel="noreferrer">Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy</a></p>
-    </article><article class="finding warning">
+    </article><article id="finding-b004d56e-eb79-4eee-814f-d62c6e029431" class="finding warning">
       <h3>Browser permissions policy</h3><span class="badge">Warning · Informational</span>
       <p>Permissions-Policy is absent. Restrict sensitive browser features only where relevant; defaults vary by feature.</p><dl><dt>Business impact</dt><dd>Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.</dd><dt>Recommended remediation</dt><dd>Identify required browser features and restrict unused sensitive features, for example camera=(), microphone=(), geolocation=(), after compatibility testing.</dd></dl>
       <strong>Evidence</strong><pre>{
@@ -368,26 +404,26 @@
   "status_code": 200,
   "url": "https://example.com/"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483624+00:00 · headers.permissions · 7e1a2ecc-aaae-4f81-9fcc-01a956a840fe</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.627628+00:00 · headers.permissions · b004d56e-eb79-4eee-814f-d62c6e029431</small>
       <p><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy" rel="noreferrer">Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy</a></p>
-    </article><article class="finding passed">
+    </article><article id="finding-adba8f32-48d2-4bb8-b09c-6030cca2453c" class="finding passed">
       <h3>Framing protection</h3><span class="badge">Passed · Informational</span>
       <p>A restrictive frame-ancestors or valid X-Frame-Options policy was found. Review allowed origins against business needs.</p><dl><dt>Business impact</dt><dd>Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.</dd><dt>Recommended remediation</dt><dd>For interactive HTML, configure CSP frame-ancestors with the intended embedding origins. Use &#39;none&#39; only when embedding is unnecessary; X-Frame-Options DENY/SAMEORIGIN can support older clients.</dd></dl>
       <strong>Evidence</strong><pre>{
   "content_type": "text/html",
-  "header_value": "frame-ancestors=; X-Frame-Options=DENY",
+  "header_value": "frame-ancestors=[]; X-Frame-Options=DENY",
   "method": "HEAD",
   "status_code": 200,
   "url": "https://example.com/"
 }</pre>
-      <small>Observed at (UTC): 2026-11-08T21:39:46.483632+00:00 · headers.framing · fffca47f-2ff1-464b-9a1f-e5d832579077</small>
+      <small>Observed at (UTC): 2026-11-09T10:02:51.627642+00:00 · headers.framing · adba8f32-48d2-4bb8-b09c-6030cca2453c</small>
       <p><a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors" rel="noreferrer">Reference: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors</a></p>
     </article>
   
-  <h2>Methodology and limitations</h2><p>DNS uses the configured recursive resolver, bounded TXT/A/AAAA/NS/MX/CAA queries and only supplied DKIM selectors. DMARC inheritance uses a bundled public suffix list; sender alignment and reporting delivery are not tested. SPF checks common syntax and potential lookup paths, not a full sender-dependent evaluation. CAA is inspected at the exact name, not as an effective inherited policy. One TLS handshake verifies the requested hostname and chain against the local trust store. No obsolete-protocol probing, revocation or CT validation is performed. HTTP uses HEAD on ports 80/443, validated public IPs and bounded same-organizational-domain redirects; response bodies and HTML meta policies are not inspected. Headers reflect the final successful response, possibly a CDN or error-specific endpoint. A single selected IP is sampled. Network failures and blocked requests are unknown, not confirmed vulnerabilities. This tool does not verify asset ownership beyond the user&#39;s declaration.</p>
+  <h2>Methodology and limitations</h2><p>DNS uses the configured recursive resolver, bounded queries and only supplied DKIM selectors. DMARC uses explicitly labeled legacy RFC 7489 PSL/pct interpretation; current RFC 9989 tree-walk/testing semantics are not implemented. Records with np/psd/t remain inconclusive. Sender alignment and reporting delivery are not tested. SPF checks common syntax and potential lookup paths, not full sender-dependent evaluation. CAA is inspected only at the exact name. One TLS handshake verifies the requested hostname and chain using the local trust store; obsolete protocol support, revocation and CT are not probed. HTTP uses HEAD on ports 80/443, validated public IPs and bounded same-organizational-domain redirects. Bodies and HTML meta policies are not inspected. Headers reflect the final successful response, possibly a CDN. Only one selected IP is sampled. Saved web evidence uses a header allowlist and redacts URL queries, credentials and fragments; paths and DNS records can still be sensitive. Failures and blocked requests are unknown, not confirmed vulnerabilities. Ownership is a user declaration, not independently verified.</p>
   <pre>{
   "dns_queries": 7,
-  "engine_version": "0.1.0",
+  "engine_version": "0.2.0",
   "http_method": "HEAD",
   "http_requests": 3,
   "limits": {
@@ -401,6 +437,6 @@
   "synthetic_fixture": true
 }</pre>
   <h2>Point-in-time, low-impact configuration checks. Unknown results are not failures. This is not a penetration test or certification.</h2><p class="notice">This assessment is not a penetration test, audit certification, compliance attestation, or guarantee of security. It cannot establish the security of an organization or the probability of compromise. Assess only assets you own or are explicitly authorized to review.</p>
-  <footer>CyberCheck Community · schema 1 · 2c44a457-b239-44d6-8ca7-e8402c20212f</footer>
+  <footer>CyberCheck Community · schema 1 · 375929c6-7440-48c9-959f-a9fea525991d</footer>
 </body>
 </html>

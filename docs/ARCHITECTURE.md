@@ -35,7 +35,9 @@ An assessment contains immutable observations in normal use. The database can up
 4. Use the first validated IP as the literal socket/HTTP destination. Preserve the intended Host and TLS SNI; verification remains enabled.
 5. Validate every redirect separately. Only HTTP/80 and HTTPS/443 are possible, and redirect scope is restricted to the initial organizational domain using a bundled PSL, including private suffix boundaries to separate shared-hosting tenants.
 6. Consume DNS/HTTP counters and a shared monotonic deadline. Check the deadline on each HTTP socket read/write/TLS operation. HEAD headers are limited to 64 KiB and response bodies are not consumed.
-7. Persist observations and render escaped reports. Network or policy-block failures are unknown, not vulnerabilities.
+7. Persist minimized observations and render escaped reports. Web evidence uses an allowlist, query/userinfo/fragment redaction and classified diagnostics. Rendering old web history also redacts without rewriting source payloads. Network or policy-block failures are unknown, not vulnerabilities.
+
+The redirect chain remembers whether any HTTPS hop has occurred, so a later HTTP downgrade is blocked even when the initial URL was HTTP. DNS-only SPF dependencies permit service labels such as `_spf`; that validator is never used to weaken web destination validation. HTTPX's original Host/SNI reaches the real httpcore backend, as exercised by public-interface memory-stream tests. The adapter closes raw streams on failed TLS upgrades and respects the shorter of caller timeout and remaining budget.
 
 HTTP uses HTTPX plus a small custom transport built on the public httpcore network backend API. This is necessary because HTTPX inactivity timeouts alone do not bound a slow stream's total duration. The httpcore and HTTPX API contracts are exercised with mock transports/backends. Relevant official docs: [HTTPX SNI extension](https://www.python-httpx.org/advanced/extensions/), [HTTPX transports](https://www.python-httpx.org/advanced/transports/) and [httpcore backends](https://www.encode.io/httpcore/network-backends/).
 
@@ -43,9 +45,11 @@ The DNS resolver is trusted local infrastructure, not a target-selected arbitrar
 
 ## Storage and operational assumptions
 
-This is a single-user localhost application without authentication, tenants or a background queue. Concurrent Streamlit sessions have independent assessment budgets and can create additional traffic; do not expose the server publicly. SQLite connections are short-lived with bounded lock waits. There is no automated schema migration beyond the initial schema; introduce explicit migrations before changing payload contracts or `user_version`.
+This is a single-user localhost application without authentication, tenants or a background queue. Concurrent Streamlit sessions have independent assessment budgets and can create additional traffic; do not expose the server publicly. SQLite connections are short-lived with bounded lock waits. Version 1 is preserved; unsupported future schemas fail before schema changes. Malformed payloads raise a recoverable storage error. Report files are created exclusively at mode 0600, refusing existing files and final symlinks; database files are created privately before SQLite opens them. Parent directories remain trusted. Explicit migrations are required before changing schema version.
 
-Do not store credentials in DNS records, environment examples or reports. Logs contain event, domain, assessment ID, module and exception type; unexpected exceptions include local tracebacks for diagnosis. JSON/HTML reports contain observed infrastructure details and are not encrypted at rest. The app never sends mail.
+Previous-assessment lookup orders equal timestamps by insertion rowid. Comparison normalizes list/tuple serialization, unordered DNS record sets and the certificate expiry countdown, while still detecting certificate date, status, severity and policy changes. Across engine versions, evidence-schema differences may remain visible and are not automatically risk regressions.
+
+Do not store credentials in DNS records, environment examples or reports. Logs contain event, domain, assessment ID, module, exception type and stack locations, without arbitrary exception messages, locals or source-line text. JSON/HTML reports contain observed infrastructure details and are not encrypted at rest. The app never sends mail. JSON adds a derived summary while preserving schema-version-1 model fields; `Assessment.from_dict()` ignores known derived fields and recomputes the optional score.
 
 ## Extension points
 

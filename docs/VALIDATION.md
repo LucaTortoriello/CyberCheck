@@ -1,25 +1,52 @@
-# Local validation record
+# v0.2 validation record
 
-Executed on 2026-11-08, on macOS with Python 3.13.14 in the project `.venv`.
+Executed on **2026-11-09**, macOS/arm64, Python **3.13.14**, branch `improvement/cybercheck-v0.2`. Baseline: `c96a493`. The original v0.1 record is preserved in [validation/V01.md](validation/V01.md).
 
-| Check | Observed result |
+## Executed quality gates
+
+| Gate | Actual result |
 |---|---|
-| `python -m pytest -q --cov=cybercheck --cov-report=term-missing` | **119 passed**, 93% statement coverage. No failed tests in the final run. |
-| `ruff check .` | Passed. |
-| `ruff format --check .` | Passed; 43 Python files checked. |
-| `python -m pip check` | No broken requirements found. |
-| `cybercheck --help` | CLI entry point displayed expected options. |
-| `python scripts/generate_examples.py` | Produced clearly labeled synthetic HTML/JSON using mocked network responses. |
-| `streamlit run streamlit_app.py --server.headless true` | Server started on `127.0.0.1:8501`. |
-| `GET /_stcore/health` on the local server | Returned `ok`. |
-| `GET /` on the local server | Returned HTTP 200. |
+| Baseline suite before changes | **119 passed**, 93% statement coverage. |
+| Final suite in the clean venv | **170 passed**, zero failures/warnings, **94%** rounded statement coverage (1,234 of 1,313 statements; 93.983%). |
+| Ruff lint and formatting | Passed against the final source. |
+| Dependency compatibility | `python -m pip check`: no broken requirements in the fresh environment. |
+| Dependency advisory scan | pip-audit **2.10.1**, exact `requirements.lock`, PyPI advisory lookup: **65 versions audited, zero skips, zero known advisories**. Baseline lock: 46 versions, zero known advisories. |
+| Fresh macOS installation | Created `/tmp/cybercheck-v02-clean`; installed the lock, then `pip install --no-deps -e .`; package version **0.2.0** and CLI verified. |
+| HTML/JSON exports | Generated through the engine with mocked network; schema-1 round trip, derived-score recomputation, escaping, inconclusive summary and legacy web-evidence redaction tested. |
+| Real browser UI | Chrome **156.0.8078.80**, Playwright **1.64.1**, isolated localhost preview with synthetic data: Italian/English and all six navigation views exercised, zero browser page errors. |
+| Responsive layout | **1365 × 900** desktop and **390 × 844** mobile: no page-level horizontal overflow; screenshots visually inspected. |
+| Browser print/PDF | Synthetic report printed to A4 by Chrome: valid PDF, **18 pages**, **462,861 bytes**; print-preview screenshot inspected. No runtime PDF dependency added. |
+| GitHub Actions | [Run 42600436024](https://github.com/LucaTortoriello/CyberCheck/actions/runs/42600436024) **succeeded** for source commit `1ee3052974a62d03eceb0029b7c71dc1d8c12867`: `test (3.12)`, `test (3.13)`, `test (3.14)` and `dependency-audit` all succeeded. The PR also displays checks for subsequent documentation-only commits. |
+| Live target assessment | **Not run.** Developer confirmed no owned domain is currently available; no third-party target authorized. |
 
-Tests include domain/selector validation, private/reserved destinations, mixed-family fail-closed DNS, IP pinning with original Host/SNI, redirect rebinding, private-suffix tenant isolation, port/scope/downgrade blocking, HTTP budgets and deadline/header caps, DNS failures, SPF/DMARC/DKIM cases, specific certificate verification errors, header applicability, report escaping, SQLite round trips, history comparison, CLI output, authorization declaration, and Streamlit assessment/navigation/filter/export behavior in both languages.
+The final clean-environment command was:
 
-The initial test run found a logging-field collision on unexpected module failure, an incorrect expected fixture count and an AppTest path assumption. These were corrected. Additional review corrected history picker synchronization and persisted scoring preference state. Regression tests exercise these paths.
+```sh
+/tmp/cybercheck-v02-clean/bin/pytest -q --cov=cybercheck --cov-report=term-missing
+```
 
-No live domain assessment was performed: no owned or specifically authorized live domain was supplied. Tests use injected resolvers, HTTPX/httpcore mocks and TLS mocks, with outbound sockets and real DNS blocked. Example outputs do not represent real findings about example.com; they carry an explicit synthetic-fixture notice and do not fabricate a certificate.
+All 119 baseline tests remain in the suite, with 51 additional cases. No existing expectation was removed to hide a behavior change. Coverage is a test-completeness indicator, not evidence that every vulnerability is excluded.
 
-The local HTTP health check verifies the server; AppTest exercises UI execution and interaction. No browser screenshot/visual review, remote CI run, hosted deployment or third-party vulnerability audit is claimed. GitHub Actions is prepared for Python 3.12/3.13/3.14 and must be observed after the owner approves publication.
+## Regression evidence
 
-Before a customer pilot, assess an explicitly authorized domain and have the domain's mail/hosting administrator verify the observed configuration and remediation relevance. See [commercial validation](ROADMAP.md).
+New tests first reproduced the downgrade, reserved/scoped destination, cookie/token/exception retention and report symlink defects. Parser/history regressions reproduced SPF modifier/macros/underscore dependency issues, invalid supported CIDRs, DMARC version whitespace, malformed/long HSTS, combined CSP, NXDOMAIN success, future-schema downgrade, equal-timestamp ordering and unstable evidence comparisons. The real transport backend contract reproduced missing cleanup before TLS upgrade and ignored shorter caller timeouts before their fixes.
+
+Final tests cover those cases, private report/database creation, legacy export redaction without rewriting the source, Unknown/Error/Not applicable classification, score exclusions, JSON/HTML integrity, recovery from unreadable stored data, bilingual startup errors and save retry without additional network requests. Resource warnings/unraisable exceptions fail the suite; newly added direct SQLite test connections were explicitly closed.
+
+The custom transport uses documented public HTTPX/httpcore interfaces. A memory-stream test verified original Host/SNI, mandatory hostname/chain checks, no response-body consumption, fragmented-header deadline enforcement, the 64 KiB cap and socket cleanup. No TLS verification bypass or relaxed destination policy was introduced.
+
+## Browser artifacts and reproduction
+
+`scripts/browser_smoke.py` runs only against the localhost preview and never starts an assessment. An isolated database contains a clearly labeled synthetic fixture. Outbound browser requests to non-local origins are blocked. See [DEVELOPMENT.md](DEVELOPMENT.md) for reproduction.
+
+Reviewed screenshots are [desktop](screenshots/v02-overview-desktop.png) and [mobile](screenshots/v02-overview-mobile.png). Transient artifacts are under `/tmp/cybercheck-v02-browser/`, including `browser-validation.json`, print preview and `synthetic-report.pdf`. They are synthetic QA outputs, not live security evidence. Chrome automation and selected viewport inspection are not a full accessibility, browser-compatibility or print-pagination audit.
+
+## Remaining boundaries and release decision
+
+Changes are submitted for review in [draft PR #1](https://github.com/LucaTortoriello/CyberCheck/pull/1), targeting main from `improvement/cybercheck-v0.2`. The branch was pushed normally; main and the license remain unchanged. No release was published. The GitHub app integration could read the repository but returned 403 for PR creation, so the draft was created through the local CLI after confirming its authenticated account was LucaTortoriello.
+
+No confirmed Critical or High application vulnerability remains unresolved within the reviewed localhost boundary, and the advisory lookup found no known vulnerabilities for the locked versions at execution time. This is not a comprehensive supply-chain review or a third-party certification. Bootstrap/build tools, unknown advisories, OS routing, resolver and trust-store integrity remain outside that result.
+
+DMARC continues to use an explicitly labeled legacy RFC 7489 profile; full current RFC 9989 discovery/testing semantics are not implemented. That Medium limitation remains open and must be considered before a paid accuracy-sensitive offering. SPF remains partial; DKIM publication is not signing verification; HEAD/one-IP results are limited observations. Public hosting still needs ownership verification, authentication, quotas and independent egress isolation.
+
+The engineering changes are suitable for **review**, not an assertion of completed real-world product validation. No live result or false-positive rate is fabricated. The [real-world procedure and pending status](REAL_WORLD_VALIDATION.md) are explicit. No merge into main, release publication, hosted deployment, license change or paid service is authorized by this record.

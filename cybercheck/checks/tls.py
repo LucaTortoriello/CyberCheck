@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 
 from cybercheck.core.config import Budget, LimitReached
 from cybercheck.core.dns import DNSClient
+from cybercheck.core.evidence import network_error
 from cybercheck.core.validation import UnsafeTarget
 from cybercheck.locales.findings import finding
 from cybercheck.models import Finding
@@ -20,10 +21,9 @@ def check_tls(domain: str, dns: DNSClient, budget: Budget) -> list[Finding]:
     try:
         address = dns.public_addresses(domain)[0]
         evidence["address"] = address
-        timeout = budget.remaining()
         context = ssl.create_default_context()
         # No insecure retry to retrieve otherwise untrusted certificate data.
-        with socket.create_connection((address, 443), timeout=timeout) as raw:
+        with socket.create_connection((address, 443), timeout=budget.remaining()) as raw:
             raw.settimeout(budget.remaining())
             with context.wrap_socket(raw, server_hostname=domain) as secured:
                 certificate = secured.getpeercert()
@@ -116,7 +116,7 @@ def check_tls(domain: str, dns: DNSClient, budget: Budget) -> list[Finding]:
             for key in KEYS
         ]
     except (OSError, ssl.SSLError, UnsafeTarget, LimitReached) as exc:
-        evidence["error"] = f"{type(exc).__name__}: {exc}"
+        evidence.update(network_error(exc))
         return [
             finding(
                 key,

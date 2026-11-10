@@ -82,6 +82,10 @@ class Assessment:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Assessment":
         values = dict(data)
+        if values.get("schema_version", 1) != 1:
+            raise ValueError("Unsupported assessment schema version")
+        for derived in ("configuration_health", "score_formula", "methodology", "disclaimer", "summary"):
+            values.pop(derived, None)
         values["findings"] = [Finding.from_dict(f) for f in values.get("findings", [])]
         return cls(**values)
 

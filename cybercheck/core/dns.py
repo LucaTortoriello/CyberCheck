@@ -46,7 +46,7 @@ class DNSClient:
         except dns.resolver.NoAnswer:
             result = DNSResult(*key, "absent")
         except (dns.exception.DNSException, OSError, LimitReached) as exc:
-            result = DNSResult(*key, "error", error=f"{type(exc).__name__}: {exc}")
+            result = DNSResult(*key, "error", error=type(exc).__name__)
         self.cache[key] = result
         return result
 

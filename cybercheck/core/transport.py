@@ -19,15 +19,21 @@ class DeadlineStream(httpcore.NetworkStream):
         self.budget = budget
         self.received = 0
 
+    def operation_timeout(self, requested: float | None) -> float:
+        remaining = self.budget.remaining()
+        return remaining if requested is None else min(requested, remaining)
+
     def read(self, max_bytes: int, timeout: float | None = None) -> bytes:
         if self.received >= 65536:
             raise httpcore.RemoteProtocolError("Response header read limit exceeded")
-        data = self.stream.read(min(max_bytes, 65536 - self.received), timeout=self.budget.remaining())
+        data = self.stream.read(
+            min(max_bytes, 65536 - self.received), timeout=self.operation_timeout(timeout)
+        )
         self.received += len(data)
         return data
 
     def write(self, buffer: bytes, timeout: float | None = None) -> None:
-        self.stream.write(buffer, timeout=self.budget.remaining())
+        self.stream.write(buffer, timeout=self.operation_timeout(timeout))
 
     def start_tls(
         self,
@@ -35,14 +41,20 @@ class DeadlineStream(httpcore.NetworkStream):
         server_hostname: str | None = None,
         timeout: float | None = None,
     ) -> httpcore.NetworkStream:
-        return DeadlineStream(
-            self.stream.start_tls(
-                ssl_context,
-                server_hostname=server_hostname,
-                timeout=self.budget.remaining(),
-            ),
-            self.budget,
-        )
+        try:
+            return DeadlineStream(
+                self.stream.start_tls(
+                    ssl_context,
+                    server_hostname=server_hostname,
+                    timeout=self.operation_timeout(timeout),
+                ),
+                self.budget,
+            )
+        except BaseException:
+            # If the deadline expires before start_tls is called, httpcore has
+            # not yet registered this connection. Close the connected raw stream.
+            self.stream.close()
+            raise
 
     def close(self) -> None:
         self.stream.close()
@@ -71,7 +83,7 @@ class DeadlineBackend(httpcore.NetworkBackend):
         stream = self.backend.connect_tcp(
             host,
             port,
-            timeout=self.budget.remaining(),
+            timeout=min(timeout, self.budget.remaining()) if timeout is not None else self.budget.remaining(),
             local_address=local_address,
             socket_options=socket_options,
         )

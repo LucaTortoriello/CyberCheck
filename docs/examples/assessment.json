@@ -70,8 +70,8 @@
         "https://www.rfc-editor.org/rfc/rfc1035"
       ],
       "scoreable": false,
-      "id": "defaa0e4-ca1c-4975-8e50-e75447d7cfc7",
-      "timestamp": "2026-11-08T21:39:46.458601+00:00"
+      "id": "12c83ecd-b531-43df-99f7-dd6fda34d96f",
+      "timestamp": "2026-11-09T10:02:51.597464+00:00"
     },
     {
       "check_id": "dns.mx",
@@ -107,8 +107,8 @@
         "https://www.rfc-editor.org/rfc/rfc7505"
       ],
       "scoreable": false,
-      "id": "618b7626-dabb-42e0-8f55-a08f53107a7a",
-      "timestamp": "2026-11-08T21:39:46.458662+00:00"
+      "id": "e489af54-0122-4c94-9784-b7ab843d224d",
+      "timestamp": "2026-11-09T10:02:51.597530+00:00"
     },
     {
       "check_id": "dns.caa",
@@ -142,8 +142,8 @@
         "https://www.rfc-editor.org/rfc/rfc8659"
       ],
       "scoreable": false,
-      "id": "6b782e8d-0df3-4c12-9c63-1b8d961a5e9c",
-      "timestamp": "2026-11-08T21:39:46.458675+00:00"
+      "id": "e88c1b12-cc0a-40a3-b55d-6a0cbbb64d06",
+      "timestamp": "2026-11-09T10:02:51.597544+00:00"
     },
     {
       "check_id": "email.spf",
@@ -186,8 +186,8 @@
         "https://www.rfc-editor.org/rfc/rfc7208"
       ],
       "scoreable": false,
-      "id": "cf960c53-c971-4217-9ba0-37cfb08adafc",
-      "timestamp": "2026-11-08T21:39:46.459171+00:00"
+      "id": "ac7e308e-126f-491a-8c80-abb837b20266",
+      "timestamp": "2026-11-09T10:02:51.598591+00:00"
     },
     {
       "check_id": "email.spf_lookups",
@@ -221,8 +221,8 @@
         "https://www.rfc-editor.org/rfc/rfc7208#section-4.6.4"
       ],
       "scoreable": false,
-      "id": "289b1d1e-4008-46b5-8c82-fffc499cff85",
-      "timestamp": "2026-11-08T21:39:46.459186+00:00"
+      "id": "8fa45def-1ffe-4b83-a03e-1d297b782b63",
+      "timestamp": "2026-11-09T10:02:51.598609+00:00"
     },
     {
       "check_id": "email.dmarc",
@@ -234,8 +234,8 @@
       "status": "warning",
       "severity": "low",
       "explanation": {
-        "en": "Policy none, pct=100. Monitoring without requested enforcement; appropriate during a managed rollout.",
-        "it": "Policy none, pct=100. Monitoraggio senza applicazione richiesta; può essere appropriato durante un rilascio controllato."
+        "en": "Legacy RFC 7489 policy none, pct=100. Monitoring without requested enforcement; appropriate during a managed rollout.",
+        "it": "Policy legacy RFC 7489 none, pct=100. Monitoraggio senza applicazione richiesta; può essere appropriato durante un rilascio controllato."
       },
       "business_impact": {
         "en": "Email authentication configuration can affect impersonation resistance and message delivery. DNS alone does not prove successful authentication.",
@@ -262,14 +262,16 @@
         },
         "effective_policy": "none",
         "pct": 100,
-        "syntax_errors": []
+        "syntax_errors": [],
+        "policy_model": "RFC 7489 legacy discovery and percentage semantics",
+        "limitations": "RFC 9989 DNS tree walk, np, psd and t semantics are not implemented"
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc7489"
       ],
       "scoreable": false,
-      "id": "0cfb28a8-736d-4c92-86e6-6baf39686739",
-      "timestamp": "2026-11-08T21:39:46.476968+00:00"
+      "id": "480fd1f6-6a0c-40a5-b6c4-58b0f67c9b71",
+      "timestamp": "2026-11-09T10:02:51.620108+00:00"
     },
     {
       "check_id": "email.dmarc_reporting",
@@ -301,8 +303,8 @@
         "https://www.rfc-editor.org/rfc/rfc7489#section-7"
       ],
       "scoreable": false,
-      "id": "5999b48e-c80d-4cbe-bc21-a0dc51276d11",
-      "timestamp": "2026-11-08T21:39:46.477070+00:00"
+      "id": "88a1d01e-a325-4f5f-86a8-007fe56da79f",
+      "timestamp": "2026-11-09T10:02:51.620231+00:00"
     },
     {
       "check_id": "email.dkim",
@@ -330,8 +332,8 @@
         "https://www.rfc-editor.org/rfc/rfc6376"
       ],
       "scoreable": false,
-      "id": "dde84ee8-d389-445f-8560-ca083b05a53f",
-      "timestamp": "2026-11-08T21:39:46.477080+00:00"
+      "id": "64012012-a1f1-42a6-b629-3c108049e0dc",
+      "timestamp": "2026-11-09T10:02:51.620245+00:00"
     },
     {
       "check_id": "tls.connection",
@@ -359,14 +361,15 @@
         "port": 443,
         "verification": "local system trust store",
         "address": "8.8.8.8",
-        "error": "TimeoutError: Synthetic fixture: no TLS connection attempted"
+        "error_type": "TimeoutError",
+        "reason": "network_timeout"
       },
       "references": [
         "https://docs.python.org/3/library/ssl.html"
       ],
       "scoreable": false,
-      "id": "bbb04988-0f41-4876-8315-c157a93a8dbe",
-      "timestamp": "2026-11-08T21:39:46.483004+00:00"
+      "id": "de1f18c3-d713-4096-bf6f-bbd86b71b105",
+      "timestamp": "2026-11-09T10:02:51.626788+00:00"
     },
     {
       "check_id": "tls.chain",
@@ -394,14 +397,15 @@
         "port": 443,
         "verification": "local system trust store",
         "address": "8.8.8.8",
-        "error": "TimeoutError: Synthetic fixture: no TLS connection attempted"
+        "error_type": "TimeoutError",
+        "reason": "network_timeout"
       },
       "references": [
         "https://docs.python.org/3/library/ssl.html"
       ],
       "scoreable": false,
-      "id": "f4d82a04-266e-435e-abbf-462ec136bbce",
-      "timestamp": "2026-11-08T21:39:46.483014+00:00"
+      "id": "b8d5c6ab-2bd0-481a-87a7-0d0c74fb5b19",
+      "timestamp": "2026-11-09T10:02:51.626802+00:00"
     },
     {
       "check_id": "tls.hostname",
@@ -429,14 +433,15 @@
         "port": 443,
         "verification": "local system trust store",
         "address": "8.8.8.8",
-        "error": "TimeoutError: Synthetic fixture: no TLS connection attempted"
+        "error_type": "TimeoutError",
+        "reason": "network_timeout"
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc9525"
       ],
       "scoreable": false,
-      "id": "c352a6c1-d645-4629-a6db-15255437da2c",
-      "timestamp": "2026-11-08T21:39:46.483022+00:00"
+      "id": "69678f15-0fc5-4394-a3f5-fa01791c98e4",
+      "timestamp": "2026-11-09T10:02:51.626810+00:00"
     },
     {
       "check_id": "tls.validity",
@@ -464,14 +469,15 @@
         "port": 443,
         "verification": "local system trust store",
         "address": "8.8.8.8",
-        "error": "TimeoutError: Synthetic fixture: no TLS connection attempted"
+        "error_type": "TimeoutError",
+        "reason": "network_timeout"
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc5280"
       ],
       "scoreable": false,
-      "id": "346e4911-f767-456a-8341-df55ddf957a9",
-      "timestamp": "2026-11-08T21:39:46.483029+00:00"
+      "id": "c9a8efef-0d3f-47cd-8971-7afd63620443",
+      "timestamp": "2026-11-09T10:02:51.626817+00:00"
     },
     {
       "check_id": "tls.protocol",
@@ -499,14 +505,15 @@
         "port": 443,
         "verification": "local system trust store",
         "address": "8.8.8.8",
-        "error": "TimeoutError: Synthetic fixture: no TLS connection attempted"
+        "error_type": "TimeoutError",
+        "reason": "network_timeout"
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc8446"
       ],
       "scoreable": false,
-      "id": "480b40fa-0f11-4df5-8487-4b2f44f4cbb6",
-      "timestamp": "2026-11-08T21:39:46.483035+00:00"
+      "id": "05795227-84eb-4718-9ba9-12f061ed9297",
+      "timestamp": "2026-11-09T10:02:51.626825+00:00"
     },
     {
       "check_id": "http.https",
@@ -545,14 +552,25 @@
             "status_code": 200
           }
         ],
-        "method": "HEAD"
+        "method": "HEAD",
+        "header_values": {
+          "x-frame-options": [
+            "DENY"
+          ],
+          "x-content-type-options": [
+            "nosniff"
+          ],
+          "content-type": [
+            "text/html"
+          ]
+        }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc9110"
       ],
       "scoreable": false,
-      "id": "1bf45f3f-2cde-4999-afe7-0707ecff4b0e",
-      "timestamp": "2026-11-08T21:39:46.483575+00:00"
+      "id": "6ad45169-0386-49fa-a159-7171389ad1fd",
+      "timestamp": "2026-11-09T10:02:51.627552+00:00"
     },
     {
       "check_id": "headers.hsts",
@@ -586,8 +604,8 @@
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security"
       ],
       "scoreable": true,
-      "id": "838d0080-6b68-451f-acf6-34d17d0927ed",
-      "timestamp": "2026-11-08T21:39:46.483591+00:00"
+      "id": "9ec80832-9b98-43c7-83a2-c7ca8f764956",
+      "timestamp": "2026-11-09T10:02:51.627577+00:00"
     },
     {
       "check_id": "headers.nosniff",
@@ -621,8 +639,8 @@
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options"
       ],
       "scoreable": true,
-      "id": "44fa34ed-ce93-4d1c-8f4c-71783233f065",
-      "timestamp": "2026-11-08T21:39:46.483601+00:00"
+      "id": "54a02299-3779-466f-8b24-91717e56d2b9",
+      "timestamp": "2026-11-09T10:02:51.627591+00:00"
     },
     {
       "check_id": "headers.referrer",
@@ -656,8 +674,8 @@
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy"
       ],
       "scoreable": false,
-      "id": "f8b3f07c-44d5-439c-9de0-65fc29fb848f",
-      "timestamp": "2026-11-08T21:39:46.483610+00:00"
+      "id": "18b87929-ec5f-4a9b-9278-67a821ff76a2",
+      "timestamp": "2026-11-09T10:02:51.627604+00:00"
     },
     {
       "check_id": "headers.csp",
@@ -691,8 +709,8 @@
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy"
       ],
       "scoreable": false,
-      "id": "d82a52f1-401b-4a47-8d60-3dc9322921d1",
-      "timestamp": "2026-11-08T21:39:46.483617+00:00"
+      "id": "e6e06a8a-dc2d-4aaf-b4db-64392041c3e3",
+      "timestamp": "2026-11-09T10:02:51.627616+00:00"
     },
     {
       "check_id": "headers.permissions",
@@ -726,8 +744,8 @@
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy"
       ],
       "scoreable": false,
-      "id": "7e1a2ecc-aaae-4f81-9fcc-01a956a840fe",
-      "timestamp": "2026-11-08T21:39:46.483624+00:00"
+      "id": "b004d56e-eb79-4eee-814f-d62c6e029431",
+      "timestamp": "2026-11-09T10:02:51.627628+00:00"
     },
     {
       "check_id": "headers.framing",
@@ -755,14 +773,14 @@
         "method": "HEAD",
         "status_code": 200,
         "content_type": "text/html",
-        "header_value": "frame-ancestors=; X-Frame-Options=DENY"
+        "header_value": "frame-ancestors=[]; X-Frame-Options=DENY"
       },
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors"
       ],
       "scoreable": false,
-      "id": "fffca47f-2ff1-464b-9a1f-e5d832579077",
-      "timestamp": "2026-11-08T21:39:46.483632+00:00"
+      "id": "adba8f32-48d2-4bb8-b09c-6030cca2453c",
+      "timestamp": "2026-11-09T10:02:51.627642+00:00"
     },
     {
       "check_id": "http.redirect",
@@ -806,22 +824,33 @@
             "status_code": 200
           }
         ],
-        "method": "HEAD"
+        "method": "HEAD",
+        "header_values": {
+          "x-frame-options": [
+            "DENY"
+          ],
+          "x-content-type-options": [
+            "nosniff"
+          ],
+          "content-type": [
+            "text/html"
+          ]
+        }
       },
       "references": [
         "https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html"
       ],
       "scoreable": false,
-      "id": "0cf7d80b-ef3a-4468-b5f1-4d899d2a8b20",
-      "timestamp": "2026-11-08T21:39:46.484151+00:00"
+      "id": "44d8405b-e378-4810-b71c-29e33b2f81ae",
+      "timestamp": "2026-11-09T10:02:51.628183+00:00"
     }
   ],
-  "id": "2c44a457-b239-44d6-8ca7-e8402c20212f",
-  "started_at": "2026-11-08T21:39:46.457129+00:00",
-  "completed_at": "2026-11-08T21:39:46.484156+00:00",
+  "id": "375929c6-7440-48c9-959f-a9fea525991d",
+  "started_at": "2026-11-09T10:02:51.594601+00:00",
+  "completed_at": "2026-11-09T10:02:51.628188+00:00",
   "authorization_confirmed": true,
   "metadata": {
-    "engine_version": "0.1.0",
+    "engine_version": "0.2.0",
     "mode": "public-target-only",
     "http_method": "HEAD",
     "dns_queries": 7,
@@ -842,7 +871,26 @@
     "evaluated": 1,
     "excluded": 20
   },
+  "summary": {
+    "counts": {
+      "passed": 9,
+      "failed": 0,
+      "warning": 6,
+      "unknown": 6,
+      "error": 0,
+      "not_applicable": 0
+    },
+    "confirmed_finding_ids": [],
+    "inconclusive_finding_ids": [
+      "64012012-a1f1-42a6-b629-3c108049e0dc",
+      "de1f18c3-d713-4096-bf6f-bbd86b71b105",
+      "b8d5c6ab-2bd0-481a-87a7-0d0c74fb5b19",
+      "69678f15-0fc5-4394-a3f5-fa01791c98e4",
+      "c9a8efef-0d3f-47cd-8971-7afd63620443",
+      "05795227-84eb-4718-9ba9-12f061ed9297"
+    ]
+  },
   "score_formula": "100 × passed / (passed + failed), using only explicitly scoreable checks. Warnings, unknown, errors and inapplicable checks are excluded. Missing policies may remain warnings, so read coverage and findings alongside the score. This is not a probability of compromise or a security guarantee.",
-  "methodology": "DNS uses the configured recursive resolver, bounded TXT/A/AAAA/NS/MX/CAA queries and only supplied DKIM selectors. DMARC inheritance uses a bundled public suffix list; sender alignment and reporting delivery are not tested. SPF checks common syntax and potential lookup paths, not a full sender-dependent evaluation. CAA is inspected at the exact name, not as an effective inherited policy. One TLS handshake verifies the requested hostname and chain against the local trust store. No obsolete-protocol probing, revocation or CT validation is performed. HTTP uses HEAD on ports 80/443, validated public IPs and bounded same-organizational-domain redirects; response bodies and HTML meta policies are not inspected. Headers reflect the final successful response, possibly a CDN or error-specific endpoint. A single selected IP is sampled. Network failures and blocked requests are unknown, not confirmed vulnerabilities. This tool does not verify asset ownership beyond the user's declaration.",
+  "methodology": "DNS uses the configured recursive resolver, bounded queries and only supplied DKIM selectors. DMARC uses explicitly labeled legacy RFC 7489 PSL/pct interpretation; current RFC 9989 tree-walk/testing semantics are not implemented. Records with np/psd/t remain inconclusive. Sender alignment and reporting delivery are not tested. SPF checks common syntax and potential lookup paths, not full sender-dependent evaluation. CAA is inspected only at the exact name. One TLS handshake verifies the requested hostname and chain using the local trust store; obsolete protocol support, revocation and CT are not probed. HTTP uses HEAD on ports 80/443, validated public IPs and bounded same-organizational-domain redirects. Bodies and HTML meta policies are not inspected. Headers reflect the final successful response, possibly a CDN. Only one selected IP is sampled. Saved web evidence uses a header allowlist and redacts URL queries, credentials and fragments; paths and DNS records can still be sensitive. Failures and blocked requests are unknown, not confirmed vulnerabilities. Ownership is a user declaration, not independently verified.",
   "disclaimer": "This assessment is not a penetration test, audit certification, compliance attestation, or guarantee of security. It cannot establish the security of an organization or the probability of compromise. Assess only assets you own or are explicitly authorized to review."
 }
