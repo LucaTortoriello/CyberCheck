@@ -1,12 +1,46 @@
 # CyberCheck
 
-**Understand a domain's security configuration, with evidence and clear next steps.**
+**Local domain security configuration checks, with evidence and practical next steps.**
 
-CyberCheck is a working local assessment application for small businesses, freelancers and IT providers. It performs low-impact DNS, email, TLS and web configuration checks, stores assessment history in SQLite, and exports actionable HTML and JSON reports. The interface and HTML reports support Italian (default) and English.
+CyberCheck is an open-source, local security configuration assessment tool for small businesses, developers, freelancers and IT service providers. It helps users understand selected weaknesses and misconfigurations associated with a domain they own or are explicitly authorized to assess.
 
-**v0.2 is a reliability and security review of the existing MVP.** See the [technical audit](docs/TECHNICAL_AUDIT_V02.md), [executed validation](docs/VALIDATION.md) and [real-world validation procedure/status](docs/REAL_WORLD_VALIDATION.md). No live domain validation has been performed: the developer has no authorized domain available. DMARC results explicitly use the legacy RFC 7489 profile; full current RFC 9989 support is deferred.
+It brings DNS, email and web observations into a dashboard with explanations and recommended actions. Business owners can see what needs review, while IT professionals can inspect the supporting technical evidence. The interface and HTML reports support Italian (default) and English.
 
-This is a configuration assessment, **not a penetration test, certification, compliance attestation or guarantee of security**. Assess only domains you own or have explicit authorization to review.
+This is a configuration assessment, **not a penetration test, certification, compliance attestation or guarantee of security**.
+
+## How CyberCheck Works
+
+An assessment starts with one domain and the user's confirmation of ownership or authorization. The engine then runs six stages:
+
+1. **DNS inspection:** Queries publicly resolvable A, AAAA, NS, MX and CAA records to inventory domain addresses, nameservers, mail routing and published certificate-authority settings. CAA inspection is limited to the exact assessed name.
+2. **SPF analysis:** Reads the email sender authorization policy, checks common syntax problems, multiple records and policy qualifiers, and inspects selected `include`/`redirect` dependencies. Lookup complexity is a bounded static estimate, not a full sender-specific SPF evaluation.
+3. **DMARC analysis:** Examines published policies, reporting settings and organizational-domain inheritance using the **legacy RFC 7489 implementation**. Full current RFC 9989 discovery and testing behavior is not implemented; records with `np`, `psd` or `t` markers remain inconclusive.
+4. **DKIM inspection:** Queries public key records for up to five user-supplied selectors. It does not guess selectors or verify that real messages are signed, that published keys are cryptographically valid, or that messages meet alignment requirements. Without a selector, DKIM remains unknown.
+5. **TLS verification:** Performs one verified TLS handshake on port 443, checking the certificate chain against the local trust store and matching the requested hostname. It records the issuer, validity period, expiration and negotiated protocol; it does not enumerate every supported TLS version.
+6. **HTTP security analysis:** Uses bounded HTTP `HEAD` requests on ports 80/443 to observe HTTPS connectivity, redirects and selected browser security headers, including HSTS, CSP and framing controls. Redirect destinations are validated before connection; response bodies are not inspected.
+
+CyberCheck gathers observable technical evidence and evaluates it using deterministic rules in Python. It does not use AI to invent findings or predict vulnerabilities.
+
+```mermaid
+flowchart LR
+    A["Authorized Domain"] --> B["DNS / Email / TLS / HTTP Checks"]
+    B --> C["Technical Findings"]
+    C --> D["Dashboard & Reports"]
+```
+
+## Understanding the results
+
+Each finding provides:
+
+- **Status:** Whether the check passed, failed, needs review, could not establish a result, encountered an error or does not apply.
+- **Severity:** The potential consequence of the observed issue, from Informational to Critical; it is not an organization-wide risk rating.
+- **Technical evidence:** Relevant DNS records, certificate details or HTTP observations, with sensitive web data minimized or redacted.
+- **Explanation:** What was observed and why it may matter to the business or service.
+- **Suggested remediation:** Practical next steps to review with the responsible administrator or provider.
+
+A warning does not automatically mean an exploitable vulnerability. A timeout can leave a check Unknown without proving an insecure configuration. The [status definitions and scoring rules](#statuses-and-score) explain these distinctions and the optional Configuration Health score.
+
+Assessments are saved locally in SQLite. Users can compare consecutive runs for the same domain and export printable HTML or JSON reports containing findings, evidence, remediation and limitations.
 
 ## What is included
 
@@ -22,6 +56,16 @@ This is a configuration assessment, **not a penetration test, certification, com
 - A CLI, deterministic offline tests and GitHub Actions.
 
 There are no paid APIs, accounts, payments, mandatory cloud services or hardcoded assessment results. Empty installations start with no assessments.
+
+## Scope and current limitations
+
+CyberCheck checks selected public domain configurations. It is not a penetration-testing platform or a comprehensive vulnerability scanner. It does not exploit vulnerabilities, scan ports or perform authenticated application testing, and it does not require administrator credentials.
+
+Ownership or explicit authorization is required for every assessment. The authorization declaration is not an independent ownership check. **Independent live-domain validation has not yet been completed:** no developer-owned or otherwise authorized domain was available. Mocked tests and synthetic examples do not establish real-world detection accuracy.
+
+The current MVP assesses one domain per run. Automated monitoring, alerts, multi-domain management and paid hosting are future possibilities described in the [roadmap](docs/ROADMAP.md), rather than current product features.
+
+**v0.2 is a reliability and security review of the existing MVP.** See the [technical audit](docs/TECHNICAL_AUDIT_V02.md), [executed validation](docs/VALIDATION.md) and [real-world validation procedure/status](docs/REAL_WORLD_VALIDATION.md). The [methodology](docs/METHODOLOGY.md) documents the limits of the current checks, including legacy DMARC support and single-endpoint sampling.
 
 ## Install on macOS
 
