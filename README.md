@@ -28,6 +28,64 @@ flowchart LR
     C --> D["Dashboard & Reports"]
 ```
 
+## CyberCheck Architecture & Assessment Modules — Visual Overview
+
+The first map follows one assessment from input to results. The engine runs six modules in order and collects their findings. Storage, the dashboard and report generation are supporting components, separate from the security checks.
+
+### Diagram 1 — How CyberCheck Works
+
+```mermaid
+flowchart TB
+    domain["Authorized domain"] --> guards["Input validation and security boundaries<br/>Public targets and safe redirects<br/>Timeouts and request limits"]
+    guards --> engine["Assessment engine"]
+    engine --> modules
+
+    subgraph modules["Six assessment modules - run in order"]
+        direction TB
+        dns["DNS"] --> spf["SPF"] --> dmarc["DMARC"]
+        dmarc --> dkim["DKIM"] --> tls["TLS"] --> http["HTTP"]
+    end
+
+    modules --> findings["Structured findings<br/>Status, severity, evidence and guidance"]
+    findings --> support
+
+    subgraph support["Supporting components - use the findings"]
+        direction TB
+        history["SQLite history"]
+        dashboard["Streamlit dashboard"]
+        reports["HTML / JSON reports"]
+        history ~~~ dashboard ~~~ reports
+    end
+```
+
+Authorization is the user's declaration, not independent proof of ownership. The module arrows show execution order; each module contributes its own findings. The three supporting components use those collected results.
+
+### Diagram 2 — What Each Module Actually Checks
+
+Each branch names a module, its purpose and the evidence it inspects. The branches form a vertical list to keep the map readable on smaller screens.
+
+```mermaid
+flowchart LR
+    modules["Six<br/>modules"]
+    modules --> dns["DNS: find domain services<br/>A, AAAA, NS, MX, CAA"]
+    modules --> spf["SPF: describe allowed senders<br/>Published record and syntax<br/>Sender policy qualifiers<br/>Selected DNS dependencies"]
+    modules --> dmarc["DMARC: set mail handling<br/>Published policy and reporting<br/>Legacy RFC 7489 interpretation"]
+    modules --> dkim["DKIM: inspect signing keys<br/>Public key records<br/>Explicit selectors only"]
+    modules --> tls["TLS: verify encryption<br/>Chain and hostname<br/>Validity and expiration<br/>Negotiated protocol"]
+    modules --> http["HTTP: check web behavior<br/>HTTPS connectivity<br/>HTTP-to-HTTPS redirects<br/>HSTS, CSP and other headers"]
+```
+
+| Module | What it checks | What it does NOT check |
+|---|---|---|
+| **DNS** | A/AAAA addresses, NS nameservers, MX mail routing/null MX, and CAA at the exact name. | DNSSEC validation, effective inherited CAA policy or mail server reachability. |
+| **SPF** | Published SPF records, common syntax errors, sender policy qualifiers and selected DNS dependencies; a bounded lookup estimate. | Full sender-IP evaluation, macro expansion or every void/MX/PTR lookup-limit case. |
+| **DMARC** | Published policy, reporting settings and inheritance under the legacy RFC 7489 model. | Full RFC 9989 discovery/testing, message alignment, report delivery or external-report authorization. |
+| **DKIM** | Public key records and supported key-tag/base64 checks for up to five explicitly supplied selectors. | Selector discovery, full cryptographic key validation, actual message signatures or alignment. |
+| **TLS** | One verified handshake: local trust chain, hostname, certificate validity/expiration and negotiated protocol. | Revocation, Certificate Transparency, enumeration of all protocols/ciphers or vulnerability exploitation. |
+| **HTTP** | Bounded HEAD requests: HTTPS, redirects, HSTS, CSP, MIME-type, referrer, permissions and framing headers. | Page bodies, authenticated application tests, GET comparison or full CSP/Permissions-Policy effectiveness. |
+
+A published policy or key is evidence of configuration, not proof that real email or application behavior is secure. Incomplete checks remain inconclusive. See the [methodology](docs/METHODOLOGY.md) for the detailed interpretation limits.
+
 ## Understanding the results
 
 Each finding provides:
