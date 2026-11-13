@@ -2,6 +2,8 @@
 
 **Local domain security configuration checks, with evidence and practical next steps.**
 
+**[🇮🇹 Italian Guide — Learn how CyberCheck works, module by module](docs/GUIDA_ITALIANA.md)**
+
 CyberCheck is an open-source, local security configuration assessment tool for small businesses, developers, freelancers and IT service providers. It helps users understand selected weaknesses and misconfigurations associated with a domain they own or are explicitly authorized to assess.
 
 It brings DNS, email and web observations into a dashboard with explanations and recommended actions. Business owners can see what needs review, while IT professionals can inspect the supporting technical evidence. The interface and HTML reports support Italian (default) and English.
@@ -20,13 +22,6 @@ An assessment starts with one domain and the user's confirmation of ownership or
 6. **HTTP security analysis:** Uses bounded HTTP `HEAD` requests on ports 80/443 to observe HTTPS connectivity, redirects and selected browser security headers, including HSTS, CSP and framing controls. Redirect destinations are validated before connection; response bodies are not inspected.
 
 CyberCheck gathers observable technical evidence and evaluates it using deterministic rules in Python. It does not use AI to invent findings or predict vulnerabilities.
-
-```mermaid
-flowchart LR
-    A["Authorized Domain"] --> B["DNS / Email / TLS / HTTP Checks"]
-    B --> C["Technical Findings"]
-    C --> D["Dashboard & Reports"]
-```
 
 ## CyberCheck Architecture & Assessment Modules — Visual Overview
 
