@@ -62,29 +62,35 @@ def transport_for(budget, stream):
     return PinnedTransport(budget, backend), memory
 
 
-def test_original_hostname_and_verification_reach_actual_core_backend():
-    budget = Budget(Settings())
+@pytest.mark.parametrize("method", ["HEAD", "GET"])
+def test_original_hostname_and_verification_reach_actual_core_backend(method):
+    budget = Budget(Settings(allow_get_fallback=method == "GET"))
     stream = MemoryStream([b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\n", b"never"])
     transport, backend = transport_for(budget, stream)
     with httpx.Client(transport=transport, trust_env=False) as client:
-        response = client.head(
-            "https://8.8.8.8/", headers={"Host": "example.com"}, extensions={"sni_hostname": "example.com"}
+        response = client.request(
+            method,
+            "https://8.8.8.8/",
+            headers={"Host": "example.com"},
+            extensions={"sni_hostname": "example.com"},
         )
         assert response.status_code == 200
+        assert response.content == b""
     assert backend.connections[0][:2] == ("8.8.8.8", 443)
     context, hostname, timeout = stream.tls
     assert context.check_hostname and context.verify_mode == ssl.CERT_REQUIRED
     assert hostname == "example.com"
     assert 0 < timeout <= budget.settings.timeout
     assert b"Host: example.com" in b"".join(stream.written)
-    assert stream.chunks == deque([b"never"])  # HEAD body is never consumed.
+    assert stream.chunks == deque([b"never"])  # Neither method consumes the body stream.
     assert stream.closed
 
 
-def test_slow_fragmented_headers_stop_at_shared_deadline(monkeypatch):
+@pytest.mark.parametrize("method", ["HEAD", "GET"])
+def test_slow_fragmented_headers_stop_at_shared_deadline(monkeypatch, method):
     clock = [0.0]
     monkeypatch.setattr("cybercheck.core.config.monotonic", lambda: clock[0])
-    budget = Budget(Settings(max_seconds=10))
+    budget = Budget(Settings(max_seconds=10, allow_get_fallback=method == "GET"))
 
     def tick():
         clock[0] += 1.0
@@ -93,17 +99,51 @@ def test_slow_fragmented_headers_stop_at_shared_deadline(monkeypatch):
     transport, _ = transport_for(budget, stream)
     with httpx.Client(transport=transport) as client:
         with pytest.raises(LimitReached):
-            client.head("http://8.8.8.8/")
+            client.request(method, "https://8.8.8.8/")
     assert clock[0] == 10
     assert stream.closed
 
 
-def test_oversized_headers_are_stopped_and_socket_is_closed():
+@pytest.mark.parametrize("method", ["HEAD", "GET"])
+def test_oversized_headers_are_stopped_and_socket_is_closed(method):
     stream = MemoryStream([b"HTTP/1.1 200 OK\r\nX-Large: " + b"x" * 70000])
-    transport, _ = transport_for(Budget(Settings()), stream)
+    transport, _ = transport_for(Budget(Settings(allow_get_fallback=method == "GET")), stream)
     with httpx.Client(transport=transport) as client:
         with pytest.raises(httpx.TransportError):
-            client.head("http://8.8.8.8/")
+            client.request(method, "https://8.8.8.8/")
+    assert stream.closed
+
+
+@pytest.mark.parametrize(
+    ("enabled", "method", "url"),
+    [
+        (False, "GET", "https://8.8.8.8/"),
+        (True, "GET", "http://8.8.8.8/"),
+        (True, "POST", "https://8.8.8.8/"),
+    ],
+)
+def test_transport_rejects_unapproved_methods_before_connecting(enabled, method, url):
+    stream = MemoryStream([])
+    transport, backend = transport_for(Budget(Settings(allow_get_fallback=enabled)), stream)
+    with httpx.Client(transport=transport) as client:
+        with pytest.raises(ValueError):
+            client.request(method, url)
+    assert not backend.connections
+
+
+def test_get_discards_body_bytes_coalesced_with_headers():
+    stream = MemoryStream(
+        [
+            b"HTTP/1.1 200 OK\r\nContent-Length: 999999999\r\n\r\nBODY_SECRET",
+            b"never read this remaining body",
+        ]
+    )
+    transport, _ = transport_for(Budget(Settings(allow_get_fallback=True)), stream)
+    with httpx.Client(transport=transport) as client:
+        response = client.get("https://8.8.8.8/")
+    assert response.content == b""
+    assert b"BODY_SECRET" not in repr(response).encode()
+    assert stream.chunks == deque([b"never read this remaining body"])
     assert stream.closed
 
 

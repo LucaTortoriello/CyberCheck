@@ -311,7 +311,7 @@ Il controllo dedicato esegue **un solo handshake**; le richieste HTTPS del modul
 
 Una richiesta HTTP specifica un metodo e una risorsa. La risposta contiene un codice di stato, **intestazioni** con metadati e, normalmente, un corpo. `200` indica successo; `301` e `308` possono indicare un reindirizzamento tramite `Location`; `405` indica che il metodo non è consentito. Il codice HTTP non è la gravità di un finding.
 
-**GET** richiede una rappresentazione della risorsa, per esempio il documento HTML. **HEAD** richiede le informazioni della risposta senza il corpo. CyberCheck usa soltanto HEAD, a partire da `/`, senza ripiegare su GET: non scarica né analizza pagine, script o moduli di accesso.
+**GET** richiede una rappresentazione della risorsa, per esempio il documento HTML. **HEAD** richiede le informazioni della risposta senza il corpo. CyberCheck parte da `/` con HEAD. Solo con consenso separato può usare un fallback GET HTTPS dopo HEAD `405` o `501`: legge le intestazioni e chiude la risposta senza leggere o salvare il flusso del corpo. Non analizza pagine, script o moduli di accesso.
 
 Esempio didattico di passaggio alla versione cifrata:
 
@@ -321,6 +321,32 @@ Location: https://azienda.example/
 ```
 
 `check_web()` prova HTTPS e, separatamente, il percorso da HTTP. Se la catena HTTP arriva a HTTPS verificato nell'ambito permesso, il controllo di reindirizzamento supera il criterio. Un successo HTTP senza passaggio a HTTPS produce un avviso basso. Una porta 80 chiusa, un errore HTTP senza passaggio a HTTPS o un reindirizzamento bloccato restano inconcludenti.
+
+### HEAD non supportato: fallback GET facoltativo
+
+Alcuni server gestiscono GET, il metodo usato per aprire una pagina nel browser, ma non HEAD. `405 Method Not Allowed` indica che il metodo non è consentito per quella risorsa; `501 Not Implemented` può indicare che il server non lo implementa. Non dimostrano da soli una vulnerabilità o che il sito non funzioni nel browser.
+
+Il fallback è **disattivato per impostazione predefinita**. Il normale consenso all'assessment non autorizza automaticamente GET. Dopo avere ottenuto il permesso del proprietario anche per GET e i redirect consentiti, seleziona la casella facoltativa in **Nuovo assessment**, oppure usa:
+
+```sh
+cybercheck dominio-autorizzato.tld --authorized --allow-get-fallback --language it
+```
+
+Nel codice Python, l'opzione è `Settings(allow_get_fallback=True)`, insieme all'autorizzazione obbligatoria all'assessment. Non esiste una variabile d'ambiente che abiliti GET in modo implicito.
+
+Solo dopo HEAD HTTPS `405` o `501` viene avviata una catena GET all'URL finale di HEAD. Ogni passaggio riutilizza validazione DNS/IP pubblici, connessione all'IP validato, controllo del nome e del certificato TLS. I redirect GET devono restare HTTPS e nello stesso dominio organizzativo autorizzato, rispettando anche i confini fra clienti di servizi di hosting condiviso. HEAD e GET condividono il limite dei redirect; richieste e query contano nei budget HTTP/DNS esistenti e non azzerano il tempo disponibile. Non ci sono tentativi automatici ripetuti o cicli di fallback. Il controllo separato del passaggio HTTP→HTTPS continua a usare HEAD. Non vengono inviati credenziali, cookie, token di autenticazione o intestazioni Range.
+
+**Limiti operativi:** un'applicazione progettata male può eseguire azioni anche con GET. Leggere solo le intestazioni non elimina questo rischio. Il server può comunque generare e inviare il corpo; alcuni byte potrebbero arrivare insieme alle intestazioni ed essere scartati. CyberCheck non legge né conserva il flusso del corpo. Non garantisce che HEAD e GET restituiscano le stesse intestazioni, né che la risposta provenga dall'applicazione anziché da un CDN. GET può consumare il budget rimasto e lasciare inconcludenti controlli successivi.
+
+I rapporti distinguono tre domande:
+
+- **Connettività HTTPS:** è stata stabilita una connessione verificata ed è arrivata una risposta HTTP? Anche `501` basta a confermare soltanto questo.
+- **Risposta HTTP applicativa:** è arrivato un esito finale 2xx per il metodo e l'URL indicati? Altri stati o errori rimangono sconosciuti, senza diventare automaticamente vulnerabilità. Anche 2xx non verifica login e funzioni complete.
+- **Intestazioni di sicurezza:** è disponibile una risposta HTTPS finale 2xx idonea? Le policy vengono valutate secondo il tipo di contenuto; senza prove sufficienti restano sconosciute.
+
+Nello scenario HEAD `501`, prima si leggeva «Endpoint HTTPS: Superato» e sei intestazioni sconosciute. Ora si legge «Connettività HTTPS: Superato», con `501` esplicito, «Risposta HTTP applicativa: Sconosciuto» e fallback GET saltato perché non autorizzato. Se il fallback viene autorizzato e restituisce `200`, la risposta applicativa supera il criterio limitato e si valutano le intestazioni ricevute tramite GET. Se GET viene bloccato o fallisce, resta registrata la connessione HTTPS iniziale e gli altri risultati restano inconcludenti. Questo confronto è illustrativo: non è un nuovo assessment del sito reale.
+
+Lo schema HTML/JSON resta alla versione 1. `http.https` conserva il proprio ID con il titolo più chiaro «Connettività HTTPS». Il nuovo rilievo informativo `http.application` aggiunge un risultato, senza contribuire al punteggio. L'evidenza `http_observation` registra stato HEAD, possibile mancato supporto del metodo, esito del fallback e idoneità delle intestazioni; i passaggi registrano il metodo. Nei metadati `http_method: HEAD` resta il metodo iniziale, mentre `get_fallback_enabled` registra il consenso. I risultati storici restano leggibili e non vengono riclassificati.
 
 ### Le intestazioni osservate
 
@@ -389,11 +415,11 @@ CyberCheck cerca `frame-ancestors` nelle policy CSP applicate, con un insieme li
 
 ### Quando questi risultati valgono
 
-`check_headers()` valuta le intestazioni solo se è disponibile una risposta HEAD HTTPS finale con stato **2xx**. Una risposta HTTPS `404` può dimostrare connettività HTTPS e lasciare comunque sconosciuti tutti i controlli delle intestazioni. Un server che rifiuta HEAD non viene riprovato con GET.
+`check_headers()` valuta le intestazioni solo se è disponibile una risposta HTTPS finale con stato **2xx**, ottenuta con HEAD oppure con il fallback GET autorizzato. Una risposta HTTPS `404` può dimostrare connettività HTTPS e lasciare comunque sconosciuti tutti i controlli delle intestazioni. Fallback disattivato, bloccato, non riuscito o con stato non 2xx lascia gli esiti sconosciuti.
 
 CSP, Permissions-Policy e protezione dall'incorporamento vengono valutate per `text/html` e `application/xhtml+xml`. Per un tipo noto non HTML sono non applicabili; se il tipo manca rimangono sconosciute. HSTS, `nosniff` e Referrer-Policy vengono comunque considerati sulla risposta 2xx.
 
-I risultati descrivono un percorso e una risposta, non ogni pagina, sessione autenticata, area geografica di una rete di distribuzione dei contenuti o comportamento GET. Cookie e intestazioni arbitrarie non vengono conservati come evidenza web; valori di query e frammenti degli indirizzi vengono rimossi o oscurati. I record DNS e altri dettagli possono comunque contenere informazioni da condividere con attenzione.
+I risultati descrivono un percorso e una risposta, non ogni pagina, sessione autenticata, area geografica di una rete di distribuzione dei contenuti o comportamento applicativo completo. Cookie e intestazioni arbitrarie non vengono conservati come evidenza web; valori di query e frammenti degli indirizzi vengono rimossi o oscurati. I record DNS e altri dettagli possono comunque contenere informazioni da condividere con attenzione.
 
 ## 9. Come leggere i risultati
 
@@ -436,7 +462,7 @@ Il pannello e i rapporti HTML tengono il punteggio disattivato per impostazione 
 
 ### Un assessment fittizio completo
 
-Quella che segue è una **simulazione didattica costruita a tavolino**, non un'esecuzione di CyberCheck e non un rapporto generato dalla rete. Comprende tutti i 21 rilievi previsti per questa configurazione, con un selettore esplicito.
+Quella che segue è una **simulazione didattica costruita a tavolino**, non un'esecuzione di CyberCheck e non un rapporto generato dalla rete. Comprende tutti i 22 rilievi previsti per questa configurazione, con un selettore esplicito.
 
 Configurazione immaginata per `azienda.example`, con autorizzazione e selettore `firma2026`:
 
@@ -479,7 +505,8 @@ Permissions-Policy, X-Frame-Options e `frame-ancestors` sono assenti. Il percors
 | `tls.hostname` | Superato | Informativa | Nome richiesto coperto. | Sì |
 | `tls.validity` | Superato | Informativa | Certificato valido, oltre la soglia di 30 giorni. | Sì |
 | `tls.protocol` | Superato | Informativa | TLS 1.3 negoziato. | Sì |
-| `http.https` | Superato | Informativa | Ricevuta risposta HEAD HTTPS. | No |
+| `http.https` | Superato | Informativa | Connessione HTTPS e risposta HTTP ricevuta. | No |
+| `http.application` | Superato | Informativa | Risposta HEAD HTTPS 200 per questo URL; funzioni complete non verificate. | No |
 | `headers.hsts` | Avviso | Bassa | `max-age=0` non attiva HSTS. | No: avviso |
 | `headers.nosniff` | Superato | Informativa | Valore `nosniff` presente. | Sì |
 | `headers.referrer` | Avviso | Bassa | `unsafe-url` è permissivo. | No |
@@ -488,7 +515,7 @@ Permissions-Policy, X-Frame-Options e `frame-ancestors` sono assenti. Il percors
 | `headers.framing` | Avviso | Bassa | Nessuna protezione riconosciuta dall'incorporamento. | No |
 | `http.redirect` | Avviso | Bassa | Successo HTTP senza passaggio a HTTPS. | No |
 
-Il riepilogo è **11 superati, 2 falliti e 8 avvisi**; nessuno sconosciuto, errore o non applicabile in questa ipotesi. I controlli nel punteggio sono 6: 5 superati e 1 fallito. Il valore è `100 × 5 / 6 = 83,3`, con **6 rilievi valutati e 15 esclusi**.
+Il riepilogo è **12 superati, 2 falliti e 8 avvisi**; nessuno sconosciuto, errore o non applicabile in questa ipotesi. I controlli nel punteggio sono 6: 5 superati e 1 fallito. Il valore è `100 × 5 / 6 = 83,3`, con **6 rilievi valutati e 16 esclusi**.
 
 Per leggere il risultato, parti dalla contraddizione MX e dal permissivo `+all`, verifica se il selettore revocato è ancora usato e riesamina poi le misure web rispetto al servizio. La scelta `p=none` richiede una decisione sul percorso di adozione, non un cambio indiscriminato a `reject`. Il punteggio 83,3 non deve nascondere nessuna di queste osservazioni.
 

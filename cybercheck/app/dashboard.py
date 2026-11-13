@@ -3,6 +3,7 @@
 import json
 import logging
 import sqlite3
+from dataclasses import replace
 from html import escape
 
 import streamlit as st
@@ -121,6 +122,8 @@ def new_assessment(repository: Repository, settings: Settings, language: str) ->
             t("selectors"), placeholder="selector1, selector2", help=t("selector_help"), max_chars=650
         )
         authorized = st.checkbox(t("authorization"))
+        allow_get_fallback = st.checkbox(t("allow_get_fallback"), value=False)
+        st.caption(t("get_fallback_help"))
         submitted = st.form_submit_button(t("start"), type="primary")
     if not submitted:
         return
@@ -142,7 +145,13 @@ def new_assessment(repository: Repository, settings: Settings, language: str) ->
         progress_bar.progress(current / total, text=f"{current}/{total} — {labels[module]}")
 
     try:
-        assessment = run_assessment(domain, selectors, authorized=True, settings=settings, progress=progress)
+        assessment = run_assessment(
+            domain,
+            selectors,
+            authorized=True,
+            settings=replace(settings, allow_get_fallback=allow_get_fallback),
+            progress=progress,
+        )
     except ValueError:
         progress_bar.empty()
         st.error(t("validation_error"))
