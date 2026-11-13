@@ -19,7 +19,7 @@ An assessment starts with one domain and the user's confirmation of ownership or
 3. **DMARC analysis:** Examines published policies, reporting settings and organizational-domain inheritance using the **legacy RFC 7489 implementation**. Full current RFC 9989 discovery and testing behavior is not implemented; records with `np`, `psd` or `t` markers remain inconclusive.
 4. **DKIM inspection:** Queries public key records for up to five user-supplied selectors. It does not guess selectors or verify that real messages are signed, that published keys are cryptographically valid, or that messages meet alignment requirements. Without a selector, DKIM remains unknown.
 5. **TLS verification:** Performs one verified TLS handshake on port 443, checking the certificate chain against the local trust store and matching the requested hostname. It records the issuer, validity period, expiration and negotiated protocol; it does not enumerate every supported TLS version.
-6. **HTTP security analysis:** Uses bounded HTTP `HEAD` requests on ports 80/443 to observe HTTPS connectivity, redirects and selected browser security headers, including HSTS, CSP and framing controls. Redirect destinations are validated before connection; response bodies are not inspected.
+6. **HTTP security analysis:** Uses bounded HTTP `HEAD` requests on ports 80/443 to observe HTTPS connectivity, redirects and selected browser security headers, including HSTS, CSP and framing controls. After HTTPS HEAD 405/501, a GET fallback can be explicitly authorized. Redirect destinations are validated before connection; response bodies are not inspected.
 
 CyberCheck gathers observable technical evidence and evaluates it using deterministic rules in Python. It does not use AI to invent findings or predict vulnerabilities.
 
@@ -77,7 +77,7 @@ flowchart LR
 | **DMARC** | Published policy, reporting settings and inheritance under the legacy RFC 7489 model. | Full RFC 9989 discovery/testing, message alignment, report delivery or external-report authorization. |
 | **DKIM** | Public key records and supported key-tag/base64 checks for up to five explicitly supplied selectors. | Selector discovery, full cryptographic key validation, actual message signatures or alignment. |
 | **TLS** | One verified handshake: local trust chain, hostname, certificate validity/expiration and negotiated protocol. | Revocation, Certificate Transparency, enumeration of all protocols/ciphers or vulnerability exploitation. |
-| **HTTP** | Bounded HEAD requests: HTTPS, redirects, HSTS, CSP, MIME-type, referrer, permissions and framing headers. | Page bodies, authenticated application tests, GET comparison or full CSP/Permissions-Policy effectiveness. |
+| **HTTP** | Bounded HEAD requests, with optional HTTPS GET fallback after HEAD 405/501: HTTPS connectivity, application response, redirects and browser security headers. | Page bodies, authenticated application tests, comprehensive availability monitoring or full CSP/Permissions-Policy effectiveness. |
 
 A published policy or key is evidence of configuration, not proof that real email or application behavior is secure. Incomplete checks remain inconclusive. See the [methodology](docs/METHODOLOGY.md) for the detailed interpretation limits.
 
@@ -164,9 +164,41 @@ Replace `your-owned-domain.tld` with an asset you are authorized to assess:
 cybercheck your-owned-domain.tld --authorized --selectors selector1,selector2 --language en --output exports
 ```
 
-The authorization flag is mandatory. Omit selectors if unknown. Add `--include-score` to include the optional health score in HTML. A completed assessment can contain unknown/error findings; the CLI prints counts and exports evidence, rather than treating network uncertainty as a confirmed vulnerability.
+The authorization flag is mandatory. Omit selectors if unknown. GET fallback requires the separate `--allow-get-fallback` flag; `--authorized` alone does not enable it. Add `--include-score` to include the optional health score in HTML. A completed assessment can contain unknown/error findings; the CLI prints counts and exports evidence, rather than treating network uncertainty as a confirmed vulnerability.
 
 `cybercheck --version` prints the installed version. If history persistence fails after export, the CLI returns a nonzero exit status and explicitly reports that the HTML/JSON files are available. Export files are created owner-only and never overwrite an existing file or follow its symlink.
+
+## Servers that reject HEAD and optional GET fallback
+
+Some servers implement normal page visits (`GET`) but reject the lighter `HEAD` request. `405 Method Not Allowed` means this method is not allowed for that resource; `501 Not Implemented` can mean the server does not implement it. Neither response alone proves a security vulnerability or that the application is unavailable to browsers.
+
+CyberCheck separates three observations:
+
+- **HTTPS connectivity:** a verified HTTPS connection returned an HTTP response, even if its status was 501. This does not prove the application is working.
+- **Application response:** a final 2xx response was observed for the stated method and URL. Other statuses and request failures remain Unknown, without declaring a vulnerability. A 2xx response still does not verify login, business functions or the whole site.
+- **Security headers:** evaluated on the final eligible HTTPS 2xx response, with existing content-type applicability rules. Error responses leave the six checks Unknown.
+
+GET fallback is **disabled by default**, because GET can trigger actions in poorly designed applications. Obtain authorization for GET and permitted redirects before enabling it. In **New Assessment**, select the separate optional GET checkbox, or use:
+
+```sh
+cybercheck your-owned-domain.tld --authorized --allow-get-fallback --language en
+```
+
+For Python callers, use `Settings(allow_get_fallback=True)` alongside the mandatory assessment authorization. The setting is per assessment; no environment variable silently enables GET.
+
+After HTTPS HEAD returns 405 or 501, one GET fallback chain starts at that final HEAD URL. The separate HTTP-to-HTTPS redirect check continues to use HEAD. Every GET hop requires HTTPS, the authorized organizational domain (including shared-hosting tenant boundaries), public DNS addresses, IP pinning and normal certificate/hostname verification. HEAD and fallback GET share the redirect allowance; all requests use the existing DNS/HTTP budgets and overall deadline. There are no retries or fallback loops, and no credentials, cookies, authentication tokens or Range header are sent.
+
+The request streams headers and closes immediately without reading or storing the response body stream. This cannot prevent the server from generating/sending a body or the socket from receiving some body bytes together with headers; those bytes are discarded. It does not prevent GET side effects, guarantee HEAD and GET return identical headers, or ensure the response represents the origin rather than a CDN. GET may consume the remaining request budget and leave later checks inconclusive. If fallback is disabled, blocked, unsuccessful or returns non-2xx, application availability and headers remain Unknown.
+
+For the observed HEAD 501 scenario (illustrative, without another live assessment):
+
+| Behavior | Before | After |
+|---|---|---|
+| HEAD 501, default settings | “HTTPS endpoint” Passed; six headers Unknown | “HTTPS connectivity” Passed with HTTP 501 recorded; application response Unknown; GET explicitly reported as skipped; six headers Unknown |
+| HEAD 501, authorized fallback GET 200 | No GET available | HTTPS connectivity recorded separately; application response Passed for GET 200; security headers evaluated from the final GET response |
+| HEAD 501, fallback blocked or fails | No GET available | Original HTTPS connectivity preserved; fallback outcome explained; application response and headers Unknown |
+
+HTML and JSON retain schema version 1. The existing `http.https` ID now has the clearer title “HTTPS connectivity”; the new informational, unscored `http.application` finding adds one result per assessment, so counts can differ from older runs. Evidence adds `http_observation` (HEAD status, unsupported-method indication, fallback outcome and header eligibility), and redirect hops record their method. Metadata retains `http_method: HEAD` as the initial method and adds `get_fallback_enabled`; actual methods are in findings and hops. Stored older assessments remain readable and are not reclassified retroactively.
 
 ## Statuses and score
 
@@ -195,10 +227,10 @@ New HTTP evidence retains only relevant header fields; cookies, arbitrary respon
 | `CYBERCHECK_TIMEOUT` | 5 seconds | 0.1–15 seconds |
 | `CYBERCHECK_MAX_DNS` | 48 | 8–100 queries |
 | `CYBERCHECK_MAX_HTTP` | 8 | 2–20 requests |
-| `CYBERCHECK_MAX_REDIRECTS` | 3 | 0–5 hops per chain |
+| `CYBERCHECK_MAX_REDIRECTS` | 3 | 0–5 hops per chain; shared by HTTPS HEAD and its GET fallback |
 | `CYBERCHECK_MAX_SECONDS` | 90 | 10–180 seconds |
 
-Queries are sequential and bounded; DNS answers are cached per assessment. HTTP socket operations recheck the overall deadline and limit header reads to 64 KiB. Only one verified TLS handshake is attempted. Limits reset for each assessment; this is not a rate-limited public service.
+Queries are sequential and bounded; DNS answers are cached per assessment. HTTP socket operations recheck the overall deadline and limit header reads to 64 KiB. One dedicated TLS handshake is attempted; HTTPS HEAD/GET requests also perform verified TLS handshakes. Limits reset for each assessment; this is not a rate-limited public service.
 
 ## Security boundaries
 

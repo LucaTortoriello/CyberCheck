@@ -46,7 +46,7 @@ def fixture_assessment(fake_dns):
 def test_complete_mocked_workflow(fake_dns, tmp_path):
     a = fixture_assessment(fake_dns)
     assert a.completed_at and a.authorization_confirmed
-    assert len(a.findings) == 21
+    assert len(a.findings) == 22
     assert all(f.status != Status.ERROR for f in a.findings)
     repo = Repository(tmp_path / "db.sqlite3")
     repo.save(a)

@@ -72,12 +72,21 @@ class WebClient:
     def close(self) -> None:
         self.client.close()
 
-    def fetch(self, url: str, scope: str) -> WebResponse:
+    def fetch(
+        self, url: str, scope: str, *, method: str = "HEAD", max_redirects: int | None = None
+    ) -> WebResponse:
+        if method not in {"HEAD", "GET"} or (method == "GET" and not self.budget.settings.allow_get_fallback):
+            raise ValueError("GET requires explicit fallback authorization; other methods are unsupported")
         hops: list[dict] = []
         self.last_hops = hops
         seen_https = False
-        for _ in range(self.budget.settings.max_redirects + 1):
+        redirect_limit = self.budget.settings.max_redirects
+        if max_redirects is not None:
+            redirect_limit = min(redirect_limit, max_redirects)
+        for _ in range(redirect_limit + 1):
             scheme, hostname, path = validate_url(url)
+            if method == "GET" and scheme != "https":
+                raise UnsafeTarget("GET fallback requires HTTPS at every hop")
             if organizational_domain(hostname) != organizational_domain(scope):
                 raise UnsafeTarget("Redirect outside the authorized organizational domain blocked")
             if seen_https and scheme != "https":
@@ -89,9 +98,9 @@ class WebClient:
             pinned_url = f"{scheme}://{literal}{path}"
             timeout = self.budget.consume("http")
             self.client.cookies.clear()
-            # HEAD is deliberately used throughout; no fallback GET or body download.
+            # Stream only the headers; never iterate/read the response body.
             with self.client.stream(
-                "HEAD",
+                method,
                 pinned_url,
                 headers={"Host": hostname},
                 extensions={"sni_hostname": hostname},
@@ -104,14 +113,20 @@ class WebClient:
                     if name in response.headers
                 }
                 status = response.status_code
-            hops.append({"url": redact_url(url), "address": address, "status_code": status})
+            hops.append({"url": redact_url(url), "address": address, "status_code": status, "method": method})
             if status not in {301, 302, 303, 307, 308}:
                 safe_values = {
                     name: [safe_headers({name: value})[name] for value in entries]
                     for name, entries in header_values.items()
                 }
                 return WebResponse(
-                    url, status, safe_headers(headers), address, hops, header_values=safe_values
+                    url,
+                    status,
+                    safe_headers(headers),
+                    address,
+                    hops,
+                    method=method,
+                    header_values=safe_values,
                 )
             location = headers.get("location")
             if not location:

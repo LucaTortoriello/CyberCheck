@@ -1,6 +1,7 @@
-"""HEAD-response browser policy observations, with explicit applicability."""
+"""Successful HTTPS response policy observations, with explicit applicability."""
 
 import re
+from urllib.parse import urlsplit
 
 from cybercheck.core.evidence import redact_url
 from cybercheck.core.network import WebResponse
@@ -64,15 +65,15 @@ def active_hsts_policy(value: str | None) -> bool:
 
 
 def check_headers(response: WebResponse | None, error: dict | str | None = None) -> list[Finding]:
-    if response is None or not 200 <= response.status_code < 300:
+    if response is None or urlsplit(response.url).scheme != "https" or not 200 <= response.status_code < 300:
         evidence = response.evidence() if response else {"error": error}
         return [
             finding(
                 key,
                 T.UNKNOWN,
                 S.INFO,
-                "No successful HTTPS HEAD response available; application header configuration is unknown.",
-                "Nessuna risposta HEAD HTTPS riuscita; configurazione delle intestazioni applicative sconosciuta.",
+                "No successful HTTPS response available; application security headers are inconclusive.",
+                "Nessuna risposta HTTPS riuscita; intestazioni di sicurezza applicative inconcludenti.",
                 evidence,
             )
             for key in HEADER_KEYS
@@ -94,7 +95,7 @@ def check_headers(response: WebResponse | None, error: dict | str | None = None)
                 it,
                 {
                     "url": redact_url(response.url),
-                    "method": "HEAD",
+                    "method": response.method,
                     "status_code": response.status_code,
                     "content_type": content_type,
                     "header_value": value,

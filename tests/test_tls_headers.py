@@ -134,6 +134,6 @@ def test_http_connection_errors_keep_headers_and_redirect_unknown(fake_dns):
 
     web = WebClient(dns, dns.budget, httpx.MockTransport(fail))
     findings = check_web("example.com", web)
-    assert len(findings) == 8
+    assert len(findings) == 9
     assert all(f.status == Status.UNKNOWN for f in findings)
     web.close()
