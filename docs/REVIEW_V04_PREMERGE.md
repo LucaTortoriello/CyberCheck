@@ -8,8 +8,8 @@ older; the review uses the fetched remote base, not that stale local reference.
 
 ## A. Executive verdict
 
-**READY TO MERGE WITH MINOR RESERVATIONS**, after the corrections described here
-and successful CI on the updated branch. The incoming head required changes:
+**READY TO MERGE WITH MINOR RESERVATIONS**. The corrections described here pass
+local validation and updated-code CI. The incoming head required changes:
 passing implementation tests did not cover several misleading comparisons,
 structured-data export leaks and corrupt-history handling failures.
 
@@ -222,10 +222,17 @@ non-writable default-cache warning during compatibility checking and pip-audit
 recommended hashed lock inputs; both checks exited successfully. Dependencies
 were not installed, upgraded or changed.
 
-**Remote CI is separate:** the incoming head `8525ce4` had eight successful checks
-(push and PR workflows, each with Python 3.12/3.13/3.14 plus dependency audit),
-independently read through `gh pr view`. Updated-head CI must also pass before
-merging; its results will be recorded after the correction commit is published.
+**Remote CI is separate:** the incoming head `8525ce4` had eight successful checks,
+yet the review still reproduced the defects above. The correction commit
+`d0451530561457b400aac4a68cb03e2ef6799e0f` also has **eight successful checks**:
+push and PR workflows, each with Python 3.12/3.13/3.14 plus dependency audit.
+The PR head SHA and all conclusions were independently read with `gh pr view`;
+logs from the [PR workflow run](https://github.com/LucaTortoriello/CyberCheck/actions/runs/43883733602)
+confirm **393 passed** on each Python version, **95%** rounded coverage, successful
+lint/format/compatibility checks and no known dependency vulnerabilities. The
+separate [push workflow run](https://github.com/LucaTortoriello/CyberCheck/actions/runs/43883724009)
+also completed successfully. The final documentation update records those
+observed results without changing the validated implementation.
 Local Python 3.12/3.14 runs were not performed. No live third-party scans, OOM
 stress test, full browser/accessibility matrix or new visual browser check was
 performed in this review. Earlier Chrome checks are historical implementation
@@ -333,8 +340,9 @@ changes for this PR.
 
 ## H. Final recommendation
 
-**Merge PR #7 after updated-head GitHub Actions is green**, retaining the
-documented limitations. Do not merge the incoming `8525ce4` without these fixes.
+**Merge PR #7 with these corrections and green branch checks**, retaining the
+documented limitations. The corrected implementation has passed GitHub Actions.
+Do not merge the incoming `8525ce4` without these fixes.
 The review changes stay on the existing v0.4 feature branch; no new feature,
 schema/dependency/license change, third-party scan, deployment or automatic merge
 is part of this work. Myopia Control was not modified.
