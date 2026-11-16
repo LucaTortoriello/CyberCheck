@@ -6,6 +6,7 @@ from cybercheck.core.comparison import compare_assessments
 from cybercheck.locales.comparison import ct
 from cybercheck.locales.ui import tr
 from cybercheck.models import Assessment
+from cybercheck.models.validation import DataValidationError
 from cybercheck.reports.render import render_comparison_html, render_comparison_json
 from cybercheck.storage.sqlite import Repository, StorageDataError
 
@@ -67,6 +68,9 @@ def comparison_view(repository: Repository, active: Assessment, language: str) -
             return
         comparison = compare_assessments(earlier, later)
     except StorageDataError:
+        st.error(tr("stored_invalid", language))
+        return
+    except DataValidationError:
         st.error(tr("stored_invalid", language))
         return
     except ValueError:

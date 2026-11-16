@@ -12,6 +12,7 @@ from cybercheck import CHECK_METHODOLOGY
 from cybercheck.core.evidence import EVIDENCE_HEADERS, redact_url
 from cybercheck.locales.comparison import ct, reason
 from cybercheck.models import Assessment, Finding, Severity, Status, Text
+from cybercheck.models.assessment import validate_assessment
 
 COMPARISON_VERSION = "comparison-v1"
 KNOWN_METHODOLOGIES = {"0.2.0": "checks-v0.2", "0.3.0": CHECK_METHODOLOGY, "0.4.0": CHECK_METHODOLOGY}
@@ -32,6 +33,19 @@ HEADER_NAMES = {
     "headers.permissions": ("permissions-policy",),
     "headers.framing": ("content-security-policy", "x-frame-options"),
 }
+ISSUER_FIELDS = frozenset(
+    {
+        "commonName",
+        "countryName",
+        "localityName",
+        "stateOrProvinceName",
+        "organizationName",
+        "organizationalUnitName",
+        "emailAddress",
+        "serialNumber",
+        "domainComponent",
+    }
+)
 
 
 def stable_evidence(value: object, key: str = "") -> object:
@@ -80,7 +94,7 @@ def _known_difference(left: Any, right: Any) -> bool | None:
 def methodology(a: Assessment) -> str | None:
     metadata = _metadata(a)
     explicit = metadata.get("methodology_version")
-    if explicit is not None:
+    if "methodology_version" in metadata:
         return (
             explicit if isinstance(explicit, str) and explicit in {"checks-v0.2", CHECK_METHODOLOGY} else None
         )
@@ -91,7 +105,7 @@ def methodology(a: Assessment) -> str | None:
 def _profile(a: Assessment) -> str | None:
     metadata = _metadata(a)
     profile = metadata.get("scoring_profile")
-    if profile is not None:
+    if "scoring_profile" in metadata:
         return profile if profile == "context-v1" else None
     return "legacy-v1" if metadata.get("engine_version") == "0.2.0" else None
 
@@ -116,19 +130,24 @@ def _time(value: Any) -> datetime | None:
 
 
 def _snapshot(a: Assessment) -> dict:
+    def text(name: str) -> str | None:
+        value = _metadata(a).get(name)
+        return value if isinstance(value, str) and len(value) <= 128 else None
+
+    enabled = _metadata(a).get("get_fallback_enabled")
     return {
         "id": a.id,
         "domain": a.domain,
         "started_at": a.started_at,
         "completed_at": a.completed_at,
-        "engine_version": _metadata(a).get("engine_version"),
+        "engine_version": text("engine_version"),
         "methodology_version": methodology(a),
         "scoring_profile": _profile(a),
         "context": _context(a),
         "context_source": "user_declared_unverified" if _context(a) is not None else "not_recorded",
         "selectors": sorted(a.selectors),
-        "http_method": _metadata(a).get("http_method"),
-        "get_fallback_enabled": _metadata(a).get("get_fallback_enabled"),
+        "http_method": text("http_method"),
+        "get_fallback_enabled": enabled if type(enabled) is bool else None,
         "synthetic_fixture": _metadata(a).get("synthetic_fixture") is True,
     }
 
@@ -164,11 +183,31 @@ def _dns_observation(data: dict, key: str) -> Observation:
         and data.get("state") in ("ok", "absent")
         and isinstance(data.get("name"), str)
         and data.get("record_type") == expected
+        and bool(data.get("name"))
+        and (bool(data["records"]) if data.get("state") == "ok" else not data["records"])
     )
     return Observation(fields, complete)
 
 
+def _legacy_header_fields(headers: object, names: tuple[str, ...]) -> dict | None:
+    if not isinstance(headers, dict) or not all(
+        isinstance(k, str) and isinstance(v, str) for k, v in headers.items()
+    ):
+        return None
+    lowered = {}
+    for key, value in headers.items():
+        name = key.lower()
+        if name in names:
+            if name in lowered:
+                return None  # Case-folding must not silently select a duplicate field.
+            lowered[name] = value
+    return {name: [lowered[name]] if name in lowered else [] for name in names}
+
+
 def _header_fields(data: dict, names: tuple[str, ...]) -> dict | None:
+    legacy = _legacy_header_fields(data.get("headers"), names) if "headers" in data else None
+    if "headers" in data and legacy is None:
+        return None
     observed = data.get("observed_headers")
     if isinstance(observed, dict) and all(
         name in observed
@@ -176,15 +215,32 @@ def _header_fields(data: dict, names: tuple[str, ...]) -> dict | None:
         and all(isinstance(v, str) for v in observed[name])
         for name in names
     ):
+        if legacy is not None and any(
+            (", ".join(observed[name]) if observed[name] else None)
+            != (legacy[name][0] if legacy[name] else None)
+            for name in names
+        ):
+            return None
+        if len(names) == 1 and "header_value" in data:
+            values = observed[names[0]]
+            expected = (
+                (values[0] if names[0] == "strict-transport-security" else ", ".join(values))
+                if values
+                else None
+            )
+            if data["header_value"] != expected:
+                return None
         return {name: list(observed[name]) for name in names}
     if "observed_headers" in data:
         return None
-    headers = data.get("headers")
-    if isinstance(headers, dict) and all(
-        isinstance(k, str) and isinstance(v, str) for k, v in headers.items()
-    ):
-        lowered = {k.lower(): v for k, v in headers.items()}
-        return {name: [lowered[name]] if name in lowered else [] for name in names}
+    if legacy is not None:
+        if (
+            len(names) == 1
+            and "header_value" in data
+            and data["header_value"] != (legacy[names[0]][0] if legacy[names[0]] else None)
+        ):
+            return None
+        return legacy
     if (
         len(names) == 1
         and "header_value" in data
@@ -194,11 +250,42 @@ def _header_fields(data: dict, names: tuple[str, ...]) -> dict | None:
     return None  # Historical framing values are parser-generated, not raw fields.
 
 
+def _coherent_hops(data: dict) -> bool:
+    hops = data.get("hops")
+    if not isinstance(hops, list) or not hops:
+        return False
+    for hop in hops:
+        if not isinstance(hop, dict) or not isinstance(hop.get("url"), str):
+            return False
+        if hop.get("method") != data.get("method") or not isinstance(hop.get("address"), str):
+            return False
+        code = hop.get("status_code")
+        if type(code) is not int or not 100 <= code <= 599:
+            return False
+        try:
+            uri = urlsplit(hop["url"])
+            if uri.scheme not in {"http", "https"} or not uri.hostname:
+                return False
+        except ValueError:
+            return False
+    last = hops[-1]
+    return (
+        redact_url(last["url"]) == redact_url(data.get("url", ""))
+        and last["status_code"] == data.get("status_code")
+        and ("address" not in data or last["address"] == data["address"])
+    )
+
+
 def observe(f: Finding | None) -> Observation:
     if f is None or not isinstance(f.evidence, dict):
         return Observation({}, False)
     data = f.evidence
     key = f.check_id
+    if (
+        key.partition(".")[0] in {"dns", "email", "tls", "http", "headers"}
+        and f.category != key.partition(".")[0]
+    ):
+        return Observation({}, False)
     if key == "dns.records":
         parts = {
             kind: _dns_observation(data.get(kind, {}) if isinstance(data.get(kind), dict) else {}, kind)
@@ -220,7 +307,7 @@ def observe(f: Finding | None) -> Observation:
         if isinstance(issuer, dict) and all(
             isinstance(k, str) and isinstance(v, str) for k, v in issuer.items()
         ):
-            fields["issuer"] = dict(issuer)
+            fields["issuer"] = {k: v for k, v in issuer.items() if k in ISSUER_FIELDS}
         sans = data.get("subject_alt_names")
         if isinstance(sans, (list, tuple)) and all(
             isinstance(item, (list, tuple)) and len(item) == 2 and all(isinstance(v, str) for v in item)
@@ -244,6 +331,14 @@ def observe(f: Finding | None) -> Observation:
         complete = measured and all(name in fields for name in ("hostname", "address", "port"))
         if key == "tls.validity":
             complete = complete and _time(fields.get("not_before")) is not None
+            if complete:
+                complete = _time(fields["not_before"]) <= _time(fields["not_after"])
+        elif key == "tls.chain":
+            complete = complete and bool(fields.get("issuer"))
+        elif key == "tls.hostname":
+            complete = complete and bool(fields.get("subject_alt_names"))
+        if "verify_code" in fields:
+            complete = False  # Known capture format stops verification before collecting a certificate.
         return Observation(stable_evidence(fields), complete)
     if key in HEADER_NAMES or key in {"http.https", "http.application", "http.redirect"}:
         fields = _scalar_fields(data, ("method", "content_type", "address"))
@@ -262,6 +357,8 @@ def observe(f: Finding | None) -> Observation:
                 and all(name in fields for name in ("url", "method", "content_type", "status_code"))
                 and 200 <= fields["status_code"] < 300
             )
+            if key in {"headers.csp", "headers.permissions", "headers.framing"}:
+                complete = complete and fields.get("content_type") in {"text/html", "application/xhtml+xml"}
         else:
             headers = data.get("headers")
             if isinstance(headers, dict):
@@ -292,6 +389,8 @@ def observe(f: Finding | None) -> Observation:
                         }.items()
                     }
             complete = all(name in fields for name in ("url", "method", "status_code"))
+            if key == "http.redirect" or data.get("hops"):
+                complete = complete and _coherent_hops(data)
         try:
             parsed = urlsplit(fields.get("url", ""))
             complete = (
@@ -378,6 +477,24 @@ def _concern(f: Finding) -> bool:
         and f.severity != Severity.INFO
         and (not isinstance(f.evidence, dict) or f.applicability != "not_applicable")
     )
+
+
+def _criterion_change(key: str, differences: list[dict], observation: str) -> str:
+    """Other TLS facts can change without changing this particular criterion."""
+    relevant = {
+        "tls.validity": {"not_before", "not_after"},
+        "tls.protocol": {"protocol"},
+        "tls.hostname": {"hostname", "subject_alt_names", "verify_code"},
+        "tls.chain": {"issuer", "verify_code"},
+    }.get(key)
+    if relevant is None:
+        return observation
+    selected = [item for item in differences if item["field"] in relevant]
+    if any(item["earlier_present"] and item["later_present"] for item in selected):
+        return "changed"
+    if selected or observation == "inconclusive":
+        return "inconclusive"
+    return "equivalent"
 
 
 def _compare_finding(
@@ -485,6 +602,7 @@ def _compare_finding(
         if left.complete and right.complete and not measured_differences
         else "inconclusive"
     )
+    criterion_observation = _criterion_change(key, differences, observation)
     matched = old is not None and new is not None
 
     def changed(attribute: str) -> bool | None:
@@ -519,8 +637,12 @@ def _compare_finding(
         or new.status in {Status.UNKNOWN, Status.ERROR, Status.NA}
     ):
         codes.append("unmeasured_result")
-    if observation == "equivalent" and interpretation:
-        codes.append("same_observation_different_result")
+    if criterion_observation == "equivalent" and interpretation:
+        codes.append(
+            "same_observation_different_result"
+            if observation == "equivalent"
+            else "same_criterion_different_result"
+        )
     compatibility = (
         "not_comparable"
         if not matched or duplicate or not left.fields or not right.fields
@@ -534,10 +656,10 @@ def _compare_finding(
         if _concern(old) and _concern(new):
             lifecycle = "persistent_issue"
             explanations.append("persistent_supported")
-        elif observation == "changed" and old.status == Status.PASSED and _concern(new):
+        elif criterion_observation == "changed" and old.status == Status.PASSED and _concern(new):
             lifecycle = "new_issue"
             explanations.append("new_supported")
-        elif observation == "changed" and _concern(old) and new.status == Status.PASSED:
+        elif criterion_observation == "changed" and _concern(old) and new.status == Status.PASSED:
             lifecycle = "resolved_issue"
             explanations.append("resolved_supported")
         else:
@@ -548,7 +670,7 @@ def _compare_finding(
         explanations.append("observation_changed")
     elif observation == "equivalent" and not interpretation:
         explanations.append("observation_equivalent")
-    if (observation == "equivalent" and interpretation) or any(
+    if (criterion_observation == "equivalent" and interpretation) or any(
         dimensions[name]
         for name in (
             "context_changed",
@@ -566,6 +688,7 @@ def _compare_finding(
         "categories": list(dict.fromkeys(categories)),
         "concern_change": lifecycle,
         "observation_change": observation,
+        "criterion_observation_change": criterion_observation,
         "comparability": compatibility,
         "dimensions": dimensions,
         "differences": differences,
@@ -635,6 +758,8 @@ def _score_comparison(
 
 
 def compare_assessments(earlier: Assessment, later: Assessment) -> Comparison:
+    validate_assessment(earlier, strict_evidence=False)
+    validate_assessment(later, strict_evidence=False)
     if earlier.domain != later.domain:
         raise ValueError("Only assessments of the same domain can be compared")
     left_time, right_time = _time(earlier.started_at), _time(later.started_at)

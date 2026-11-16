@@ -36,8 +36,8 @@ STRINGS = {
         "Impossibile aprire il database locale, oppure schema non supportato. Controlla percorso e permessi; conservalo e ripristina un backup o scegli un percorso separato.",
     ),
     "stored_invalid": (
-        "This stored assessment cannot be read. Its data has been preserved. Select another assessment or recover a database backup.",
-        "Questo assessment salvato non è leggibile. I dati sono stati conservati. Seleziona un altro assessment o recupera un backup del database.",
+        "This stored assessment cannot be read: its structure is invalid, its identity is inconsistent, or it exceeds supported read limits. Its data has been preserved. Select another assessment or recover a database backup.",
+        "Questo assessment salvato non è leggibile: la struttura non è valida, l'identità è incoerente o supera i limiti di lettura supportati. I dati sono stati conservati. Seleziona un altro assessment o recupera un backup del database.",
     ),
     "checks_done": (
         "Checks completed; saving results locally…",

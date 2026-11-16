@@ -43,6 +43,12 @@ independent underlying causes:
 For example, the same certificate can cross an expiry-warning threshold as time
 passes. The classification changes while the measured certificate is unchanged;
 this is an evaluation change, not proof of a certificate replacement.
+The lifecycle uses evidence relevant to that particular TLS criterion: dates for
+validity, protocol for negotiation, SAN/hostname for identity, issuer/verification
+for chain results. An unrelated cipher/protocol/issuer change cannot turn the
+same expiry dates crossing a time threshold into a new configuration concern.
+`criterion_observation_change` records this distinction while all supported TLS
+measurement differences remain visible under `observation_change`.
 
 ## Comparability rules
 
@@ -61,6 +67,8 @@ comparable criteria and a limited valid score comparison.
   malformed versions/IDs do not establish equivalent rules. This mapping describes
   the reviewed releases; version labels are not code-integrity attestations and
   cannot reconstruct unrecorded private modifications.
+  An explicitly null/malformed methodology or scoring profile stays unknown;
+  historical version fallback applies only when that key is absent.
 - New v0.4 runs record `methodology_version: checks-v0.3`. Checking rules remain
   unchanged; extra raw-header evidence is measurement bookkeeping.
 - Context is the three recorded sending/receiving/DNS-control declarations, always
@@ -107,6 +115,14 @@ unrelated TXT publication. HTTP hop order and duplicate-header order are preserv
 Record/header strings are compared as recorded; there is no full semantic DNS,
 SPF, DMARC, CSP or browser emulation. Per-request nonces, routing, caches, selected
 backends and sampling can change observations without an administrator edit.
+Contradictory DNS state/record combinations, conflicting raw/combined/scalar
+header representations and case-folded header collisions are incomplete evidence.
+Document-level CSP/framing/permissions criteria require a successful HTML response.
+Recorded redirect chains require hop method/IP/status and a consistent final
+response. TLS validity requires ordered dates; chain/hostname comparisons also
+require recorded issuer/SAN evidence. Partial/rejected certificates do not justify
+a score delta. These checks do not reevaluate the original finding or prove that
+the saved observations were authentic.
 
 Assessment/finding UUIDs, timestamps, counters, durations, report-generation times,
 certificate days remaining, explanations, remediation, applicability prose and
@@ -150,6 +166,30 @@ JSON retains both languages; HTML selects Italian or English with autoescaping,
 offline styles and the existing report restrictions. Source payloads are never
 written, and raw bodies/secrets in arbitrary historical fields are never copied.
 Known synthetic inputs keep a visible synthetic label.
+Snapshot metadata uses typed scalar fields rather than copying arbitrary nested
+objects. Certificate issuer attributes also use a named allowlist. Allowed DNS,
+certificate, title and security-header strings can themselves be confidential;
+this projection is data minimization, not general-purpose secret detection.
+
+Stored JSON is checked before decoding against a **16 MiB UTF-8 payload limit**.
+SQLite reads avoid returning oversized payloads and bound native value sizes on
+those connections. Loaded models and direct comparison inputs are limited to
+**40 container levels, 200,000 visited values/keys and 512 findings**, with a
+16 MiB aggregate content budget (including conservative primitive overhead).
+Invalid Unicode, nonfinite/oversized numbers and invalid model field types are
+rejected. These are supported-input limits, not a claim about exact peak memory.
+The decoder can still allocate within the serialized size limit; deeply nested
+decoder failures are handled as invalid history.
+
+Stored identity/domain/start time must match the SQLite history index. Missing
+historical timestamps are left unknown instead of replaced with the current time;
+missing required identities are rejected rather than generated. Corrupt or
+oversized records remain untouched for recovery and are reported by the UI. This
+deliberately stops accepting structurally invalid or exceptionally large artifacts;
+valid native v0.2/v0.3 schema-1 history remains readable without migration.
+
+See the [independent pre-merge review](REVIEW_V04_PREMERGE.md) for reproduced
+defects, regression cases and separately executed validation.
 
 ## Worked fictional pair
 

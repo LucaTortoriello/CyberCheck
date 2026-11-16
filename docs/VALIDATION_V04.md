@@ -1,5 +1,9 @@
 # v0.4 executed validation — assessment comparison
 
+This is the initial implementation validation record. The later
+[independent pre-merge review](REVIEW_V04_PREMERGE.md) documents defects missed by
+this suite, corrections, additional tests and the final validation results.
+
 2026-11-16, macOS / Python 3.13.14. Main baseline `5500bb0`, branch
 `improvement/cybercheck-v0.4-comparison`. The [audit](COMPARISON_AUDIT_V04.md)
 was written before code changes. No live assessment was performed.

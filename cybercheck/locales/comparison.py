@@ -5,6 +5,10 @@ from dataclasses import asdict
 from cybercheck.models import Text
 
 STRINGS = {
+    "same_criterion_different_result": (
+        "Measurements for this criterion are equivalent although other TLS facts differ. The result change is an evaluation change, not a new or resolved configuration concern.",
+        "Le misure relative a questo criterio sono equivalenti anche se altri dati TLS differiscono. Il cambio di esito è una variazione di valutazione, non un nuovo problema di configurazione o una risoluzione.",
+    ),
     "title": ("Assessment comparison", "Confronto tra assessment"),
     "intro": (
         "Choose two saved runs for the same target. Categories describe evidence, not proven exploitation.",
