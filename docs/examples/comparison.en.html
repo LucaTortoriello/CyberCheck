@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>CyberCheck — Assessment comparison — example.com</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,sans-serif;color:#17243a;background:#edf1f6}
+    *{box-sizing:border-box}body{max-width:1020px;margin:32px auto;padding:40px;background:white;line-height:1.6}
+    h1{font-size:32px;line-height:1.2}h2{margin-top:32px;border-bottom:1px solid #dce3eb;padding-bottom:8px}
+    .brand{color:#188261;font-size:24px;font-weight:750}.notice{background:#f1f5f9;padding:16px;border-radius:6px}
+    table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid #dce3eb;overflow-wrap:anywhere}
+    article{border:1px solid #dce3eb;border-radius:6px;padding:20px;margin:20px 0}h3{margin-top:0}.badge{background:#edf1f6;padding:4px 8px;font-size:12px}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;background:#f4f6f9;padding:14px}small{color:#57657a}
+    @page{size:A4;margin:16mm}@media print{body{padding:0;margin:0;max-width:none;font-size:10pt}article{break-inside:auto}h2,h3{break-after:avoid}tr{break-inside:avoid}thead{display:table-header-group}pre{font-size:8pt}p,li{orphans:3;widows:3}}
+    @media(max-width:600px){body{margin:0;padding:20px}h1{font-size:26px}th,td{padding:6px;font-size:12px}}
+  </style>
+</head>
+<body>
+  <div class="brand">CyberCheck</div><h1>Assessment comparison</h1><p><strong>example.com</strong></p>
+  <p class="notice"><strong>SYNTHETIC TEST FIXTURE — This is not a live assessment.</strong></p>
+  <table><thead><tr><th>Earlier assessment</th><th>Later assessment</th></tr></thead><tbody>
+    <tr><td>2026-10-01T00:00:00+00:00<br><small>synthetic-earlier</small><br>CyberCheck 0.4.0<br>checks-v0.3 · context-v1</td><td>2026-11-16T00:00:00+00:00<br><small>synthetic-later</small><br>CyberCheck 0.4.0<br>checks-v0.3 · context-v1</td></tr>
+  </tbody></table>
+  <h2>Comparability: Partially comparable</h2>
+  <p class="notice">comparison-v1 compares allowlisted measured fields by exact check ID; missing evidence, method/context changes and unrecognized rules reduce comparability. It never reruns checks or rewrites saved assessments.</p>
+  <ul><li>Required measured evidence is missing, malformed, failed or unsupported. Missing fields are not treated as empty observations.</li><li>The sets of recorded measured fields differ; only common fields can be compared directly.</li></ul>
+  <h2>Configuration overview</h2><p>Counts are per finding and categories can overlap. A changed observation does not establish a configuration-wide improvement or regression.</p>
+  <table><tbody><tr><th>New concern</th><td>0</td></tr><tr><th>Resolved concern</th><td>3</td></tr><tr><th>Persistent concern</th><td>1</td></tr><tr><th>Unchanged</th><td>0</td></tr><tr><th>Changed observation</th><td>5</td></tr><tr><th>Evaluation changed</th><td>0</td></tr><tr><th>Inconclusive</th><td>1</td></tr></tbody></table>
+  <h2>Score comparison</h2><p>Profiles, context and evaluated criteria match. The delta is a limited diagnostic, not a security rating.</p>
+  <p>100.0 → 100.0 · Δ 0.0</p>
+  <ul></ul>
+  <h2>Finding comparisons and supporting evidence</h2>
+  <article>
+    <h3>DMARC policy</h3><small>email.dmarc</small>
+    <p><span class="badge">Resolved concern</span> <span class="badge">Changed observation</span> </p>
+    <p>Comparability: Comparable · Different observations</p>
+    <p>Warning → Passed · Low → Informational</p>
+    <ul><li>A previously supported concern now meets the Passed criterion with different measured evidence under comparable conditions.</li><li>Recorded technical observations differ. Review the field differences and comparability limits before attributing a configuration change.</li></ul>
+    <strong>Separate comparison dimensions</strong><pre>{
+  "applicability_changed": false,
+  "assessment_context_changed": false,
+  "context_changed": false,
+  "engine_version_changed": false,
+  "methodology_changed": false,
+  "scoring_eligibility_changed": false,
+  "scoring_profile_changed": false,
+  "severity_changed": true,
+  "status_changed": true
+}</pre>
+    <strong>Compared technical evidence (limited projection)</strong><pre>{
+  "differences": [
+    {
+      "earlier": [
+        "v=DMARC1; p=none"
+      ],
+      "earlier_present": true,
+      "field": "records",
+      "later": [
+        "v=DMARC1; p=reject"
+      ],
+      "later_present": true
+    }
+  ],
+  "earlier": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "name": "_dmarc.example.com",
+      "record_type": "TXT",
+      "records": [
+        "v=DMARC1; p=none"
+      ],
+      "state": "ok"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-earlier-email.dmarc",
+    "scoreable": false,
+    "severity": "low",
+    "status": "warning"
+  },
+  "later": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "name": "_dmarc.example.com",
+      "record_type": "TXT",
+      "records": [
+        "v=DMARC1; p=reject"
+      ],
+      "state": "ok"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-later-email.dmarc",
+    "scoreable": false,
+    "severity": "informational",
+    "status": "passed"
+  }
+}</pre>
+  </article><article>
+    <h3>SPF configuration</h3><small>email.spf</small>
+    <p><span class="badge">Resolved concern</span> <span class="badge">Changed observation</span> </p>
+    <p>Comparability: Comparable · Different observations</p>
+    <p>Warning → Passed · Low → Informational</p>
+    <ul><li>A previously supported concern now meets the Passed criterion with different measured evidence under comparable conditions.</li><li>Recorded technical observations differ. Review the field differences and comparability limits before attributing a configuration change.</li></ul>
+    <strong>Separate comparison dimensions</strong><pre>{
+  "applicability_changed": false,
+  "assessment_context_changed": false,
+  "context_changed": false,
+  "engine_version_changed": false,
+  "methodology_changed": false,
+  "scoring_eligibility_changed": false,
+  "scoring_profile_changed": false,
+  "severity_changed": true,
+  "status_changed": true
+}</pre>
+    <strong>Compared technical evidence (limited projection)</strong><pre>{
+  "differences": [
+    {
+      "earlier": [
+        "v=spf1 +all"
+      ],
+      "earlier_present": true,
+      "field": "records",
+      "later": [
+        "v=spf1 -all"
+      ],
+      "later_present": true
+    }
+  ],
+  "earlier": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "name": "example.com",
+      "record_type": "TXT",
+      "records": [
+        "v=spf1 +all"
+      ],
+      "state": "ok"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-earlier-email.spf",
+    "scoreable": false,
+    "severity": "low",
+    "status": "warning"
+  },
+  "later": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "name": "example.com",
+      "record_type": "TXT",
+      "records": [
+        "v=spf1 -all"
+      ],
+      "state": "ok"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-later-email.spf",
+    "scoreable": false,
+    "severity": "informational",
+    "status": "passed"
+  }
+}</pre>
+  </article><article>
+    <h3>Content Security Policy</h3><small>headers.csp</small>
+    <p><span class="badge">Resolved concern</span> <span class="badge">Changed observation</span> </p>
+    <p>Comparability: Comparable · Different observations</p>
+    <p>Warning → Passed · Low → Informational</p>
+    <ul><li>A previously supported concern now meets the Passed criterion with different measured evidence under comparable conditions.</li><li>Recorded technical observations differ. Review the field differences and comparability limits before attributing a configuration change.</li></ul>
+    <strong>Separate comparison dimensions</strong><pre>{
+  "applicability_changed": false,
+  "assessment_context_changed": false,
+  "context_changed": false,
+  "engine_version_changed": false,
+  "methodology_changed": false,
+  "scoring_eligibility_changed": false,
+  "scoring_profile_changed": false,
+  "severity_changed": true,
+  "status_changed": true
+}</pre>
+    <strong>Compared technical evidence (limited projection)</strong><pre>{
+  "differences": [
+    {
+      "earlier": {
+        "content-security-policy": []
+      },
+      "earlier_present": true,
+      "field": "header_fields",
+      "later": {
+        "content-security-policy": [
+          "default-src \u0027self\u0027"
+        ]
+      },
+      "later_present": true
+    }
+  ],
+  "earlier": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "content_type": "text/html",
+      "header_fields": {
+        "content-security-policy": []
+      },
+      "method": "HEAD",
+      "status_code": 200,
+      "url": "https://example.com/"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-earlier-headers.csp",
+    "scoreable": false,
+    "severity": "low",
+    "status": "warning"
+  },
+  "later": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "content_type": "text/html",
+      "header_fields": {
+        "content-security-policy": [
+          "default-src \u0027self\u0027"
+        ]
+      },
+      "method": "HEAD",
+      "status_code": 200,
+      "url": "https://example.com/"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-later-headers.csp",
+    "scoreable": false,
+    "severity": "informational",
+    "status": "passed"
+  }
+}</pre>
+  </article><article>
+    <h3>Framing protection</h3><small>headers.framing</small>
+    <p><span class="badge">Inconclusive</span> </p>
+    <p>Comparability: Partially comparable · Inconclusive</p>
+    <p>Warning → Passed · Low → Informational</p>
+    <ul><li>Required measured evidence is missing, malformed, failed or unsupported. Missing fields are not treated as empty observations.</li><li>The sets of recorded measured fields differ; only common fields can be compared directly.</li></ul>
+    <strong>Separate comparison dimensions</strong><pre>{
+  "applicability_changed": false,
+  "assessment_context_changed": false,
+  "context_changed": false,
+  "engine_version_changed": false,
+  "methodology_changed": false,
+  "scoring_eligibility_changed": false,
+  "scoring_profile_changed": false,
+  "severity_changed": true,
+  "status_changed": true
+}</pre>
+    <strong>Compared technical evidence (limited projection)</strong><pre>{
+  "differences": [
+    {
+      "earlier": null,
+      "earlier_present": false,
+      "field": "header_fields",
+      "later": {
+        "content-security-policy": [],
+        "x-frame-options": [
+          "DENY"
+        ]
+      },
+      "later_present": true
+    }
+  ],
+  "earlier": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "content_type": "text/html",
+      "method": "HEAD",
+      "status_code": 200,
+      "url": "https://example.com/"
+    },
+    "evidence_complete": false,
+    "id": "synthetic-earlier-headers.framing",
+    "scoreable": false,
+    "severity": "low",
+    "status": "warning"
+  },
+  "later": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "content_type": "text/html",
+      "header_fields": {
+        "content-security-policy": [],
+        "x-frame-options": [
+          "DENY"
+        ]
+      },
+      "method": "HEAD",
+      "status_code": 200,
+      "url": "https://example.com/"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-later-headers.framing",
+    "scoreable": false,
+    "severity": "informational",
+    "status": "passed"
+  }
+}</pre>
+  </article><article>
+    <h3>Referrer policy</h3><small>headers.referrer</small>
+    <p><span class="badge">Persistent concern</span> </p>
+    <p>Comparability: Comparable · Equivalent observations</p>
+    <p>Warning → Warning · Low → Low</p>
+    <ul><li>The same criterion remains a supported concern in both runs. This does not establish exploitation or identical underlying causes.</li><li>The supported measured fields and interpretation are equivalent within this limited comparison.</li></ul>
+    <strong>Separate comparison dimensions</strong><pre>{
+  "applicability_changed": false,
+  "assessment_context_changed": false,
+  "context_changed": false,
+  "engine_version_changed": false,
+  "methodology_changed": false,
+  "scoring_eligibility_changed": false,
+  "scoring_profile_changed": false,
+  "severity_changed": false,
+  "status_changed": false
+}</pre>
+    <strong>Compared technical evidence (limited projection)</strong><pre>{
+  "differences": [],
+  "earlier": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "content_type": "text/html",
+      "header_fields": {
+        "referrer-policy": []
+      },
+      "method": "HEAD",
+      "status_code": 200,
+      "url": "https://example.com/"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-earlier-headers.referrer",
+    "scoreable": false,
+    "severity": "low",
+    "status": "warning"
+  },
+  "later": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "content_type": "text/html",
+      "header_fields": {
+        "referrer-policy": []
+      },
+      "method": "HEAD",
+      "status_code": 200,
+      "url": "https://example.com/"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-later-headers.referrer",
+    "scoreable": false,
+    "severity": "low",
+    "status": "warning"
+  }
+}</pre>
+  </article><article>
+    <h3>Negotiated TLS protocol</h3><small>tls.protocol</small>
+    <p><span class="badge">Changed observation</span> </p>
+    <p>Comparability: Comparable · Different observations</p>
+    <p>Passed → Passed · Informational → Informational</p>
+    <ul><li>Recorded technical observations differ. Review the field differences and comparability limits before attributing a configuration change.</li></ul>
+    <strong>Separate comparison dimensions</strong><pre>{
+  "applicability_changed": false,
+  "assessment_context_changed": false,
+  "context_changed": false,
+  "engine_version_changed": false,
+  "methodology_changed": false,
+  "scoring_eligibility_changed": false,
+  "scoring_profile_changed": false,
+  "severity_changed": false,
+  "status_changed": false
+}</pre>
+    <strong>Compared technical evidence (limited projection)</strong><pre>{
+  "differences": [
+    {
+      "earlier": "2026-12-01T00:00:00+00:00",
+      "earlier_present": true,
+      "field": "not_after",
+      "later": "2027-02-14T00:00:00+00:00",
+      "later_present": true
+    },
+    {
+      "earlier": "2026-09-01T00:00:00+00:00",
+      "earlier_present": true,
+      "field": "not_before",
+      "later": "2026-11-16T00:00:00+00:00",
+      "later_present": true
+    },
+    {
+      "earlier": "TLSv1.2",
+      "earlier_present": true,
+      "field": "protocol",
+      "later": "TLSv1.3",
+      "later_present": true
+    }
+  ],
+  "earlier": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "address": "8.8.8.8",
+      "hostname": "example.com",
+      "issuer": {
+        "organizationName": "Fictional test CA"
+      },
+      "not_after": "2026-12-01T00:00:00+00:00",
+      "not_before": "2026-09-01T00:00:00+00:00",
+      "port": 443,
+      "protocol": "TLSv1.2"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-earlier-tls.protocol",
+    "scoreable": true,
+    "severity": "informational",
+    "status": "passed"
+  },
+  "later": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "address": "8.8.8.8",
+      "hostname": "example.com",
+      "issuer": {
+        "organizationName": "Fictional test CA"
+      },
+      "not_after": "2027-02-14T00:00:00+00:00",
+      "not_before": "2026-11-16T00:00:00+00:00",
+      "port": 443,
+      "protocol": "TLSv1.3"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-later-tls.protocol",
+    "scoreable": true,
+    "severity": "informational",
+    "status": "passed"
+  }
+}</pre>
+  </article><article>
+    <h3>Certificate validity and expiry</h3><small>tls.validity</small>
+    <p><span class="badge">Changed observation</span> </p>
+    <p>Comparability: Comparable · Different observations</p>
+    <p>Passed → Passed · Informational → Informational</p>
+    <ul><li>Recorded technical observations differ. Review the field differences and comparability limits before attributing a configuration change.</li></ul>
+    <strong>Separate comparison dimensions</strong><pre>{
+  "applicability_changed": false,
+  "assessment_context_changed": false,
+  "context_changed": false,
+  "engine_version_changed": false,
+  "methodology_changed": false,
+  "scoring_eligibility_changed": false,
+  "scoring_profile_changed": false,
+  "severity_changed": false,
+  "status_changed": false
+}</pre>
+    <strong>Compared technical evidence (limited projection)</strong><pre>{
+  "differences": [
+    {
+      "earlier": "2026-12-01T00:00:00+00:00",
+      "earlier_present": true,
+      "field": "not_after",
+      "later": "2027-02-14T00:00:00+00:00",
+      "later_present": true
+    },
+    {
+      "earlier": "2026-09-01T00:00:00+00:00",
+      "earlier_present": true,
+      "field": "not_before",
+      "later": "2026-11-16T00:00:00+00:00",
+      "later_present": true
+    },
+    {
+      "earlier": "TLSv1.2",
+      "earlier_present": true,
+      "field": "protocol",
+      "later": "TLSv1.3",
+      "later_present": true
+    }
+  ],
+  "earlier": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "address": "8.8.8.8",
+      "hostname": "example.com",
+      "issuer": {
+        "organizationName": "Fictional test CA"
+      },
+      "not_after": "2026-12-01T00:00:00+00:00",
+      "not_before": "2026-09-01T00:00:00+00:00",
+      "port": 443,
+      "protocol": "TLSv1.2"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-earlier-tls.validity",
+    "scoreable": true,
+    "severity": "informational",
+    "status": "passed"
+  },
+  "later": {
+    "applicability": "applicable",
+    "applicability_basis": "user_declared",
+    "applicability_recorded": true,
+    "evidence": {
+      "address": "8.8.8.8",
+      "hostname": "example.com",
+      "issuer": {
+        "organizationName": "Fictional test CA"
+      },
+      "not_after": "2027-02-14T00:00:00+00:00",
+      "not_before": "2026-11-16T00:00:00+00:00",
+      "port": 443,
+      "protocol": "TLSv1.3"
+    },
+    "evidence_complete": true,
+    "id": "synthetic-later-tls.validity",
+    "scoreable": true,
+    "severity": "informational",
+    "status": "passed"
+  }
+}</pre>
+  </article>
+  <h2>Methodology and limitations</h2><pre>{
+  "earlier": {
+    "completed_at": null,
+    "context": {
+      "controls_dns": false,
+      "receives_email": false,
+      "sends_email": true
+    },
+    "context_source": "user_declared_unverified",
+    "domain": "example.com",
+    "engine_version": "0.4.0",
+    "get_fallback_enabled": false,
+    "http_method": "HEAD",
+    "id": "synthetic-earlier",
+    "methodology_version": "checks-v0.3",
+    "scoring_profile": "context-v1",
+    "selectors": [],
+    "started_at": "2026-10-01T00:00:00+00:00",
+    "synthetic_fixture": true
+  },
+  "later": {
+    "completed_at": null,
+    "context": {
+      "controls_dns": false,
+      "receives_email": false,
+      "sends_email": true
+    },
+    "context_source": "user_declared_unverified",
+    "domain": "example.com",
+    "engine_version": "0.4.0",
+    "get_fallback_enabled": false,
+    "http_method": "HEAD",
+    "id": "synthetic-later",
+    "methodology_version": "checks-v0.3",
+    "scoring_profile": "context-v1",
+    "selectors": [],
+    "started_at": "2026-11-16T00:00:00+00:00",
+    "synthetic_fixture": true
+  }
+}</pre>
+  <p class="notice">This assessment is not a penetration test, audit certification, compliance attestation, or guarantee of security. It cannot establish the security of an organization or the probability of compromise. Assess only assets you own or are explicitly authorized to review.</p><footer><small>CyberCheck · comparison-v1 · comparison schema 1</small></footer>
+</body>
+</html>

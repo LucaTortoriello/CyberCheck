@@ -6,7 +6,9 @@ from importlib.resources import files
 
 from jinja2 import Environment, select_autoescape
 
+from cybercheck.core.comparison import Comparison
 from cybercheck.core.evidence import safe_web_evidence
+from cybercheck.locales.comparison import ct
 from cybercheck.locales.ui import tr
 from cybercheck.models import Assessment
 
@@ -67,4 +69,23 @@ def render_html(assessment: Assessment, language: str = "it", *, include_score: 
         score_formula_key="score_formula_context"
         if assessment.metadata.get("scoring_profile") == "context-v1"
         else "score_formula",
+    )
+
+
+def render_comparison_json(comparison: Comparison) -> str:
+    """Export the allowlisted comparison projection, never source response bodies."""
+    return json.dumps(comparison.to_dict(), indent=2, ensure_ascii=False)
+
+
+def render_comparison_html(comparison: Comparison, language: str = "it") -> str:
+    language = "en" if language == "en" else "it"
+    environment = Environment(autoescape=select_autoescape(default=True))
+    template = environment.from_string(
+        files("cybercheck.reports").joinpath("comparison.html").read_text("utf-8")
+    )
+    return template.render(
+        c=comparison.to_dict(),
+        language=language,
+        ct=lambda key: ct(key, language),
+        t=lambda key: tr(key, language),
     )

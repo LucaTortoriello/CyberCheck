@@ -1,6 +1,6 @@
 # CyberCheck: guida italiana per capire i controlli
 
-Questa guida accompagna chi studia sicurezza informatica e ha poca esperienza di programmazione. Spiega i concetti, mostra piccoli esempi e li collega al codice di CyberCheck v0.3. Non serve conoscere Python per seguirla: i nomi delle funzioni permettono di ritrovare nel repository il comportamento descritto.
+Questa guida accompagna chi studia sicurezza informatica e ha poca esperienza di programmazione. Spiega i concetti, mostra piccoli esempi e li collega al codice di CyberCheck v0.4. Non serve conoscere Python per seguirla: i nomi delle funzioni permettono di ritrovare nel repository il comportamento descritto.
 
 Tutti i domini, gli indirizzi e i risultati degli esempi sono **fittizi e didattici**. Il suffisso `.example` e gli indirizzi `192.0.2.0/24` e `2001:db8::/32` servono alla documentazione: non sono bersagli da interrogare. CyberCheck blocca le connessioni a indirizzi riservati; questi esempi non sono scansioni eseguibili né osservazioni raccolte su Internet.
 
@@ -94,7 +94,9 @@ La freccia verso SQLite descrive il salvataggio eseguito dal pannello o dalla ri
 | [cybercheck/models/assessment.py](../cybercheck/models/assessment.py) | `Finding`, `Assessment`, `Status` e `Severity` definiscono i dati; `Assessment.health` calcola punteggio e copertura. |
 | [cybercheck/locales/findings.py](../cybercheck/locales/findings.py) | `finding()` costruisce rilievi con testi, riferimenti e indicazioni di correzione nelle due lingue supportate. |
 | [cybercheck/core/evidence.py](../cybercheck/core/evidence.py) | Riduce e oscura dati web sensibili nelle evidenze. |
-| [cybercheck/storage/sqlite.py](../cybercheck/storage/sqlite.py) | `Repository.save()`, `get()`, `list()` e `previous()` gestiscono la cronologia; `compare()` confronta due esecuzioni dello stesso dominio. |
+| [cybercheck/storage/sqlite.py](../cybercheck/storage/sqlite.py) | `Repository.save()`, `get()`, `list()` e `previous()` gestiscono la cronologia; `compare()` conserva l'interfaccia precedente per le righe cambiate. |
+| [cybercheck/core/comparison.py](../cybercheck/core/comparison.py) | `compare_assessments()` distingue osservazioni, interpretazione, contesto e confrontabilità senza eseguire nuove richieste. |
+| [cybercheck/app/comparison.py](../cybercheck/app/comparison.py) | Permette di scegliere due assessment salvati dello stesso target e scaricare il confronto. |
 | [cybercheck/reports/render.py](../cybercheck/reports/render.py) | `render_html()` e `render_json()` generano i rapporti; `report_view()` prepara una copia con evidenze web filtrate. |
 
 ### Limiti operativi e destinazioni
@@ -541,7 +543,43 @@ Il riepilogo è **12 superati, 1 fallito e 9 avvisi**; nessuno stato Sconosciuto
 
 Per leggere il risultato, parti dalla contraddizione MX e dal permissivo `+all`, verifica se il selettore revocato è ancora usato e riesamina poi le misure web rispetto al servizio. La scelta `p=none` richiede una decisione sul percorso di adozione, non un cambio indiscriminato a `reject`. Il punteggio 80 non deve nascondere nessuna di queste osservazioni.
 
-La cronologia SQLite permette di confrontare l'esecuzione con la precedente dello stesso dominio. Una variazione dell'evidenza non è automaticamente un peggioramento: per esempio, il normale calo dei giorni residui del certificato viene ignorato nel confronto stabile. I rapporti HTML sono stampabili dal browser; l'app non genera direttamente PDF.
+La cronologia SQLite permette di confrontare due esecuzioni salvate dello stesso dominio, anche non consecutive. Il normale calo dei giorni residui del certificato viene ignorato nel confronto delle osservazioni. I rapporti HTML sono stampabili dal browser; l'app non genera direttamente PDF.
+
+### Confrontare due assessment in v0.4
+
+Apri **Cronologia assessment**, scegli un assessment del target e usa **Apri assessment**. Nei controlli del confronto scegli la data precedente e quella successiva: il confronto si aggiorna leggendo solo i dati locali. Le due selezioni hanno pagine separate da 25 risultati, così puoi raggiungere esecuzioni lontane nel tempo. Il target resta lo stesso; coppie invertite o la stessa esecuzione ripetuta non producono esportazioni fuorvianti. La coppia predefinita è l'assessment attivo con il suo precedente.
+
+Prima dei conteggi leggi la **confrontabilità**: Confrontabile, Parzialmente confrontabile o Non confrontabile. Ogni limite ha una spiegazione. Apri poi un finding per vedere gli stati, le gravità, l'applicabilità e i campi tecnici registrati nelle due esecuzioni. Puoi scaricare HTML e JSON del confronto senza avviare nuove scansioni, nemmeno se un assessment storico aveva autorizzato GET.
+
+| Categoria | Come leggerla |
+|---|---|
+| Nuovo elemento da esaminare | Un criterio prima Superato presenta ora un problema o avviso non informativo supportato, con osservazioni diverse e condizioni confrontabili. |
+| Elemento risolto | Un elemento precedentemente supportato soddisfa ora il criterio Superato, con osservazioni diverse in condizioni confrontabili. |
+| Elemento persistente | Lo stesso criterio resta da esaminare in entrambe le esecuzioni; non prova che la causa sia identica. |
+| Invariato | Osservazioni supportate e interpretazione sono equivalenti entro i limiti del confronto. |
+| Osservazione cambiata | Dati tecnici misurati diversi; non significa automaticamente sicurezza migliorata o peggiorata. |
+| Valutazione cambiata | Interpretazione, applicabilità, contesto o ammissibilità al punteggio differiscono; i dati misurati possono essere uguali. |
+| Inconcludente | Evidenze, copertura o confrontabilità non bastano per stabilire una transizione attendibile. |
+
+Le categorie possono sovrapporsi: un criterio risolto può anche mostrare osservazioni cambiate. Un finding assente nella nuova esecuzione **non prova una correzione**: il controllo può essere saltato o avere selettori diversi. Un nuovo tipo di controllo introdotto da un aggiornamento non dimostra un nuovo problema sul target. Passare da Sconosciuto a misurabile significa avere nuove evidenze, non sapere quando il problema sia comparso.
+
+**Esempio con due assessment fittizi.** Il 1 ottobre e il 16 novembre una stessa applicazione autorizzata ha questi risultati immaginari, con contesto dichiarato invariato:
+
+| Criterio | Ottobre | Novembre | Conclusione supportata |
+|---|---|---|---|
+| SPF | `+all`, Avviso | `-all`, Superato | Criterio risolto e osservazione cambiata; non verifica messaggi reali. |
+| DMARC | `p=none`, Avviso | `p=reject`, Superato | Criterio limitato di policy cambiato; allineamento e comportamento dei destinatari restano non verificati. |
+| CSP | Header assente, Avviso | Header applicato presente, Superato | Criterio di presenza risolto; efficacia completa non dimostrata. |
+| Scadenza TLS | Certificato valido fino a dicembre | Nuova scadenza a febbraio, ancora valido | Rinnovo osservabile, non un miglioramento di sicurezza dedotto automaticamente. |
+| Protocollo TLS | Negoziato 1.2 | Negoziato 1.3 | Osservazione cambiata; il supporto delle altre versioni resta non testato. |
+| Framing storico | Solo valore derivato dal parser | Valori raw CSP/XFO registrati | Confronto limitato: non si inventa un header storico mancante. |
+| Referrer | Avviso contestuale | Stesso avviso contestuale | Elemento persistente nel criterio limitato. |
+
+Questo esempio fittizio usa v0.4 e la stessa metodologia dei controlli su entrambi i lati; la riga framing rappresenta un record precedente incompleto. I [report italiano](examples/comparison.it.html), [inglese](examples/comparison.en.html) e [JSON](examples/comparison.json) sono generati offline da `scripts/generate_comparison_example.py`: nessuna connessione viene effettuata e nessun certificato reale è stato raccolto. Se cambia la versione del client HTTP, cambia anche lo User-Agent: le risposte possono differire e il confronto web viene qualificato anche quando le regole dei controlli restano uguali.
+
+Un caso diverso chiarisce la **valutazione cambiata**: se il medesimo SPF `+all` è Fallito/Alta in v0.2 e Avviso/Media in v0.3, è cambiata la classificazione del programma, non è dimostrata una modifica DNS. I contesti dichiarati possono produrre differenze analoghe senza cambiare alcun record. HEAD e GET, risposte di tipo diverso, endpoint diversi e query URL oscurate riducono inoltre la confrontabilità.
+
+Due punteggi uguali o diversi non bastano per giudicare un miglioramento. Il delta numerico appare solo con profili e metodologie noti compatibili, stesso contesto, stessi ID dei criteri conteggiati e osservazioni di supporto confrontabili. Il profilo v0.2 e `context-v1` escludono criteri diversi: i loro numeri non sono direttamente confrontabili. Gli assessment storici conservano payload, classificazioni, flag e calcolo originale; il confronto non li aggiorna alle nuove regole.
 
 ## 10. Esercizi pratici
 

@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Callable
 
-from cybercheck import __version__
+from cybercheck import CHECK_METHODOLOGY, __version__
 from cybercheck.checks.email import check_dkim, check_dmarc, check_dns, check_spf
 from cybercheck.checks.tls import check_tls
 from cybercheck.checks.web import check_web
@@ -51,6 +51,7 @@ def run_assessment(
         authorization_confirmed=True,
         metadata={
             "engine_version": __version__,
+            "methodology_version": CHECK_METHODOLOGY,
             "mode": "public-target-only",
             "http_method": "HEAD",
             "get_fallback_enabled": web.budget.settings.allow_get_fallback,

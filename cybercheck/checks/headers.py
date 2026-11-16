@@ -19,6 +19,15 @@ HEADER_KEYS = (
     "headers.framing",
 )
 
+HEADER_NAMES = {
+    "headers.hsts": ("strict-transport-security",),
+    "headers.csp": ("content-security-policy",),
+    "headers.nosniff": ("x-content-type-options",),
+    "headers.referrer": ("referrer-policy",),
+    "headers.permissions": ("permissions-policy",),
+    "headers.framing": ("content-security-policy", "x-frame-options"),
+}
+
 
 def active_hsts_policy(value: str | None) -> bool:
     directives: dict[str, str | None] = {}
@@ -99,6 +108,7 @@ def check_headers(response: WebResponse | None, error: dict | str | None = None)
                     "status_code": response.status_code,
                     "content_type": content_type,
                     "header_value": value,
+                    "observed_headers": {name: response.values(name) for name in HEADER_NAMES[key]},
                 },
                 scoreable=scoreable,
             )

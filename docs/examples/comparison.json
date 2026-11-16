@@ -1,0 +1,779 @@
+{
+  "domain": "example.com",
+  "earlier": {
+    "id": "synthetic-earlier",
+    "domain": "example.com",
+    "started_at": "2026-10-01T00:00:00+00:00",
+    "completed_at": null,
+    "engine_version": "0.4.0",
+    "methodology_version": "checks-v0.3",
+    "scoring_profile": "context-v1",
+    "context": {
+      "sends_email": true,
+      "receives_email": false,
+      "controls_dns": false
+    },
+    "context_source": "user_declared_unverified",
+    "selectors": [],
+    "http_method": "HEAD",
+    "get_fallback_enabled": false,
+    "synthetic_fixture": true
+  },
+  "later": {
+    "id": "synthetic-later",
+    "domain": "example.com",
+    "started_at": "2026-11-16T00:00:00+00:00",
+    "completed_at": null,
+    "engine_version": "0.4.0",
+    "methodology_version": "checks-v0.3",
+    "scoring_profile": "context-v1",
+    "context": {
+      "sends_email": true,
+      "receives_email": false,
+      "controls_dns": false
+    },
+    "context_source": "user_declared_unverified",
+    "selectors": [],
+    "http_method": "HEAD",
+    "get_fallback_enabled": false,
+    "synthetic_fixture": true
+  },
+  "comparability": "partially_comparable",
+  "limitations": [
+    {
+      "code": "incomplete_evidence",
+      "explanation": {
+        "en": "Required measured evidence is missing, malformed, failed or unsupported. Missing fields are not treated as empty observations.",
+        "it": "Evidenze misurate necessarie sono mancanti, malformate, fallite o non supportate. I campi mancanti non sono trattati come osservazioni vuote."
+      }
+    },
+    {
+      "code": "field_coverage_changed",
+      "explanation": {
+        "en": "The sets of recorded measured fields differ; only common fields can be compared directly.",
+        "it": "I campi misurati registrati differiscono; solo i campi comuni possono essere confrontati direttamente."
+      }
+    }
+  ],
+  "findings": [
+    {
+      "check_id": "email.dmarc",
+      "check_name": {
+        "en": "DMARC policy",
+        "it": "Policy DMARC"
+      },
+      "categories": [
+        "resolved_issue",
+        "changed_observation"
+      ],
+      "concern_change": "resolved_issue",
+      "observation_change": "changed",
+      "comparability": "comparable",
+      "dimensions": {
+        "status_changed": true,
+        "severity_changed": true,
+        "applicability_changed": false,
+        "context_changed": false,
+        "assessment_context_changed": false,
+        "scoring_eligibility_changed": false,
+        "scoring_profile_changed": false,
+        "methodology_changed": false,
+        "engine_version_changed": false
+      },
+      "differences": [
+        {
+          "field": "records",
+          "earlier_present": true,
+          "later_present": true,
+          "earlier": [
+            "v=DMARC1; p=none"
+          ],
+          "later": [
+            "v=DMARC1; p=reject"
+          ]
+        }
+      ],
+      "reasons": [
+        {
+          "code": "resolved_supported",
+          "explanation": {
+            "en": "A previously supported concern now meets the Passed criterion with different measured evidence under comparable conditions.",
+            "it": "Un elemento precedentemente supportato soddisfa ora il criterio Superato con evidenze misurate diverse in condizioni confrontabili."
+          }
+        },
+        {
+          "code": "observation_changed",
+          "explanation": {
+            "en": "Recorded technical observations differ. Review the field differences and comparability limits before attributing a configuration change.",
+            "it": "Le osservazioni tecniche registrate differiscono. Esamina i campi variati e i limiti di confrontabilità prima di attribuire una modifica di configurazione."
+          }
+        }
+      ],
+      "earlier": {
+        "id": "synthetic-earlier-email.dmarc",
+        "status": "warning",
+        "severity": "low",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": false,
+        "evidence": {
+          "name": "_dmarc.example.com",
+          "record_type": "TXT",
+          "state": "ok",
+          "records": [
+            "v=DMARC1; p=none"
+          ]
+        },
+        "evidence_complete": true
+      },
+      "later": {
+        "id": "synthetic-later-email.dmarc",
+        "status": "passed",
+        "severity": "informational",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": false,
+        "evidence": {
+          "name": "_dmarc.example.com",
+          "record_type": "TXT",
+          "state": "ok",
+          "records": [
+            "v=DMARC1; p=reject"
+          ]
+        },
+        "evidence_complete": true
+      },
+      "previous_status": "warning",
+      "current_status": "passed",
+      "previous_severity": "low",
+      "current_severity": "informational",
+      "evidence_changed": true
+    },
+    {
+      "check_id": "email.spf",
+      "check_name": {
+        "en": "SPF configuration",
+        "it": "Configurazione SPF"
+      },
+      "categories": [
+        "resolved_issue",
+        "changed_observation"
+      ],
+      "concern_change": "resolved_issue",
+      "observation_change": "changed",
+      "comparability": "comparable",
+      "dimensions": {
+        "status_changed": true,
+        "severity_changed": true,
+        "applicability_changed": false,
+        "context_changed": false,
+        "assessment_context_changed": false,
+        "scoring_eligibility_changed": false,
+        "scoring_profile_changed": false,
+        "methodology_changed": false,
+        "engine_version_changed": false
+      },
+      "differences": [
+        {
+          "field": "records",
+          "earlier_present": true,
+          "later_present": true,
+          "earlier": [
+            "v=spf1 +all"
+          ],
+          "later": [
+            "v=spf1 -all"
+          ]
+        }
+      ],
+      "reasons": [
+        {
+          "code": "resolved_supported",
+          "explanation": {
+            "en": "A previously supported concern now meets the Passed criterion with different measured evidence under comparable conditions.",
+            "it": "Un elemento precedentemente supportato soddisfa ora il criterio Superato con evidenze misurate diverse in condizioni confrontabili."
+          }
+        },
+        {
+          "code": "observation_changed",
+          "explanation": {
+            "en": "Recorded technical observations differ. Review the field differences and comparability limits before attributing a configuration change.",
+            "it": "Le osservazioni tecniche registrate differiscono. Esamina i campi variati e i limiti di confrontabilità prima di attribuire una modifica di configurazione."
+          }
+        }
+      ],
+      "earlier": {
+        "id": "synthetic-earlier-email.spf",
+        "status": "warning",
+        "severity": "low",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": false,
+        "evidence": {
+          "name": "example.com",
+          "record_type": "TXT",
+          "state": "ok",
+          "records": [
+            "v=spf1 +all"
+          ]
+        },
+        "evidence_complete": true
+      },
+      "later": {
+        "id": "synthetic-later-email.spf",
+        "status": "passed",
+        "severity": "informational",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": false,
+        "evidence": {
+          "name": "example.com",
+          "record_type": "TXT",
+          "state": "ok",
+          "records": [
+            "v=spf1 -all"
+          ]
+        },
+        "evidence_complete": true
+      },
+      "previous_status": "warning",
+      "current_status": "passed",
+      "previous_severity": "low",
+      "current_severity": "informational",
+      "evidence_changed": true
+    },
+    {
+      "check_id": "headers.csp",
+      "check_name": {
+        "en": "Content Security Policy",
+        "it": "Content Security Policy"
+      },
+      "categories": [
+        "resolved_issue",
+        "changed_observation"
+      ],
+      "concern_change": "resolved_issue",
+      "observation_change": "changed",
+      "comparability": "comparable",
+      "dimensions": {
+        "status_changed": true,
+        "severity_changed": true,
+        "applicability_changed": false,
+        "context_changed": false,
+        "assessment_context_changed": false,
+        "scoring_eligibility_changed": false,
+        "scoring_profile_changed": false,
+        "methodology_changed": false,
+        "engine_version_changed": false
+      },
+      "differences": [
+        {
+          "field": "header_fields",
+          "earlier_present": true,
+          "later_present": true,
+          "earlier": {
+            "content-security-policy": []
+          },
+          "later": {
+            "content-security-policy": [
+              "default-src 'self'"
+            ]
+          }
+        }
+      ],
+      "reasons": [
+        {
+          "code": "resolved_supported",
+          "explanation": {
+            "en": "A previously supported concern now meets the Passed criterion with different measured evidence under comparable conditions.",
+            "it": "Un elemento precedentemente supportato soddisfa ora il criterio Superato con evidenze misurate diverse in condizioni confrontabili."
+          }
+        },
+        {
+          "code": "observation_changed",
+          "explanation": {
+            "en": "Recorded technical observations differ. Review the field differences and comparability limits before attributing a configuration change.",
+            "it": "Le osservazioni tecniche registrate differiscono. Esamina i campi variati e i limiti di confrontabilità prima di attribuire una modifica di configurazione."
+          }
+        }
+      ],
+      "earlier": {
+        "id": "synthetic-earlier-headers.csp",
+        "status": "warning",
+        "severity": "low",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": false,
+        "evidence": {
+          "method": "HEAD",
+          "content_type": "text/html",
+          "url": "https://example.com/",
+          "status_code": 200,
+          "header_fields": {
+            "content-security-policy": []
+          }
+        },
+        "evidence_complete": true
+      },
+      "later": {
+        "id": "synthetic-later-headers.csp",
+        "status": "passed",
+        "severity": "informational",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": false,
+        "evidence": {
+          "method": "HEAD",
+          "content_type": "text/html",
+          "url": "https://example.com/",
+          "status_code": 200,
+          "header_fields": {
+            "content-security-policy": [
+              "default-src 'self'"
+            ]
+          }
+        },
+        "evidence_complete": true
+      },
+      "previous_status": "warning",
+      "current_status": "passed",
+      "previous_severity": "low",
+      "current_severity": "informational",
+      "evidence_changed": true
+    },
+    {
+      "check_id": "headers.framing",
+      "check_name": {
+        "en": "Framing protection",
+        "it": "Protezione dall'incorporamento"
+      },
+      "categories": [
+        "inconclusive"
+      ],
+      "concern_change": "inconclusive",
+      "observation_change": "inconclusive",
+      "comparability": "partially_comparable",
+      "dimensions": {
+        "status_changed": true,
+        "severity_changed": true,
+        "applicability_changed": false,
+        "context_changed": false,
+        "assessment_context_changed": false,
+        "scoring_eligibility_changed": false,
+        "scoring_profile_changed": false,
+        "methodology_changed": false,
+        "engine_version_changed": false
+      },
+      "differences": [
+        {
+          "field": "header_fields",
+          "earlier_present": false,
+          "later_present": true,
+          "earlier": null,
+          "later": {
+            "content-security-policy": [],
+            "x-frame-options": [
+              "DENY"
+            ]
+          }
+        }
+      ],
+      "reasons": [
+        {
+          "code": "incomplete_evidence",
+          "explanation": {
+            "en": "Required measured evidence is missing, malformed, failed or unsupported. Missing fields are not treated as empty observations.",
+            "it": "Evidenze misurate necessarie sono mancanti, malformate, fallite o non supportate. I campi mancanti non sono trattati come osservazioni vuote."
+          }
+        },
+        {
+          "code": "field_coverage_changed",
+          "explanation": {
+            "en": "The sets of recorded measured fields differ; only common fields can be compared directly.",
+            "it": "I campi misurati registrati differiscono; solo i campi comuni possono essere confrontati direttamente."
+          }
+        }
+      ],
+      "earlier": {
+        "id": "synthetic-earlier-headers.framing",
+        "status": "warning",
+        "severity": "low",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": false,
+        "evidence": {
+          "method": "HEAD",
+          "content_type": "text/html",
+          "url": "https://example.com/",
+          "status_code": 200
+        },
+        "evidence_complete": false
+      },
+      "later": {
+        "id": "synthetic-later-headers.framing",
+        "status": "passed",
+        "severity": "informational",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": false,
+        "evidence": {
+          "method": "HEAD",
+          "content_type": "text/html",
+          "url": "https://example.com/",
+          "status_code": 200,
+          "header_fields": {
+            "content-security-policy": [],
+            "x-frame-options": [
+              "DENY"
+            ]
+          }
+        },
+        "evidence_complete": true
+      },
+      "previous_status": "warning",
+      "current_status": "passed",
+      "previous_severity": "low",
+      "current_severity": "informational",
+      "evidence_changed": false
+    },
+    {
+      "check_id": "headers.referrer",
+      "check_name": {
+        "en": "Referrer policy",
+        "it": "Policy del referrer"
+      },
+      "categories": [
+        "persistent_issue"
+      ],
+      "concern_change": "persistent_issue",
+      "observation_change": "equivalent",
+      "comparability": "comparable",
+      "dimensions": {
+        "status_changed": false,
+        "severity_changed": false,
+        "applicability_changed": false,
+        "context_changed": false,
+        "assessment_context_changed": false,
+        "scoring_eligibility_changed": false,
+        "scoring_profile_changed": false,
+        "methodology_changed": false,
+        "engine_version_changed": false
+      },
+      "differences": [],
+      "reasons": [
+        {
+          "code": "persistent_supported",
+          "explanation": {
+            "en": "The same criterion remains a supported concern in both runs. This does not establish exploitation or identical underlying causes.",
+            "it": "Lo stesso criterio resta un elemento da esaminare supportato in entrambe le esecuzioni. Non dimostra sfruttamento o cause sottostanti identiche."
+          }
+        },
+        {
+          "code": "observation_equivalent",
+          "explanation": {
+            "en": "The supported measured fields and interpretation are equivalent within this limited comparison.",
+            "it": "I campi misurati supportati e l'interpretazione sono equivalenti entro questo confronto limitato."
+          }
+        }
+      ],
+      "earlier": {
+        "id": "synthetic-earlier-headers.referrer",
+        "status": "warning",
+        "severity": "low",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": false,
+        "evidence": {
+          "method": "HEAD",
+          "content_type": "text/html",
+          "url": "https://example.com/",
+          "status_code": 200,
+          "header_fields": {
+            "referrer-policy": []
+          }
+        },
+        "evidence_complete": true
+      },
+      "later": {
+        "id": "synthetic-later-headers.referrer",
+        "status": "warning",
+        "severity": "low",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": false,
+        "evidence": {
+          "method": "HEAD",
+          "content_type": "text/html",
+          "url": "https://example.com/",
+          "status_code": 200,
+          "header_fields": {
+            "referrer-policy": []
+          }
+        },
+        "evidence_complete": true
+      },
+      "previous_status": "warning",
+      "current_status": "warning",
+      "previous_severity": "low",
+      "current_severity": "low",
+      "evidence_changed": false
+    },
+    {
+      "check_id": "tls.protocol",
+      "check_name": {
+        "en": "Negotiated TLS protocol",
+        "it": "Protocollo TLS negoziato"
+      },
+      "categories": [
+        "changed_observation"
+      ],
+      "concern_change": "unchanged",
+      "observation_change": "changed",
+      "comparability": "comparable",
+      "dimensions": {
+        "status_changed": false,
+        "severity_changed": false,
+        "applicability_changed": false,
+        "context_changed": false,
+        "assessment_context_changed": false,
+        "scoring_eligibility_changed": false,
+        "scoring_profile_changed": false,
+        "methodology_changed": false,
+        "engine_version_changed": false
+      },
+      "differences": [
+        {
+          "field": "not_after",
+          "earlier_present": true,
+          "later_present": true,
+          "earlier": "2026-12-01T00:00:00+00:00",
+          "later": "2027-02-14T00:00:00+00:00"
+        },
+        {
+          "field": "not_before",
+          "earlier_present": true,
+          "later_present": true,
+          "earlier": "2026-09-01T00:00:00+00:00",
+          "later": "2026-11-16T00:00:00+00:00"
+        },
+        {
+          "field": "protocol",
+          "earlier_present": true,
+          "later_present": true,
+          "earlier": "TLSv1.2",
+          "later": "TLSv1.3"
+        }
+      ],
+      "reasons": [
+        {
+          "code": "observation_changed",
+          "explanation": {
+            "en": "Recorded technical observations differ. Review the field differences and comparability limits before attributing a configuration change.",
+            "it": "Le osservazioni tecniche registrate differiscono. Esamina i campi variati e i limiti di confrontabilità prima di attribuire una modifica di configurazione."
+          }
+        }
+      ],
+      "earlier": {
+        "id": "synthetic-earlier-tls.protocol",
+        "status": "passed",
+        "severity": "informational",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": true,
+        "evidence": {
+          "hostname": "example.com",
+          "address": "8.8.8.8",
+          "not_before": "2026-09-01T00:00:00+00:00",
+          "not_after": "2026-12-01T00:00:00+00:00",
+          "protocol": "TLSv1.2",
+          "port": 443,
+          "issuer": {
+            "organizationName": "Fictional test CA"
+          }
+        },
+        "evidence_complete": true
+      },
+      "later": {
+        "id": "synthetic-later-tls.protocol",
+        "status": "passed",
+        "severity": "informational",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": true,
+        "evidence": {
+          "hostname": "example.com",
+          "address": "8.8.8.8",
+          "not_before": "2026-11-16T00:00:00+00:00",
+          "not_after": "2027-02-14T00:00:00+00:00",
+          "protocol": "TLSv1.3",
+          "port": 443,
+          "issuer": {
+            "organizationName": "Fictional test CA"
+          }
+        },
+        "evidence_complete": true
+      },
+      "previous_status": "passed",
+      "current_status": "passed",
+      "previous_severity": "informational",
+      "current_severity": "informational",
+      "evidence_changed": true
+    },
+    {
+      "check_id": "tls.validity",
+      "check_name": {
+        "en": "Certificate validity and expiry",
+        "it": "Validità e scadenza del certificato"
+      },
+      "categories": [
+        "changed_observation"
+      ],
+      "concern_change": "unchanged",
+      "observation_change": "changed",
+      "comparability": "comparable",
+      "dimensions": {
+        "status_changed": false,
+        "severity_changed": false,
+        "applicability_changed": false,
+        "context_changed": false,
+        "assessment_context_changed": false,
+        "scoring_eligibility_changed": false,
+        "scoring_profile_changed": false,
+        "methodology_changed": false,
+        "engine_version_changed": false
+      },
+      "differences": [
+        {
+          "field": "not_after",
+          "earlier_present": true,
+          "later_present": true,
+          "earlier": "2026-12-01T00:00:00+00:00",
+          "later": "2027-02-14T00:00:00+00:00"
+        },
+        {
+          "field": "not_before",
+          "earlier_present": true,
+          "later_present": true,
+          "earlier": "2026-09-01T00:00:00+00:00",
+          "later": "2026-11-16T00:00:00+00:00"
+        },
+        {
+          "field": "protocol",
+          "earlier_present": true,
+          "later_present": true,
+          "earlier": "TLSv1.2",
+          "later": "TLSv1.3"
+        }
+      ],
+      "reasons": [
+        {
+          "code": "observation_changed",
+          "explanation": {
+            "en": "Recorded technical observations differ. Review the field differences and comparability limits before attributing a configuration change.",
+            "it": "Le osservazioni tecniche registrate differiscono. Esamina i campi variati e i limiti di confrontabilità prima di attribuire una modifica di configurazione."
+          }
+        }
+      ],
+      "earlier": {
+        "id": "synthetic-earlier-tls.validity",
+        "status": "passed",
+        "severity": "informational",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": true,
+        "evidence": {
+          "hostname": "example.com",
+          "address": "8.8.8.8",
+          "not_before": "2026-09-01T00:00:00+00:00",
+          "not_after": "2026-12-01T00:00:00+00:00",
+          "protocol": "TLSv1.2",
+          "port": 443,
+          "issuer": {
+            "organizationName": "Fictional test CA"
+          }
+        },
+        "evidence_complete": true
+      },
+      "later": {
+        "id": "synthetic-later-tls.validity",
+        "status": "passed",
+        "severity": "informational",
+        "applicability": "applicable",
+        "applicability_basis": "user_declared",
+        "applicability_recorded": true,
+        "scoreable": true,
+        "evidence": {
+          "hostname": "example.com",
+          "address": "8.8.8.8",
+          "not_before": "2026-11-16T00:00:00+00:00",
+          "not_after": "2027-02-14T00:00:00+00:00",
+          "protocol": "TLSv1.3",
+          "port": 443,
+          "issuer": {
+            "organizationName": "Fictional test CA"
+          }
+        },
+        "evidence_complete": true
+      },
+      "previous_status": "passed",
+      "current_status": "passed",
+      "previous_severity": "informational",
+      "current_severity": "informational",
+      "evidence_changed": true
+    }
+  ],
+  "summary": {
+    "new_issue": 0,
+    "resolved_issue": 3,
+    "persistent_issue": 1,
+    "unchanged": 0,
+    "changed_observation": 5,
+    "evaluation_changed": 0,
+    "inconclusive": 1
+  },
+  "scoring": {
+    "valid": true,
+    "earlier": {
+      "score": 100.0,
+      "passed": 2,
+      "evaluated": 2,
+      "excluded": 5
+    },
+    "later": {
+      "score": 100.0,
+      "passed": 2,
+      "evaluated": 2,
+      "excluded": 5
+    },
+    "delta": 0.0,
+    "evaluated_check_ids": [
+      "tls.protocol",
+      "tls.validity"
+    ],
+    "explanation": {
+      "en": "Profiles, context and evaluated criteria match. The delta is a limited diagnostic, not a security rating.",
+      "it": "Profili, contesto e criteri valutati coincidono. La differenza è un dato diagnostico limitato, non un giudizio di sicurezza."
+    },
+    "reasons": []
+  },
+  "methodology": {
+    "en": "comparison-v1 compares allowlisted measured fields by exact check ID; missing evidence, method/context changes and unrecognized rules reduce comparability. It never reruns checks or rewrites saved assessments.",
+    "it": "comparison-v1 confronta campi misurati consentiti tramite check ID esatti; evidenze mancanti, metodi/contesto diversi e regole non riconosciute riducono la confrontabilità. Non riesegue controlli e non riscrive assessment salvati."
+  },
+  "comparison_version": "comparison-v1",
+  "schema_version": 1,
+  "report_type": "assessment_comparison"
+}

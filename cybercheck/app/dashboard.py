@@ -9,6 +9,7 @@ from html import escape
 import streamlit as st
 
 from cybercheck import __version__
+from cybercheck.app.comparison import comparison_view
 from cybercheck.core.config import Settings
 from cybercheck.core.context import AssessmentContext
 from cybercheck.core.engine import run_assessment
@@ -17,7 +18,7 @@ from cybercheck.core.logging import configure_logging
 from cybercheck.locales.ui import tr
 from cybercheck.models import Assessment, Finding, Severity, Status
 from cybercheck.reports.render import render_html, render_json
-from cybercheck.storage.sqlite import Repository, StorageDataError, compare
+from cybercheck.storage.sqlite import Repository, StorageDataError
 
 CSS = """
 <style>
@@ -257,36 +258,7 @@ def history_view(repository: Repository, a: Assessment | None, language: str) ->
     else:
         st.info(t("not_assessed"))
     if a:
-        st.subheader(t("compare"))
-        st.caption(a.domain + " · " + (a.completed_at or a.started_at))
-        try:
-            previous = repository.previous(a)
-        except StorageDataError:
-            st.error(t("stored_invalid"))
-            return
-        if not previous:
-            st.info(t("no_previous"))
-        else:
-            changes = compare(previous, a)
-            if changes:
-                st.dataframe(
-                    [
-                        {
-                            t("check"): c["check_id"],
-                            t("previous_status"): t(c["previous_status"] or "not_assessed"),
-                            t("current_status"): t(c["current_status"] or "not_assessed"),
-                            t("previous_severity"): t(c["previous_severity"] or "not_assessed"),
-                            t("current_severity"): t(c["current_severity"] or "not_assessed"),
-                            t("evidence_changed"): t("yes" if c["evidence_changed"] else "no"),
-                        }
-                        for c in changes
-                    ],
-                    hide_index=True,
-                    width="stretch",
-                )
-            else:
-                st.info(t("no_changes"))
-            st.caption(t("compare_note"))
+        comparison_view(repository, a, language)
 
 
 def reports_view(a: Assessment | None, language: str) -> None:

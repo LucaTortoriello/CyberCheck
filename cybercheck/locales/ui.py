@@ -184,8 +184,8 @@ STRINGS = {
     "verified": ("Observed at (UTC)", "Osservato il (UTC)"),
     "references": ("Reference", "Riferimento"),
     "history_intro": (
-        "Assessments stay in your local SQLite database. Compare consecutive observations for the same domain.",
-        "Gli assessment restano nel database SQLite locale. Confronta osservazioni consecutive per lo stesso dominio.",
+        "Assessments stay in your local SQLite database. Open a saved target and select two runs to compare observations, evaluation and comparability.",
+        "Gli assessment restano nel database SQLite locale. Apri un target salvato e scegli due esecuzioni per confrontare osservazioni, valutazione e confrontabilità.",
     ),
     "history_domain": ("Filter by exact domain (optional)", "Filtra per dominio esatto (facoltativo)"),
     "page": ("History page", "Pagina cronologia"),

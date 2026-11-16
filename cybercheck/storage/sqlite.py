@@ -8,6 +8,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
+from cybercheck.core.comparison import compare_assessments, stable_evidence  # noqa: F401
 from cybercheck.models import Assessment
 
 SCHEMA_VERSION = 1
@@ -106,41 +107,26 @@ class Repository:
         return load_payload(row["payload"]) if row else None
 
 
-def stable_evidence(value: object, key: str = "") -> object:
-    """Ignore countdowns and serialization/order noise, never changed policy data."""
-    if isinstance(value, dict):
-        return {k: stable_evidence(v, k) for k, v in value.items() if k != "days_until_expiration"}
-    if isinstance(value, (list, tuple)):
-        items = [stable_evidence(v) for v in value]
-        return sorted(items, key=lambda item: json.dumps(item, sort_keys=True)) if key == "records" else items
-    return value
-
-
 def compare(previous: Assessment, current: Assessment) -> list[dict]:
-    """Compare stable check IDs; changed evidence alone is not a risk regression."""
-    if previous.domain != current.domain:
-        raise ValueError("Only assessments of the same domain can be compared")
-    before = {f.check_id: f for f in previous.findings}
-    after = {f.check_id: f for f in current.findings}
-    changes = []
-    for key in sorted(before.keys() | after.keys()):
-        old, new = before.get(key), after.get(key)
-        if (
-            old is None
-            or new is None
-            or (old.status, old.severity, stable_evidence(old.evidence))
-            != (new.status, new.severity, stable_evidence(new.evidence))
-        ):
-            changes.append(
-                {
-                    "check_id": key,
-                    "previous_status": old.status.value if old else None,
-                    "current_status": new.status.value if new else None,
-                    "previous_severity": old.severity.value if old else None,
-                    "current_severity": new.severity.value if new else None,
-                    "evidence_changed": bool(
-                        old and new and stable_evidence(old.evidence) != stable_evidence(new.evidence)
-                    ),
-                }
+    """Compatibility adapter: retain the changed-row list and familiar field names.
+
+    New callers should use compare_assessments for full comparability and unchanged
+    or persistent findings. Source storage is never mutated.
+    """
+    comparison = compare_assessments(previous, current)
+    return [
+        item
+        for item in comparison.findings
+        if item["earlier"] is None
+        or item["later"] is None
+        or item["differences"]
+        or any(
+            item["dimensions"][name]
+            for name in (
+                "status_changed",
+                "severity_changed",
+                "applicability_changed",
+                "scoring_eligibility_changed",
             )
-    return changes
+        )
+    ]

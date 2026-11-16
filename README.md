@@ -105,7 +105,7 @@ For sending checks, declaring no sending marks operational applicability not app
 
 The dashboard and HTML display applicability beside each finding. Priority actions omit informational and explicitly inapplicable observations; counts and complete details still include them. Status and severity describe the measured criterion and its supported importance, not exploitability or an organization-wide risk assessment. Recommendations state conditional next steps and do not apply changes.
 
-Assessments are saved locally in SQLite. Users can compare consecutive runs for the same domain and export printable HTML or JSON reports containing findings, evidence, remediation and limitations.
+Assessments are saved locally in SQLite. Users can compare two saved runs for the same domain and export printable assessment or comparison reports in HTML/JSON, with evidence and limitations.
 
 ## What is included
 
@@ -116,7 +116,7 @@ Assessments are saved locally in SQLite. Users can compare consecutive runs for 
 - One verified TLS handshake: trust-chain acceptance, hostname, issuer, validity, expiration and negotiated protocol.
 - HTTPS connectivity, bounded HTTP-to-HTTPS redirect checks and six browser security-header observations.
 - Searchable/filterable findings with severity, status, timestamps, evidence and specific remediation.
-- Local history, consecutive-assessment comparison, printable HTML and evidence-preserving JSON.
+- Local history, selectable same-target assessment comparison, printable HTML and evidence-preserving JSON.
 - An optional transparent Configuration Health score with visible evaluation coverage.
 - A CLI, deterministic offline tests and GitHub Actions.
 
@@ -133,6 +133,8 @@ The current MVP assesses one domain per run. Automated monitoring, alerts, multi
 **v0.2 is a reliability and security review of the existing MVP.** See the [technical audit](docs/TECHNICAL_AUDIT_V02.md), [executed validation](docs/VALIDATION.md) and [real-world validation procedure/status](docs/REAL_WORLD_VALIDATION.md). The [methodology](docs/METHODOLOGY.md) documents the limits of the current checks, including legacy DMARC support and single-endpoint sampling.
 
 **v0.3 improves finding quality and contextual recommendations.** See the [complete finding audit](docs/FINDING_QUALITY_AUDIT_V03.md) and [v0.3 validation](docs/VALIDATION_V03.md). It preserves the same six assessment modules and network protections.
+
+**v0.4 improves comparison and change tracking.** It separates measured changes from evaluation/context changes, qualifies comparability, and exports bilingual comparison reports. See the [comparison audit](docs/COMPARISON_AUDIT_V04.md), [comparison methodology](docs/COMPARISON_METHODOLOGY_V04.md) and [v0.4 validation](docs/VALIDATION_V04.md).
 
 ## Install on macOS
 
@@ -168,7 +170,32 @@ python -m pip install -e '.[dev,audit]'
 6. Use the top navigation for overview, history, findings, reports and settings. Select Italian or English at the top right.
 7. Download HTML or JSON. Open HTML in a browser to print or use its **Save as PDF** print destination. There is no native PDF renderer.
 
-The assessment selector controls which saved run is shown. History compares the selected run with the immediately preceding run for that domain. Evidence changes are observations; they are not automatically security regressions. History is paginated, 25 assessments per page.
+The assessment selector controls which saved run is shown. History defaults to that run and its predecessor, and allows any two saved runs for the same target. History and the two comparison selectors are paginated, 25 assessments per page; the active run/predecessor stay available as defaults even outside the selected page.
+
+### Compare two assessments
+
+1. Open **Assessment History / Cronologia assessment** and open a saved assessment for the target.
+2. Select the earlier and later runs in the comparison controls. Use their separate history pages for older runs. Dates and CyberCheck versions appear beside the selected pair.
+3. Read **Comparability** and its reasons before interpreting the category counts. Open a finding for the separate dimensions and measured field differences.
+4. Download HTML (printable in a browser) or JSON. Comparisons only read local history; they never start scans or repeat requests.
+
+| Category | Meaning |
+|---|---|
+| New concern | A previously Passed criterion now has a supported noninformational concern, different observations and comparable conditions. |
+| Resolved concern | A supported concern now meets the Passed criterion with different observations under comparable conditions. |
+| Persistent concern | The same criterion remains a supported concern in both comparable runs; the underlying cause need not be identical. |
+| Unchanged | Supported observations and interpretation remain equivalent within the comparison's scope. |
+| Changed observation | Measured fields differ. This is not automatically an improvement or regression. |
+| Evaluation changed | Interpretation, applicability, context or scoring treatment differs; equivalent observations can receive different results. |
+| Inconclusive | Coverage, evidence or comparability is insufficient for a reliable lifecycle conclusion. |
+
+Categories can overlap: a resolved concern can also have changed observations. Missing/newly introduced checks and different DKIM selectors remain inconclusive for lifecycle purposes. A disappearing finding does not establish a fix, and a first measurable result after Unknown is not automatically a newly created problem. Warnings remain conditional concerns, not proof of exploitation.
+
+Comparability is **Comparable**, **Partially comparable**, or **Not comparable**, with explicit reasons. Methodology, context, profile, methods/GET coverage, endpoints, content types, redacted query values and incomplete historical evidence can limit a comparison. Scores show a numerical difference only when known methodology/profiles/context, evaluated criterion IDs and supporting comparisons match. Equal totals alone are insufficient. Historical scores and stored records are never rewritten.
+
+**Fictional example:** between October and November assessments of `example.com`, SPF changes from `+all` to `-all` (Warning → Passed): a resolved limited criterion with changed observations. A certificate's expiration moves to a later date while both checks remain Passed: an observed renewal, without an automatic security improvement. If the November result instead disappears, resolution remains inconclusive. Comparing identical `+all` observations from v0.2 and v0.3 is an evaluation change (Failed/High → Warning/Medium), with reduced comparability and no direct score delta. The configuration was not proven to change merely because the classification changed.
+
+See the [worked bilingual example](docs/COMPARISON_METHODOLOGY_V04.md#worked-fictional-pair), [English HTML](docs/examples/comparison.en.html), [Italian HTML](docs/examples/comparison.it.html), and [JSON](docs/examples/comparison.json). All example data is explicitly fictional and generated offline. Python callers can use `compare_assessments(earlier, later)` from `cybercheck.core.comparison`, then `render_comparison_html` / `render_comparison_json` from `cybercheck.reports.render`. The original `storage.sqlite.compare()` remains a changed-row adapter with its familiar status/severity keys.
 
 ## CLI
 
