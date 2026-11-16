@@ -72,7 +72,18 @@ DEFINITIONS = {
         "Protocollo TLS negoziato",
         "https://www.rfc-editor.org/rfc/rfc8446",
     ),
-    "http.https": ("http", "HTTPS endpoint", "Endpoint HTTPS", "https://www.rfc-editor.org/rfc/rfc9110"),
+    "http.https": (
+        "http",
+        "HTTPS connectivity",
+        "Connettività HTTPS",
+        "https://www.rfc-editor.org/rfc/rfc9110",
+    ),
+    "http.application": (
+        "http",
+        "HTTP application response",
+        "Risposta HTTP applicativa",
+        "https://www.rfc-editor.org/rfc/rfc9110",
+    ),
     "http.redirect": (
         "http",
         "HTTP to HTTPS redirect",

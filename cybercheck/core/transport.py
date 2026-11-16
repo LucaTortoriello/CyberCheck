@@ -1,7 +1,8 @@
 """HTTPX transport with an assessment deadline and a 64 KiB header-read cap.
 
 Uses the public httpcore backend API; every socket operation rechecks the shared
-deadline, including fragmented/slow headers. Only HEAD requests are supported.
+deadline, including fragmented/slow headers. Responses are closed without reading
+their body streams, including for explicitly enabled GET fallback requests.
 """
 
 import ssl
@@ -92,6 +93,7 @@ class DeadlineBackend(httpcore.NetworkBackend):
 
 class PinnedTransport(httpx.BaseTransport):
     def __init__(self, budget: Budget, backend: httpcore.NetworkBackend | None = None):
+        self.allow_get_fallback = budget.settings.allow_get_fallback
         self.pool = httpcore.ConnectionPool(
             ssl_context=ssl.create_default_context(),
             max_connections=1,
@@ -103,8 +105,10 @@ class PinnedTransport(httpx.BaseTransport):
         )
 
     def handle_request(self, request: httpx.Request) -> httpx.Response:
-        if request.method != "HEAD":
-            raise ValueError("Only HEAD requests are supported")
+        if request.method != "HEAD" and not (
+            self.allow_get_fallback and request.method == "GET" and request.url.scheme == "https"
+        ):
+            raise ValueError("Only HEAD and explicitly enabled HTTPS GET requests are supported")
         core_request = httpcore.Request(
             method=request.method,
             url=httpcore.URL(

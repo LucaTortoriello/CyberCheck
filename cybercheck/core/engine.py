@@ -44,7 +44,12 @@ def run_assessment(
         domain=domain,
         selectors=selectors,
         authorization_confirmed=True,
-        metadata={"engine_version": __version__, "mode": "public-target-only", "http_method": "HEAD"},
+        metadata={
+            "engine_version": __version__,
+            "mode": "public-target-only",
+            "http_method": "HEAD",
+            "get_fallback_enabled": web.budget.settings.allow_get_fallback,
+        },
     )
     tasks = [
         ("dns", lambda: check_dns(domain, dns)),

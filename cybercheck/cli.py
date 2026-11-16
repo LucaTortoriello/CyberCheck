@@ -3,6 +3,7 @@
 import argparse
 import logging
 import sqlite3
+from dataclasses import replace
 from pathlib import Path
 
 from cybercheck import __version__
@@ -27,6 +28,11 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=Path("exports"))
     parser.add_argument("--language", choices=["en", "it"], default="it")
     parser.add_argument("--include-score", action="store_true")
+    parser.add_argument(
+        "--allow-get-fallback",
+        action="store_true",
+        help="Authorize HTTPS GET headers after HEAD 405/501, including scoped redirects. GET may cause side effects.",
+    )
     args = parser.parse_args()
     if not args.authorized:
         parser.error(
@@ -34,7 +40,7 @@ def main() -> int:
         )
     configure_logging()
     try:
-        settings = Settings.from_env()
+        settings = replace(Settings.from_env(), allow_get_fallback=args.allow_get_fallback)
         assessment = run_assessment(args.domain, args.selectors, authorized=True, settings=settings)
         args.output.mkdir(parents=True, exist_ok=True, mode=0o700)
         stem = f"cybercheck-{assessment.domain}-{assessment.id[:8]}"

@@ -18,6 +18,7 @@ class Settings:
     max_http: int = 8
     max_redirects: int = 3
     max_seconds: float = 90
+    allow_get_fallback: bool = False
 
     def __post_init__(self) -> None:
         for name, low, high in (
