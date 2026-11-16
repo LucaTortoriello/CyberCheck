@@ -53,8 +53,8 @@ def check_dns(domain: str, dns: DNSClient) -> list[Finding]:
         "dns.records",
         T.UNKNOWN if any(v.state in {"error", "nxdomain"} for v in records.values()) else T.PASSED,
         S.INFO,
-        "Exact-name DNS inventory; NS records can legitimately exist only at the zone apex.",
-        "Inventario DNS del nome esatto; i record NS possono legittimamente esistere solo all'apice della zona.",
+        "Exact-name DNS inventory; missing NS at a non-apex hostname or absent IPv6 AAAA records do not by themselves establish a security issue.",
+        "Inventario DNS del nome esatto; NS assenti a un host non apice o record IPv6 AAAA assenti non accertano da soli un problema di sicurezza.",
         {kind: result.evidence() for kind, result in records.items()},
     )
     mx, caa = records["MX"], records["CAA"]
@@ -97,10 +97,10 @@ def check_dns(domain: str, dns: DNSClient) -> list[Finding]:
                 S.INFO,
                 "CAA records published at this exact name; issuer authorization semantics were not evaluated."
                 if caa.records
-                else "No CAA at this exact name. Parent/CNAME policies may apply; effective CAA was not evaluated.",
+                else "No CAA at this exact name. CAA is optional. Parent/CNAME policies may apply; effective CAA was not evaluated.",
                 "Record CAA pubblicati a questo nome esatto; la semantica di autorizzazione non è stata valutata."
                 if caa.records
-                else "Nessun CAA al nome esatto. Possono valere policy del padre/CNAME; il CAA effettivo non è stato valutato.",
+                else "Nessun CAA al nome esatto. CAA è facoltativo. Possono valere policy del padre/CNAME; il CAA effettivo non è stato valutato.",
                 caa.evidence(),
             )
         )
@@ -122,7 +122,7 @@ def check_spf(domain: str, dns: DNSClient) -> list[Finding]:
             finding(
                 "email.spf",
                 T.WARNING,
-                S.MEDIUM,
+                S.INFO,
                 "No SPF policy found at this name. Confirm whether the domain sends email before choosing a policy.",
                 "Nessuna policy SPF a questo nome. Verifica se il dominio invia email prima di scegliere una policy.",
                 evidence,
@@ -206,7 +206,7 @@ def check_spf(domain: str, dns: DNSClient) -> list[Finding]:
             "Problemi certi di sintassi SPF: " + "; ".join(errors),
         )
     elif all_qualifier == "+":
-        status, severity = T.FAILED, S.HIGH
+        status, severity = T.WARNING, S.MEDIUM
         en, it = (
             "The first all mechanism uses +all and authorizes every sender not already matched by an earlier mechanism.",
             "Il primo meccanismo all usa +all e autorizza ogni mittente non già intercettato da un meccanismo precedente.",
@@ -300,6 +300,7 @@ def dmarc_records(result: DNSResult) -> list[str]:
 def check_dmarc(domain: str, dns: DNSClient) -> list[Finding]:
     policy_domain = domain
     result = dns.query(f"_dmarc.{domain}", "TXT")
+    discovery = [result.evidence()]
     if result.state == "error":
         return [unavailable("email.dmarc", result)]
     records = dmarc_records(result)
@@ -307,18 +308,28 @@ def check_dmarc(domain: str, dns: DNSClient) -> list[Finding]:
     if not records and org != domain:
         policy_domain = org
         result = dns.query(f"_dmarc.{org}", "TXT")
+        discovery.append(result.evidence())
         if result.state == "error":
-            return [unavailable("email.dmarc", result)]
+            item = unavailable("email.dmarc", result)
+            item.evidence["discovery"] = discovery
+            return [item]
         records = dmarc_records(result)
-    evidence = result.evidence() | {"policy_domain": policy_domain, "inherited": policy_domain != domain}
+    evidence = result.evidence() | {
+        "policy_domain": policy_domain,
+        "dmarc_records": records,
+        "inherited": bool(records) and policy_domain != domain,
+        "discovery": discovery,
+        "policy_model": "RFC 7489 legacy discovery and percentage semantics",
+        "limitations": "RFC 9989 DNS tree walk, np, psd and t semantics are not implemented",
+    }
     if not records:
         return [
             finding(
                 "email.dmarc",
                 T.WARNING,
-                S.MEDIUM,
-                "No DMARC policy found at this name or its organizational domain using the bundled public suffix list.",
-                "Nessuna policy DMARC al nome o al dominio organizzativo secondo la lista dei suffissi pubblici inclusa.",
+                S.INFO,
+                "No DMARC policy found at this name or its organizational domain using legacy RFC 7489 discovery and the bundled public suffix list. Current RFC 9989 discovery was not performed; mail use and effective current-standard policy remain unknown.",
+                "Nessuna policy DMARC al nome o al dominio organizzativo con ricerca legacy RFC 7489 e lista dei suffissi inclusa. La ricerca RFC 9989 attuale non è stata eseguita; uso email e policy effettiva secondo lo standard attuale restano sconosciuti.",
                 evidence,
             )
         ]
@@ -347,7 +358,8 @@ def check_dmarc(domain: str, dns: DNSClient) -> list[Finding]:
         "policy_model": "RFC 7489 legacy discovery and percentage semantics",
         "limitations": "RFC 9989 DNS tree walk, np, psd and t semantics are not implemented",
     }
-    if errors:
+    unsupported = bool({"np", "psd", "t"} & parsed.keys())
+    if errors and not unsupported:
         return [
             finding(
                 "email.dmarc",
@@ -359,7 +371,6 @@ def check_dmarc(domain: str, dns: DNSClient) -> list[Finding]:
                 scoreable=True,
             )
         ]
-    unsupported = bool({"np", "psd", "t"} & parsed.keys())
     monitoring = policy == "none" or pct == 0
     partial = not monitoring and pct < 100
     findings = [
@@ -408,8 +419,8 @@ def check_dmarc(domain: str, dns: DNSClient) -> list[Finding]:
             else "Report aggregati assenti o con destinazione non supportata/malformata; è un'osservazione operativa, non prova di mancata autenticazione.",
             {"rua": rua, "ruf": parsed.get("ruf"), "policy_domain": policy_domain},
             remediation=Text(
-                "Use a monitored aggregate-report mailbox or reporting service. Consider privacy before enabling forensic reports (ruf).",
-                "Usa una casella monitorata per report aggregati o un servizio di analisi. Valuta la privacy prima dei report forensi (ruf).",
+                "If aggregate monitoring is useful, review a monitored reporting destination with the mail/DNS administrator, including external authorization and privacy. Reporting is optional; absence is not an authentication failure. Consider privacy before forensic reports (ruf).",
+                "Se il monitoraggio aggregato è utile, valuta con l'amministratore email/DNS una destinazione monitorata, inclusi autorizzazione esterna e privacy. I report sono facoltativi; l'assenza non è un errore di autenticazione. Valuta la privacy prima dei report forensi (ruf).",
             ),
         )
     )
@@ -426,8 +437,8 @@ def check_dkim(domain: str, selectors: list[str], dns: DNSClient) -> list[Findin
                 "DKIM cannot be reliably determined from a domain alone. No selector was supplied; no selector discovery was attempted. Unknown does not mean disabled.",
                 "DKIM non è determinabile in modo affidabile dal solo dominio. Nessun selettore fornito; non è stata tentata una ricerca. Sconosciuto non significa disabilitato.",
                 remediation=Text(
-                    "Get selectors from your mail provider or the s= tag of a DKIM-Signature header.",
-                    "Ottieni i selettori dal provider email o dal tag s= dell'intestazione DKIM-Signature.",
+                    "If this hostname sends email, get selectors from the mail provider or the s= tag of an authorized message's DKIM-Signature header. Without selectors, signing remains untested; do not guess or change DNS to clear this result.",
+                    "Se questo host invia email, ottieni i selettori dal provider o dal tag s= di DKIM-Signature di un messaggio autorizzato. Senza selettori la firma resta non testata; non indovinare selettori e non modificare il DNS per eliminare questo risultato.",
                 ),
             )
         ]

@@ -10,6 +10,7 @@ import streamlit as st
 
 from cybercheck import __version__
 from cybercheck.core.config import Settings
+from cybercheck.core.context import AssessmentContext
 from cybercheck.core.engine import run_assessment
 from cybercheck.core.evidence import safe_web_evidence
 from cybercheck.core.logging import configure_logging
@@ -44,6 +45,8 @@ def show_finding(f: Finding, language: str, *, expanded: bool = False) -> None:
         st.caption(f"{t(f.category)} · {f.check_id}")
         st.markdown(f"**{t('technical')}**")
         st.text(f.explanation.get(language))
+        st.markdown(f"**{t('applicability')}**: {t('applicability_' + f.applicability)}")
+        st.text(f.applicability_reason.get(language))
         st.markdown(f"**{t('impact')}**")
         st.text(f.business_impact.get(language))
         st.markdown(f"**{t('remediation')}**")
@@ -89,7 +92,13 @@ def overview(a: Assessment | None, language: str) -> None:
         health = a.health
         st.metric(t("health"), "—" if health["score"] is None else f"{health['score']}/100")
         st.caption(tr("coverage", language, **health))
-        st.info(t("score_formula"))
+        st.info(
+            t(
+                "score_formula_context"
+                if a.metadata.get("scoring_profile") == "context-v1"
+                else "score_formula"
+            )
+        )
     st.subheader(t("summary"))
     categories = list(dict.fromkeys(f.category for f in a.findings))
     rows = []
@@ -101,7 +110,7 @@ def overview(a: Assessment | None, language: str) -> None:
         )
     st.dataframe(rows, hide_index=True, width="stretch")
     st.subheader(t("attention"))
-    items = [f for f in a.findings if f.status in {Status.FAILED, Status.WARNING}]
+    items = [f for f in a.findings if f.needs_attention]
     order = {s: i for i, s in enumerate(Severity)}
     for f in sorted(items, key=lambda f: (f.status != Status.FAILED, order[f.severity]))[:6]:
         show_finding(f, language)
@@ -124,6 +133,13 @@ def new_assessment(repository: Repository, settings: Settings, language: str) ->
         authorized = st.checkbox(t("authorization"))
         allow_get_fallback = st.checkbox(t("allow_get_fallback"), value=False)
         st.caption(t("get_fallback_help"))
+        st.caption(t("optional_context"))
+        choices = ["unknown", "yes", "no"]
+        sends_email = st.selectbox(t("sends_email"), choices, format_func=t, key="context_sends_email")
+        receives_email = st.selectbox(
+            t("receives_email"), choices, format_func=t, key="context_receives_email"
+        )
+        controls_dns = st.selectbox(t("controls_dns"), choices, format_func=t, key="context_controls_dns")
         submitted = st.form_submit_button(t("start"), type="primary")
     if not submitted:
         return
@@ -150,6 +166,11 @@ def new_assessment(repository: Repository, settings: Settings, language: str) ->
             selectors,
             authorized=True,
             settings=replace(settings, allow_get_fallback=allow_get_fallback),
+            context=AssessmentContext(
+                sends_email={"yes": True, "no": False}.get(sends_email),
+                receives_email={"yes": True, "no": False}.get(receives_email),
+                controls_dns={"yes": True, "no": False}.get(controls_dns),
+            ),
             progress=progress,
         )
     except ValueError:
@@ -306,7 +327,7 @@ def settings_view(settings: Settings, language: str) -> None:
         st.session_state["show_score"] = st.session_state["_show_score"]
 
     st.checkbox(t("show_score"), key="_show_score", on_change=persist_score)
-    st.caption(t("score_formula"))
+    st.caption(t("score_formula_context"))
     st.subheader(t("limits"))
     st.json(
         {

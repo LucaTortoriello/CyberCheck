@@ -8,6 +8,7 @@ from pathlib import Path
 
 from cybercheck import __version__
 from cybercheck.core.config import Settings
+from cybercheck.core.context import AssessmentContext
 from cybercheck.core.engine import run_assessment
 from cybercheck.core.logging import configure_logging
 from cybercheck.reports.render import render_html, render_json
@@ -28,6 +29,17 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=Path("exports"))
     parser.add_argument("--language", choices=["en", "it"], default="it")
     parser.add_argument("--include-score", action="store_true")
+    for option, purpose in (
+        ("sends-email", "this hostname is intended to send email"),
+        ("receives-email", "this hostname is intended to receive email"),
+        ("controls-dns", "you directly control DNS changes for this hostname"),
+    ):
+        parser.add_argument(
+            f"--{option}",
+            choices=["yes", "no", "unknown"],
+            default="unknown",
+            help=f"Optional unverified declaration: {purpose} (default: unknown)",
+        )
     parser.add_argument(
         "--allow-get-fallback",
         action="store_true",
@@ -41,7 +53,16 @@ def main() -> int:
     configure_logging()
     try:
         settings = replace(Settings.from_env(), allow_get_fallback=args.allow_get_fallback)
-        assessment = run_assessment(args.domain, args.selectors, authorized=True, settings=settings)
+        declarations = {"yes": True, "no": False, "unknown": None}
+        context = AssessmentContext(
+            **{
+                name: declarations[getattr(args, name)]
+                for name in ("sends_email", "receives_email", "controls_dns")
+            }
+        )
+        assessment = run_assessment(
+            args.domain, args.selectors, authorized=True, settings=settings, context=context
+        )
         args.output.mkdir(parents=True, exist_ok=True, mode=0o700)
         stem = f"cybercheck-{assessment.domain}-{assessment.id[:8]}"
         # Export before database save so a persistence error does not lose the observations.

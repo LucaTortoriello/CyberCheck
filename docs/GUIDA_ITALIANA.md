@@ -1,6 +1,6 @@
 # CyberCheck: guida italiana per capire i controlli
 
-Questa guida accompagna chi studia sicurezza informatica e ha poca esperienza di programmazione. Spiega i concetti, mostra piccoli esempi e li collega al codice di CyberCheck v0.2. Non serve conoscere Python per seguirla: i nomi delle funzioni permettono di ritrovare nel repository il comportamento descritto.
+Questa guida accompagna chi studia sicurezza informatica e ha poca esperienza di programmazione. Spiega i concetti, mostra piccoli esempi e li collega al codice di CyberCheck v0.3. Non serve conoscere Python per seguirla: i nomi delle funzioni permettono di ritrovare nel repository il comportamento descritto.
 
 Tutti i domini, gli indirizzi e i risultati degli esempi sono **fittizi e didattici**. Il suffisso `.example` e gli indirizzi `192.0.2.0/24` e `2001:db8::/32` servono alla documentazione: non sono bersagli da interrogare. CyberCheck blocca le connessioni a indirizzi riservati; questi esempi non sono scansioni eseguibili né osservazioni raccolte su Internet.
 
@@ -193,7 +193,7 @@ Un mittente autorizzato dalla policy inclusa può superare SPF; gli altri arriva
 azienda.example. IN TXT "v=spf1 ip4:192.0.2.10 +all"
 ```
 
-Anche i mittenti diversi da quello elencato ottengono un esito positivo arrivando a `+all`. Il rilievo SPF è fallito, di gravità alta. La gravità non implica automaticamente l'inclusione nel punteggio.
+Anche i mittenti diversi da quello elencato ottengono un esito positivo arrivando a `+all`. In v0.3 il rilievo SPF è un avviso di gravità media: la policy è permissiva, ma non è un errore di sintassi né una prova di sfruttamento. Il contesto e l'intento vanno verificati; il rilievo resta escluso dal punteggio.
 
 **4. Delega completa.**
 
@@ -206,7 +206,7 @@ Il dominio delega alla seconda policy. Aggiungere `all` alla prima impedirebbe d
 
 ### Implementazione e limiti
 
-`check_spf()` cerca i record TXT SPF e distingue policy assente, multipla e singola. Più record TXT separati che cominciano con `v=spf1` causano un errore permanente SPF, detto *permerror*: il programma lo marca fallito e valutabile nel punteggio. Non va confuso con un singolo record TXT suddiviso in più stringhe, che `DNSClient.query()` ricompone.
+`check_spf()` cerca i record TXT SPF e distingue policy assente, multipla e singola. Più record TXT separati che cominciano con `v=spf1` causano un errore permanente SPF, detto *permerror*: il programma marca fallito il criterio di configurazione, valutabile nel nuovo punteggio solo con applicabilità stabilita dal contesto di invio dichiarato. Non va confuso con un singolo record TXT suddiviso in più stringhe, che `DNSClient.query()` ricompone.
 
 Il controllo singolo riconosce errori comuni: meccanismi sconosciuti, domini mancanti per `include`, indirizzi della famiglia sbagliata, prefissi non validi e alcuni modificatori duplicati. Segnala `+all`, esiti neutri e macro dipendenti dal mittente. Una **macro** inserisce valori del contesto, come informazioni sul mittente, nella policy; CyberCheck non la espande. Un controllo comune superato non garantisce la validità completa della policy.
 
@@ -244,7 +244,7 @@ Per un'azienda, DMARC aiuta a contrastare l'impersonificazione del proprio domin
 
 ### Profilo storico e standard attuale
 
-**CyberCheck v0.2 conserva il profilo storico RFC 7489.** Non è un'implementazione completa dello standard attuale [RFC 9989](https://www.rfc-editor.org/rfc/rfc9989.html), pubblicato a maggio 2026, che sostituisce RFC 7489 e RFC 9091. Il nuovo standard introduce una ricerca lungo l'albero DNS, detta *DNS tree walk*, e rimuove `pct`; il tag `t` esprime una modalità di prova. Prevede inoltre `np` per sottodomini inesistenti e `psd` per indicare il ruolo del dominio rispetto ai suffissi pubblici. Queste semantiche non sono implementate dall'app.
+**CyberCheck v0.3 conserva il profilo storico RFC 7489.** Non è un'implementazione completa dello standard attuale [RFC 9989](https://www.rfc-editor.org/rfc/rfc9989.html), pubblicato a maggio 2026, che sostituisce RFC 7489 e RFC 9091. Il nuovo standard introduce una ricerca lungo l'albero DNS, detta *DNS tree walk*, e rimuove `pct`; il tag `t` esprime una modalità di prova. Prevede inoltre `np` per sottodomini inesistenti e `psd` per indicare il ruolo del dominio rispetto ai suffissi pubblici. Queste semantiche non sono implementate dall'app.
 
 | Aspetto | Comportamento effettivo di `check_dmarc()` |
 |---|---|
@@ -252,10 +252,10 @@ Per un'azienda, DMARC aiuta a contrastare l'impersonificazione del proprio domin
 | Ereditarietà | Per una policy ereditata considera `sp`, se presente, altrimenti `p`. `sp` è la preferenza per i sottodomini. |
 | Sintassi | Controlla duplicati, ordine iniziale `v`/`p`, valori di `p` e `sp`, modalità `aspf`/`adkim` e intervallo storico di `pct`. Non valida semanticamente tutti i tag. |
 | Percentuale storica | Interpreta `pct` fra 0 e 100, predefinito 100: monitoraggio o applicazione parziale producono un avviso nel profilo RFC 7489. Non descrive necessariamente il comportamento dei destinatari moderni. |
-| Tag `np`, `psd`, `t` | Se i controlli preliminari non rilevano errori, la loro presenza lascia il rilievo principale sconosciuto ed escluso dal punteggio. Non è prova di una policy moderna errata. |
+| Tag `np`, `psd`, `t` | La loro presenza lascia il rilievo principale sconosciuto ed escluso dal punteggio, anche se la validazione storica segnala errori: questi restano nelle evidenze. Non è prova di una policy moderna errata. |
 | Rapporti | Verifica una forma supportata delle destinazioni `mailto` in `rua` e conserva anche `ruf` nelle evidenze. Non accerta consegna, proprietà della casella o autorizzazione di destinazioni esterne. |
 
-Nelle evidenze, `policy_model` e `limitations` dichiarano questo confine. Gli errori del profilo storico vengono valutati prima dei tag non supportati: non si deve modificare automaticamente una policy moderna solo perché un risultato storico è fallito. Il riferimento del comportamento conservato è [RFC 7489](https://www.rfc-editor.org/rfc/rfc7489.html); la conformità attuale richiede una verifica ulteriore. CyberCheck non verifica firme, allineamento dei messaggi o rispetto della policy da parte dei destinatari.
+Nelle evidenze, `policy_model` e `limitations` dichiarano questo confine. `discovery` conserva le query al nome esatto e al dominio organizzativo, anche in caso di errore; `inherited` è vero solo se è stata trovata una policy ereditata. Nessuna policy trovata con la ricerca storica non significa nessuna policy effettiva secondo lo standard attuale. Non modificare automaticamente una policy moderna per soddisfare il controllo storico. Il riferimento del comportamento conservato è [RFC 7489](https://www.rfc-editor.org/rfc/rfc7489.html); la conformità attuale richiede una verifica ulteriore. CyberCheck non verifica firme, allineamento dei messaggi o rispetto della policy da parte dei destinatari.
 
 ## 6. Modulo DKIM
 
@@ -438,7 +438,27 @@ Lo **stato** indica che cosa il controllo è riuscito a stabilire. I nomi tecnic
 
 La **gravità**, o severità, descrive la possibile conseguenza dell'osservazione: informativa, bassa, media, alta o critica. Non è un giudizio sull'intera organizzazione. Un errore di esecuzione non diventa automaticamente un rischio critico; una policy opzionale assente non equivale a una vulnerabilità sfruttabile.
 
-### Anatomia di un rilievo
+### Osservazione, applicabilità e raccomandazione
+
+Un'**osservazione** è un dato misurato, come «nessun MX al nome richiesto». Un **finding** interpreta quel dato rispetto a un criterio preciso. L'**applicabilità** indica se il criterio riguarda l'uso dichiarato del servizio; può essere applicabile, non applicabile o sconosciuta. La **gravità** esprime l'importanza sostenuta dalle evidenze, non la sfruttabilità dimostrata. La **raccomandazione** propone una revisione condizionale con il responsabile tecnico.
+
+Per esempio, `sito.azienda.example` può servire solo pagine web: MX assenti non dimostrano posta guasta. SPF riguarda i mittenti, MX i destinatari; ricevere email non prova che lo stesso nome invii email. SPF non si eredita dal padre. DMARC può invece essere ereditato entro i limiti della ricerca implementata. CAA è facoltativo e può avere una policy effettiva ereditata; NS assenti su un host non apice e AAAA assenti non richiedono automaticamente una modifica.
+
+Nel modulo **Nuovo assessment** puoi dichiarare separatamente invio email, ricezione email e controllo diretto del DNS. Tutti i campi sono facoltativi e partono da Sconosciuto. Sono dichiarazioni **non verificate indipendentemente**: CyberCheck non deduce proprietà, controllo DNS o uso email dal nome del provider. Senza controllo DNS, l'azione utile è chiedere una revisione al gestore della piattaforma o all'amministratore competente.
+
+Dichiarare nessun invio rende non applicabile il criterio operativo di invio, ma non prova protezione dalle impersonificazioni: anche i non mittenti possono valutare policy SPF/DMARC protettive. Le identità SPF envelope/HELO, autore DMARC e firma DKIM possono essere diverse; il contesto generico non le verifica. Le evidenze e gli stati restano disponibili: un record malformato può rimanere Fallito con applicabilità sconosciuta o non applicabile. Senza selettori, DKIM resta Sconosciuto. Il contesto non autorizza GET e non aggiunge richieste di rete.
+
+Da CLI, per esempio:
+
+```sh
+cybercheck dominio-autorizzato.tld --authorized --sends-email no --receives-email no --controls-dns unknown
+```
+
+Ogni opzione accetta `yes`, `no`, `unknown`. In Python usa `AssessmentContext` da `cybercheck.core.context` e passalo come `context` a `run_assessment()`, con `True`, `False`, `None`.
+
+HTML e pannello mostrano applicabilità e motivazione vicino al risultato. Le azioni prioritarie escludono osservazioni informative e dichiaratamente non applicabili, mantenendo conteggi e dettagli completi. SPF/DMARC assenti sono avvisi informativi se l'invio è sconosciuto o non previsto, avvisi di gravità bassa se dichiarato. Intestazioni browser facoltative assenti restano opportunità di difesa, senza provare vulnerabilità. L'assenza di Permissions-Policy non richiede di disabilitare funzionalità usate dall'applicazione.
+
+### Dati del rilievo
 
 `Finding` conserva identificatore, identificatore stabile del controllo (`check_id`), categoria, stato, gravità, spiegazione, impatto, correzione proposta, evidenze, riferimenti e istante di raccolta in UTC. Il campo `scoreable` indica l'eventuale ammissibilità al punteggio.
 
@@ -454,17 +474,19 @@ Il punteggio facoltativo di salute della configurazione è calcolato da `Assessm
 100 × controlli superati / (controlli superati + controlli falliti)
 ```
 
-Contano **solo** i rilievi con `scoreable=True` e stato superato o fallito. Gli avvisi, gli sconosciuti, gli errori, i non applicabili e le semplici osservazioni di presenza non entrano nel calcolo. Il risultato è arrotondato a un decimale; senza controlli ammissibili non c'è un punteggio.
+Nei nuovi assessment v0.3 il profilo `context-v1` conta **solo** rilievi con `scoreable=True`, stato superato o fallito e applicabilità applicabile. Gli avvisi, gli sconosciuti, gli errori, i risultati con applicabilità sconosciuta o assente e tutte le intestazioni browser facoltative sono esclusi. Il risultato è arrotondato a un decimale; senza controlli ammissibili non c'è un punteggio. Il flag salvato riflette anche queste esclusioni, così i lettori precedenti del formato mantengono la stessa ammissibilità.
 
-La **copertura** mostra quanti rilievi sono valutati e quanti esclusi. Un avviso HSTS rimane escluso anche se il relativo controllo è marcato ammissibile. Un grave `+all` nel percorso SPF singolo è anch'esso escluso per la scelta implementativa descritta nel capitolo 4. Un numero alto può quindi convivere con problemi da correggere: non è una probabilità di evitare un attacco.
+La **copertura** mostra quanti rilievi sono valutati e quanti esclusi. HSTS e nosniff sono esclusi anche quando presenti: misure facoltative non devono diluire un errore confermato. L'avviso `+all` resta escluso. Un numero alto può convivere con aspetti importanti da riesaminare: non è una probabilità di evitare un attacco.
 
-Il pannello e i rapporti HTML tengono il punteggio disattivato per impostazione predefinita. Il JSON include comunque valore calcolato, formula e copertura. Fra esecuzioni diverse, risultati sconosciuti possono cambiare il denominatore: confronta prima rilievi e copertura, poi il numero.
+Il pannello e i rapporti HTML tengono il punteggio disattivato per impostazione predefinita. Il JSON include comunque valore calcolato, formula e copertura. Confronta punteggi solo con profili, contesto e criteri valutati compatibili: anche una dichiarazione diversa può cambiare il denominatore senza modificare il DNS.
+
+Lo schema JSON e SQLite resta alla versione 1. Le aggiunte sono in dizionari già liberi: `metadata.context`, `metadata.scoring_profile` e `evidence.applicability` con `state`, `basis` e motivazione bilingue `reason`. Il riepilogo JSON aggiunge `priority_finding_ids`. Non si aggiungono campi obbligatori ai finding e non serve migrare il database. I risultati storici mantengono stati, gravità, flag e vecchio calcolo del punteggio; l'applicabilità non registrata appare Sconosciuta senza riscrivere le evidenze salvate. Le vecchie interfacce possono leggere i dati, ma occorre aggiornarle per spiegare applicabilità e profilo.
 
 ### Un assessment fittizio completo
 
 Quella che segue è una **simulazione didattica costruita a tavolino**, non un'esecuzione di CyberCheck e non un rapporto generato dalla rete. Comprende tutti i 22 rilievi previsti per questa configurazione, con un selettore esplicito.
 
-Configurazione immaginata per `azienda.example`, con autorizzazione e selettore `firma2026`:
+Configurazione immaginata per `azienda.example`, con autorizzazione, selettore `firma2026`, invio e ricezione dichiarati come previsti (non verificati indipendentemente), profilo `context-v1`:
 
 ```dns
 azienda.example. IN A 192.0.2.10
@@ -495,7 +517,7 @@ Permissions-Policy, X-Frame-Options e `frame-ancestors` sono assenti. Il percors
 | `dns.records` | Superato | Informativa | Inventario completato; la contraddizione MX ha un rilievo distinto. | No |
 | `dns.mx` | Fallito | Media | Null MX e MX ordinario insieme. | Sì |
 | `dns.caa` | Avviso | Informativa | Nessun CAA al nome esatto; ereditarietà non valutata. | No |
-| `email.spf` | Fallito | Alta | `+all` autorizza i mittenti che arrivano a quel termine. | No |
+| `email.spf` | Avviso | Media | `+all` autorizza i mittenti che arrivano a quel termine; l'intento va verificato. | No |
 | `email.spf_lookups` | Superato | Informativa | Stima di zero termini che richiedono DNS, senza dipendenze. | No |
 | `email.dmarc` | Avviso | Bassa | `p=none`: monitoraggio nel profilo storico. | No |
 | `email.dmarc_reporting` | Superato | Informativa | Destinazione `rua` nella forma supportata, non consegna provata. | No |
@@ -508,16 +530,16 @@ Permissions-Policy, X-Frame-Options e `frame-ancestors` sono assenti. Il percors
 | `http.https` | Superato | Informativa | Connessione HTTPS e risposta HTTP ricevuta. | No |
 | `http.application` | Superato | Informativa | Risposta HEAD HTTPS 200 per questo URL; funzioni complete non verificate. | No |
 | `headers.hsts` | Avviso | Bassa | `max-age=0` non attiva HSTS. | No: avviso |
-| `headers.nosniff` | Superato | Informativa | Valore `nosniff` presente. | Sì |
+| `headers.nosniff` | Superato | Informativa | Valore `nosniff` presente; misura facoltativa. | No |
 | `headers.referrer` | Avviso | Bassa | `unsafe-url` è permissivo. | No |
 | `headers.csp` | Superato | Informativa | CSP applicata presente; efficacia completa non provata. | No |
 | `headers.permissions` | Avviso | Informativa | Intestazione assente. | No |
 | `headers.framing` | Avviso | Bassa | Nessuna protezione riconosciuta dall'incorporamento. | No |
 | `http.redirect` | Avviso | Bassa | Successo HTTP senza passaggio a HTTPS. | No |
 
-Il riepilogo è **12 superati, 2 falliti e 8 avvisi**; nessuno sconosciuto, errore o non applicabile in questa ipotesi. I controlli nel punteggio sono 6: 5 superati e 1 fallito. Il valore è `100 × 5 / 6 = 83,3`, con **6 rilievi valutati e 16 esclusi**.
+Il riepilogo è **12 superati, 1 fallito e 9 avvisi**; nessuno stato Sconosciuto, Errore o Non applicabile in questa ipotesi. L'applicabilità rimane invece sconosciuta per i criteri condizionali senza contesto sufficiente, come CAA e framing. I controlli nel punteggio sono 5: 4 superati TLS e 1 fallito MX, applicabile per la ricezione dichiarata. Il valore è `100 × 4 / 5 = 80`, con **5 rilievi valutati e 17 esclusi**. Il precedente profilo avrebbe incluso nosniff; i risultati salvati con quel profilo non vengono ricalcolati.
 
-Per leggere il risultato, parti dalla contraddizione MX e dal permissivo `+all`, verifica se il selettore revocato è ancora usato e riesamina poi le misure web rispetto al servizio. La scelta `p=none` richiede una decisione sul percorso di adozione, non un cambio indiscriminato a `reject`. Il punteggio 83,3 non deve nascondere nessuna di queste osservazioni.
+Per leggere il risultato, parti dalla contraddizione MX e dal permissivo `+all`, verifica se il selettore revocato è ancora usato e riesamina poi le misure web rispetto al servizio. La scelta `p=none` richiede una decisione sul percorso di adozione, non un cambio indiscriminato a `reject`. Il punteggio 80 non deve nascondere nessuna di queste osservazioni.
 
 La cronologia SQLite permette di confrontare l'esecuzione con la precedente dello stesso dominio. Una variazione dell'evidenza non è automaticamente un peggioramento: per esempio, il normale calo dei giorni residui del certificato viene ignorato nel confronto stabile. I rapporti HTML sono stampabili dal browser; l'app non genera direttamente PDF.
 
@@ -553,7 +575,7 @@ azienda.example. IN TXT "v=spf1 include:_spf.fornitore.example ~all"
 
 **Spiegazione tecnica:** due record TXT SPF distinti sullo stesso nome rendono ambigua la selezione della policy e causano un errore permanente.
 
-**Risposta corretta:** no. `check_spf()` restituisce un rilievo fallito, di gravità media e ammissibile al punteggio. L'amministratore deve costruire un solo record coerente, verificando mittenti legittimi e dipendenze.
+**Risposta corretta:** no. `check_spf()` restituisce un rilievo fallito, di gravità media; nel nuovo punteggio l'ammissibilità richiede applicabilità stabilita dal contesto di invio dichiarato. L'amministratore deve verificare requisiti, mittenti legittimi e dipendenze prima di costruire una policy coerente.
 
 ### Esercizio 3: DMARC
 
@@ -567,7 +589,7 @@ _dmarc.azienda.example. IN TXT "v=DMARC1; p=reject; t=y; rua=mailto:rapporti@azi
 
 **Spiegazione tecnica:** `t` appartiene alle semantiche attuali che il profilo storico dell'app non implementa. La pubblicazione di `p=reject` non prova da sola il comportamento dei destinatari.
 
-**Risposta corretta:** no. In assenza di altri errori preliminari, il tag `t` rende sconosciuto il rilievo principale, escluso dal punteggio. Il controllo di forma della destinazione `rua` può risultare superato separatamente. Non va eliminato `t` solo per ottenere un risultato positivo nell'app.
+**Risposta corretta:** no. Il tag `t` rende sconosciuto il rilievo principale, escluso dal punteggio; eventuali diagnostiche del profilo storico restano nelle evidenze. Il controllo di forma della destinazione `rua` può risultare superato separatamente. Non va eliminato `t` solo per ottenere un risultato positivo nell'app.
 
 ### Esercizio 4: DKIM
 

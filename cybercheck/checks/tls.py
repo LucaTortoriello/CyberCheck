@@ -17,7 +17,13 @@ KEYS = ("tls.connection", "tls.chain", "tls.hostname", "tls.validity", "tls.prot
 
 
 def check_tls(domain: str, dns: DNSClient, budget: Budget) -> list[Finding]:
-    evidence: dict = {"hostname": domain, "port": 443, "verification": "local system trust store"}
+    evidence: dict = {
+        "hostname": domain,
+        "port": 443,
+        "verification": "local system trust store",
+        "scope": "Single-endpoint TLS verification; protocol support is not enumerated",
+        "protocol_support_enumerated": False,
+    }
     try:
         address = dns.public_addresses(domain)[0]
         evidence["address"] = address
