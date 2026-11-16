@@ -36,8 +36,8 @@ STRINGS = {
         "Impossibile aprire il database locale, oppure schema non supportato. Controlla percorso e permessi; conservalo e ripristina un backup o scegli un percorso separato.",
     ),
     "stored_invalid": (
-        "This stored assessment cannot be read. Its data has been preserved. Select another assessment or recover a database backup.",
-        "Questo assessment salvato non è leggibile. I dati sono stati conservati. Seleziona un altro assessment o recupera un backup del database.",
+        "This stored assessment cannot be read: its structure is invalid, its identity is inconsistent, or it exceeds supported read limits. Its data has been preserved. Select another assessment or recover a database backup.",
+        "Questo assessment salvato non è leggibile: la struttura non è valida, l'identità è incoerente o supera i limiti di lettura supportati. I dati sono stati conservati. Seleziona un altro assessment o recupera un backup del database.",
     ),
     "checks_done": (
         "Checks completed; saving results locally…",
@@ -184,8 +184,8 @@ STRINGS = {
     "verified": ("Observed at (UTC)", "Osservato il (UTC)"),
     "references": ("Reference", "Riferimento"),
     "history_intro": (
-        "Assessments stay in your local SQLite database. Compare consecutive observations for the same domain.",
-        "Gli assessment restano nel database SQLite locale. Confronta osservazioni consecutive per lo stesso dominio.",
+        "Assessments stay in your local SQLite database. Open a saved target and select two runs to compare observations, evaluation and comparability.",
+        "Gli assessment restano nel database SQLite locale. Apri un target salvato e scegli due esecuzioni per confrontare osservazioni, valutazione e confrontabilità.",
     ),
     "history_domain": ("Filter by exact domain (optional)", "Filtra per dominio esatto (facoltativo)"),
     "page": ("History page", "Pagina cronologia"),

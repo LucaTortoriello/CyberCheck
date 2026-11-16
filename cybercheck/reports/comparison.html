@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="{{ language }}">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>CyberCheck — {{ ct('title') }} — {{ c.domain }}</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,sans-serif;color:#17243a;background:#edf1f6}
+    *{box-sizing:border-box}body{max-width:1020px;margin:32px auto;padding:40px;background:white;line-height:1.6}
+    h1{font-size:32px;line-height:1.2}h2{margin-top:32px;border-bottom:1px solid #dce3eb;padding-bottom:8px}
+    .brand{color:#188261;font-size:24px;font-weight:750}.notice{background:#f1f5f9;padding:16px;border-radius:6px}
+    table{border-collapse:collapse;width:100%;table-layout:fixed}th,td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid #dce3eb;overflow-wrap:anywhere}
+    article{border:1px solid #dce3eb;border-radius:6px;padding:20px;margin:20px 0}h3{margin-top:0}.badge{background:#edf1f6;padding:4px 8px;font-size:12px}
+    pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;background:#f4f6f9;padding:14px}small{color:#57657a}
+    @page{size:A4;margin:16mm}@media print{body{padding:0;margin:0;max-width:none;font-size:10pt}article{break-inside:auto}h2,h3{break-after:avoid}tr{break-inside:avoid}thead{display:table-header-group}pre{font-size:8pt}p,li{orphans:3;widows:3}}
+    @media(max-width:600px){body{margin:0;padding:20px}h1{font-size:26px}th,td{padding:6px;font-size:12px}}
+  </style>
+</head>
+<body>
+  <div class="brand">CyberCheck</div><h1>{{ ct('title') }}</h1><p><strong>{{ c.domain }}</strong></p>
+  {% if c.earlier.synthetic_fixture or c.later.synthetic_fixture %}<p class="notice"><strong>{{ t('synthetic_notice') }}</strong></p>{% endif %}
+  <table><thead><tr><th>{{ ct('earlier') }}</th><th>{{ ct('later') }}</th></tr></thead><tbody>
+    <tr>{% for a in [c.earlier,c.later] %}<td>{{ a.started_at }}<br><small>{{ a.id }}</small><br>CyberCheck {{ a.engine_version or t('unknown') }}<br>{{ a.methodology_version or t('unknown') }} · {{ a.scoring_profile or t('unknown') }}</td>{% endfor %}</tr>
+  </tbody></table>
+  <h2>{{ ct('compatibility') }}: {{ ct(c.comparability) }}</h2>
+  <p class="notice">{{ c.methodology[language] }}</p>
+  <ul>{% for r in c.limitations %}<li>{{ r.explanation[language] }}</li>{% endfor %}</ul>
+  <h2>{{ t('summary') }}</h2><p>{{ ct('overlap') }}</p>
+  <table><tbody>{% for key,count in c.summary.items() %}<tr><th>{{ ct(key) }}</th><td>{{ count }}</td></tr>{% endfor %}</tbody></table>
+  <h2>{{ ct('score') }}</h2><p>{{ c.scoring.explanation[language] }}</p>
+  {% if c.scoring.valid %}<p>{{ c.scoring.earlier.score }} → {{ c.scoring.later.score }} · Δ {{ c.scoring.delta }}</p>{% endif %}
+  <ul>{% for r in c.scoring.reasons %}<li>{{ r.explanation[language] }}</li>{% endfor %}</ul>
+  <h2>{{ ct('details') }}</h2>
+  {% for f in c.findings %}<article>
+    <h3>{{ f.check_name[language] }}</h3><small>{{ f.check_id }}</small>
+    <p>{% for category in f.categories %}<span class="badge">{{ ct(category) }}</span> {% endfor %}</p>
+    <p>{{ ct('compatibility') }}: {{ ct(f.comparability) }} · {{ ct(f.observation_change) }}</p>
+    <p>{{ t(f.previous_status or 'not_assessed') }} → {{ t(f.current_status or 'not_assessed') }} · {{ t(f.previous_severity or 'not_assessed') }} → {{ t(f.current_severity or 'not_assessed') }}</p>
+    <ul>{% for r in f.reasons %}<li>{{ r.explanation[language] }}</li>{% endfor %}</ul>
+    <strong>{{ ct('dimensions') }}</strong><pre>{{ f.dimensions|tojson(indent=2) }}</pre>
+    <strong>{{ ct('evidence') }}</strong><pre>{{ {'earlier':f.earlier,'later':f.later,'differences':f.differences}|tojson(indent=2) }}</pre>
+  </article>{% endfor %}
+  <h2>{{ t('methodology') }}</h2><pre>{{ {'earlier':c.earlier,'later':c.later}|tojson(indent=2) }}</pre>
+  <p class="notice">{{ t('disclaimer') }}</p><footer><small>CyberCheck · {{ c.comparison_version }} · comparison schema {{ c.schema_version }}</small></footer>
+</body>
+</html>

@@ -7,6 +7,8 @@ from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
+from cybercheck.models.validation import MAX_FINDINGS, DataValidationError, validate_data_size
+
 
 def now() -> str:
     return datetime.now(UTC).isoformat()
@@ -84,6 +86,9 @@ class Finding:
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Finding":
         values = dict(data)
+        # Missing provenance stays missing; never invent historical UUIDs/times.
+        values.setdefault("id", "")
+        values.setdefault("timestamp", "")
         for key in ("check_name", "explanation", "business_impact", "remediation"):
             values[key] = Text(**values[key])
         values["status"] = Status(values["status"])
@@ -108,13 +113,22 @@ class Assessment:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Assessment":
+        validate_data_size(data)
+        if not isinstance(data, dict) or not isinstance(data.get("findings", []), list):
+            raise DataValidationError("Historical assessment must contain a finding list")
+        if len(data.get("findings", [])) > MAX_FINDINGS:
+            raise DataValidationError("Historical assessment exceeds the finding limit")
         values = dict(data)
-        if values.get("schema_version", 1) != 1:
+        if type(values.get("schema_version", 1)) is not int or values.get("schema_version", 1) != 1:
             raise ValueError("Unsupported assessment schema version")
+        values.setdefault("id", "")
+        values.setdefault("started_at", "")
         for derived in ("configuration_health", "score_formula", "methodology", "disclaimer", "summary"):
             values.pop(derived, None)
         values["findings"] = [Finding.from_dict(f) for f in values.get("findings", [])]
-        return cls(**values)
+        assessment = cls(**values)
+        validate_assessment(assessment)
+        return assessment
 
     @property
     def counts(self) -> dict[str, int]:
@@ -140,3 +154,48 @@ class Assessment:
             "evaluated": len(eligible),
             "excluded": len(self.findings) - len(eligible),
         }
+
+
+def validate_assessment(assessment: Assessment, *, strict_evidence: bool = True) -> None:
+    """Validate the model contract without reinterpreting or modifying findings."""
+    if not isinstance(assessment, Assessment):
+        raise DataValidationError("Expected an assessment")
+    for name in ("domain", "id", "started_at"):
+        if not isinstance(getattr(assessment, name), str):
+            raise DataValidationError("Invalid assessment identity or timestamp type")
+    if not assessment.domain or not assessment.id or not isinstance(assessment.metadata, dict):
+        raise DataValidationError("Invalid assessment domain or metadata")
+    if type(assessment.schema_version) is not int or assessment.schema_version != 1:
+        raise DataValidationError("Unsupported assessment schema")
+    if type(assessment.authorization_confirmed) is not bool:
+        raise DataValidationError("Invalid historical authorization declaration")
+    if assessment.completed_at is not None and not isinstance(assessment.completed_at, str):
+        raise DataValidationError("Invalid assessment completion timestamp type")
+    if not isinstance(assessment.selectors, list) or not all(
+        isinstance(s, str) for s in assessment.selectors
+    ):
+        raise DataValidationError("Invalid historical selectors")
+    if not isinstance(assessment.findings, list) or len(assessment.findings) > MAX_FINDINGS:
+        raise DataValidationError("Invalid or oversized finding list")
+    for f in assessment.findings:
+        if not isinstance(f, Finding):
+            raise DataValidationError("Invalid historical finding")
+        if not all(isinstance(getattr(f, name), str) for name in ("check_id", "category", "id", "timestamp")):
+            raise DataValidationError("Invalid finding identity or category")
+        if not f.check_id or not f.id or not f.category:
+            raise DataValidationError("Missing finding identity or category")
+        if (
+            not isinstance(f.status, Status)
+            or not isinstance(f.severity, Severity)
+            or type(f.scoreable) is not bool
+        ):
+            raise DataValidationError("Invalid finding evaluation fields")
+        for name in ("check_name", "explanation", "business_impact", "remediation"):
+            text = getattr(f, name)
+            if not isinstance(text, Text) or not isinstance(text.en, str) or not isinstance(text.it, str):
+                raise DataValidationError("Invalid bilingual finding text")
+        if strict_evidence and not isinstance(f.evidence, dict):
+            raise DataValidationError("Invalid historical evidence type")
+        if not isinstance(f.references, list) or not all(isinstance(r, str) for r in f.references):
+            raise DataValidationError("Invalid historical references")
+    validate_data_size(assessment)

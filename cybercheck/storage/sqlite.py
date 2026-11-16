@@ -8,7 +8,9 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
+from cybercheck.core.comparison import compare_assessments, stable_evidence  # noqa: F401
 from cybercheck.models import Assessment
+from cybercheck.models.validation import MAX_PAYLOAD_BYTES, check_payload_size
 
 SCHEMA_VERSION = 1
 
@@ -19,8 +21,9 @@ class StorageDataError(ValueError):
 
 def load_payload(payload: str) -> Assessment:
     try:
+        check_payload_size(payload)
         return Assessment.from_dict(json.loads(payload))
-    except (ValueError, TypeError, KeyError, AttributeError) as exc:
+    except (ValueError, TypeError, KeyError, AttributeError, RecursionError, OverflowError) as exc:
         raise StorageDataError("Stored assessment data is invalid or has an unsupported schema") from exc
 
 
@@ -88,59 +91,74 @@ class Repository:
             return [dict(row) for row in connection.execute(query, params)]
 
     def get(self, assessment_id: str) -> Assessment | None:
-        with self.connect() as connection:
-            row = connection.execute(
-                "SELECT payload FROM assessments WHERE id = ?", (assessment_id,)
-            ).fetchone()
-        return load_payload(row["payload"]) if row else None
+        try:
+            with self.connect() as connection:
+                # Also bound SQLite's native values while inspecting oversized rows.
+                connection.setlimit(sqlite3.SQLITE_LIMIT_LENGTH, 2 * MAX_PAYLOAD_BYTES + 65_536)
+                row = connection.execute(
+                    """SELECT id, domain, started_at,
+                    CASE WHEN length(CAST(payload AS BLOB)) <= ? THEN payload END AS payload
+                    FROM assessments WHERE id = ?""",
+                    (MAX_PAYLOAD_BYTES, assessment_id),
+                ).fetchone()
+        except sqlite3.DataError as exc:
+            raise StorageDataError("Stored assessment exceeds supported read limits") from exc
+        return self._load_row(row) if row else None
+
+    @staticmethod
+    def _load_row(row: sqlite3.Row) -> Assessment:
+        assessment = load_payload(row["payload"])
+        if (assessment.id, assessment.domain, assessment.started_at) != (
+            row["id"],
+            row["domain"],
+            row["started_at"],
+        ):
+            raise StorageDataError("Stored assessment identity disagrees with the history index")
+        return assessment
 
     def previous(self, assessment: Assessment) -> Assessment | None:
-        with self.connect() as connection:
-            row = connection.execute(
-                """SELECT payload FROM assessments
-                WHERE domain=? AND (started_at<? OR (started_at=? AND
-                    rowid < COALESCE((SELECT rowid FROM assessments WHERE id=?), 9223372036854775807)))
-                ORDER BY started_at DESC, rowid DESC LIMIT 1""",
-                (assessment.domain, assessment.started_at, assessment.started_at, assessment.id),
-            ).fetchone()
-        return load_payload(row["payload"]) if row else None
-
-
-def stable_evidence(value: object, key: str = "") -> object:
-    """Ignore countdowns and serialization/order noise, never changed policy data."""
-    if isinstance(value, dict):
-        return {k: stable_evidence(v, k) for k, v in value.items() if k != "days_until_expiration"}
-    if isinstance(value, (list, tuple)):
-        items = [stable_evidence(v) for v in value]
-        return sorted(items, key=lambda item: json.dumps(item, sort_keys=True)) if key == "records" else items
-    return value
+        try:
+            with self.connect() as connection:
+                connection.setlimit(sqlite3.SQLITE_LIMIT_LENGTH, 2 * MAX_PAYLOAD_BYTES + 65_536)
+                row = connection.execute(
+                    """SELECT id, domain, started_at,
+                    CASE WHEN length(CAST(payload AS BLOB)) <= ? THEN payload END AS payload FROM assessments
+                    WHERE domain=? AND (started_at<? OR (started_at=? AND
+                        rowid < COALESCE((SELECT rowid FROM assessments WHERE id=?), 9223372036854775807)))
+                    ORDER BY started_at DESC, rowid DESC LIMIT 1""",
+                    (
+                        MAX_PAYLOAD_BYTES,
+                        assessment.domain,
+                        assessment.started_at,
+                        assessment.started_at,
+                        assessment.id,
+                    ),
+                ).fetchone()
+        except sqlite3.DataError as exc:
+            raise StorageDataError("Stored assessment exceeds supported read limits") from exc
+        return self._load_row(row) if row else None
 
 
 def compare(previous: Assessment, current: Assessment) -> list[dict]:
-    """Compare stable check IDs; changed evidence alone is not a risk regression."""
-    if previous.domain != current.domain:
-        raise ValueError("Only assessments of the same domain can be compared")
-    before = {f.check_id: f for f in previous.findings}
-    after = {f.check_id: f for f in current.findings}
-    changes = []
-    for key in sorted(before.keys() | after.keys()):
-        old, new = before.get(key), after.get(key)
-        if (
-            old is None
-            or new is None
-            or (old.status, old.severity, stable_evidence(old.evidence))
-            != (new.status, new.severity, stable_evidence(new.evidence))
-        ):
-            changes.append(
-                {
-                    "check_id": key,
-                    "previous_status": old.status.value if old else None,
-                    "current_status": new.status.value if new else None,
-                    "previous_severity": old.severity.value if old else None,
-                    "current_severity": new.severity.value if new else None,
-                    "evidence_changed": bool(
-                        old and new and stable_evidence(old.evidence) != stable_evidence(new.evidence)
-                    ),
-                }
+    """Compatibility adapter: retain the changed-row list and familiar field names.
+
+    New callers should use compare_assessments for full comparability and unchanged
+    or persistent findings. Source storage is never mutated.
+    """
+    comparison = compare_assessments(previous, current)
+    return [
+        item
+        for item in comparison.findings
+        if item["earlier"] is None
+        or item["later"] is None
+        or item["differences"]
+        or any(
+            item["dimensions"][name]
+            for name in (
+                "status_changed",
+                "severity_changed",
+                "applicability_changed",
+                "scoring_eligibility_changed",
             )
-    return changes
+        )
+    ]

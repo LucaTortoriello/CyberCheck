@@ -100,3 +100,22 @@ apart from the existing web-data minimization. HTML/dashboard priority actions
 omit informational and explicitly inapplicable results, while counts and full
 finding details retain them. Failed criteria still appear in the confirmed list
 with applicability, even if no operational action is prioritized.
+
+## Historical comparison (v0.4)
+
+`comparison-v1` compares saved assessments without rerunning checks or writing
+history. It separates allowlisted measured observations from status/severity,
+applicability/basis, declared context, scoring eligibility/profile and check
+methodology. New/resolved/persistent concern labels require comparable measured
+criteria; missing checks and Unknown/Error/NA never establish a new/resolved
+concern. Equivalent observations with different results are evaluation changes.
+Time-dependent expiry classifications can change without certificate changes.
+
+The existing schema-v1 assessment format, context-v1 scoring and original
+historical calculation are retained. New metadata records `methodology_version:
+checks-v0.3` because v0.4 does not change check rules. New browser-header evidence
+also records relevant raw `observed_headers` values, including duplicate fields,
+to avoid treating parser-generated framing prose as raw historical headers.
+Comparison exports are a separate `assessment_comparison` report type/schema 1.
+
+See [comparison rules, field selection, compatibility and worked example](COMPARISON_METHODOLOGY_V04.md).
