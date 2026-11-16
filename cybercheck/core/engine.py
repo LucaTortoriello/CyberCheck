@@ -8,6 +8,7 @@ from cybercheck.checks.email import check_dkim, check_dmarc, check_dns, check_sp
 from cybercheck.checks.tls import check_tls
 from cybercheck.checks.web import check_web
 from cybercheck.core.config import Budget, Settings
+from cybercheck.core.context import AssessmentContext, apply_context
 from cybercheck.core.dns import DNSClient
 from cybercheck.core.network import WebClient
 from cybercheck.core.validation import normalize_domain, normalize_selectors
@@ -27,9 +28,13 @@ def run_assessment(
     progress: Callable[[int, int, str], None] | None = None,
     dns: DNSClient | None = None,
     web: WebClient | None = None,
+    context: AssessmentContext | None = None,
 ) -> Assessment:
     if not authorized:
         raise PermissionError("Confirm ownership or explicit authorization before assessing this domain")
+    if context is not None and not isinstance(context, AssessmentContext):
+        raise ValueError("context must be an AssessmentContext")
+    context = context or AssessmentContext()
     domain = normalize_domain(domain)
     selectors = normalize_selectors(selectors)
     # Validate the longest selector query before performing any network operations.
@@ -80,6 +85,7 @@ def run_assessment(
                         suffix=f":{name}",
                     )
                 )
+        apply_context(assessment, context)
         assessment.completed_at = now()
         assessment.metadata |= {
             "dns_queries": budget.dns,

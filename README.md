@@ -85,13 +85,25 @@ A published policy or key is evidence of configuration, not proof that real emai
 
 Each finding provides:
 
+- **Observation:** What the DNS query, TLS handshake or HTTP response actually returned, within the stated scope.
 - **Status:** Whether the check passed, failed, needs review, could not establish a result, encountered an error or does not apply.
+- **Applicability:** Applicable, not applicable or unknown for the stated criterion/use, with its explanation and evidence or declaration basis. This is independent of status: a published record can have malformed syntax even if its operational use is unknown.
 - **Severity:** The potential consequence of the observed issue, from Informational to Critical; it is not an organization-wide risk rating.
 - **Technical evidence:** Relevant DNS records, certificate details or HTTP observations, with sensitive web data minimized or redacted.
 - **Explanation:** What was observed and why it may matter to the business or service.
 - **Suggested remediation:** Practical next steps to review with the responsible administrator or provider.
 
 A warning does not automatically mean an exploitable vulnerability. A timeout can leave a check Unknown without proving an insecure configuration. The [status definitions and scoring rules](#statuses-and-score) explain these distinctions and the optional Configuration Health score.
+
+For example, a web-only hostname without MX is an observation, not proof of broken email. Missing SPF does not establish that legitimate messages fail; SPF concerns sending identities, while MX concerns receiving. Missing exact-name NS or AAAA need not be a problem. CAA is optional and effective policy can be inherited. Browser headers are contextual hardening opportunities; their absence does not demonstrate exploitation.
+
+### Optional service context (v0.3)
+
+In **New Assessment**, optionally declare whether the exact hostname sends email, receives email, and whether you directly control DNS changes. All three default to **Unknown**; no answer is required. Hosting/provider names never determine these answers. Declarations are saved as **user-declared, not independently verified**. DNS control affects who should review changes, not whether a record was observed. Shared-platform changes should be reviewed by the responsible operator.
+
+For sending checks, declaring no sending marks operational applicability not applicable, while preserving every observation and result. This does **not** establish resistance to impersonation: non-senders may still benefit from carefully reviewed SPF/DMARC policies. Sending identities can differ between SPF envelope/HELO, DMARC author domain and DKIM signing domain; hostname context does not verify those identities. DKIM without supplied selectors stays Unknown. DMARC uses the existing legacy discovery profile; absence there does not prove absence under current-standard discovery.
+
+The dashboard and HTML display applicability beside each finding. Priority actions omit informational and explicitly inapplicable observations; counts and complete details still include them. Status and severity describe the measured criterion and its supported importance, not exploitability or an organization-wide risk assessment. Recommendations state conditional next steps and do not apply changes.
 
 Assessments are saved locally in SQLite. Users can compare consecutive runs for the same domain and export printable HTML or JSON reports containing findings, evidence, remediation and limitations.
 
@@ -119,6 +131,8 @@ Ownership or explicit authorization is required for every assessment. The author
 The current MVP assesses one domain per run. Automated monitoring, alerts, multi-domain management and paid hosting are future possibilities described in the [roadmap](docs/ROADMAP.md), rather than current product features.
 
 **v0.2 is a reliability and security review of the existing MVP.** See the [technical audit](docs/TECHNICAL_AUDIT_V02.md), [executed validation](docs/VALIDATION.md) and [real-world validation procedure/status](docs/REAL_WORLD_VALIDATION.md). The [methodology](docs/METHODOLOGY.md) documents the limits of the current checks, including legacy DMARC support and single-endpoint sampling.
+
+**v0.3 improves finding quality and contextual recommendations.** See the [complete finding audit](docs/FINDING_QUALITY_AUDIT_V03.md) and [v0.3 validation](docs/VALIDATION_V03.md). It preserves the same six assessment modules and network protections.
 
 ## Install on macOS
 
@@ -163,6 +177,14 @@ Replace `your-owned-domain.tld` with an asset you are authorized to assess:
 ```sh
 cybercheck your-owned-domain.tld --authorized --selectors selector1,selector2 --language en --output exports
 ```
+
+Optional unverified context (each flag accepts `yes`, `no`, or `unknown`):
+
+```sh
+cybercheck your-owned-domain.tld --authorized --sends-email no --receives-email no --controls-dns unknown
+```
+
+Python callers can pass `context=AssessmentContext(sends_email=False, receives_email=False)` to `run_assessment()`; import `AssessmentContext` from `cybercheck.core.context`. Omitted fields are `None` (unknown). Context never authorizes GET or adds DNS/HTTP requests.
 
 The authorization flag is mandatory. Omit selectors if unknown. GET fallback requires the separate `--allow-get-fallback` flag; `--authorized` alone does not enable it. Add `--include-score` to include the optional health score in HTML. A completed assessment can contain unknown/error findings; the CLI prints counts and exports evidence, rather than treating network uncertainty as a confirmed vulnerability.
 
@@ -213,7 +235,9 @@ HTML and JSON retain schema version 1. The existing `http.https` ID now has the 
 
 Severity describes the potential consequence **of that observation**, not organization-wide risk. `p=none`, missing headers and optional CAA are not classified as critical. `-all` is not prescribed universally. DKIM key publication does not prove message signing, key cryptographic validity or alignment.
 
-The optional score is **100 × passed / (passed + failed)** among explicitly scoreable checks. Warnings, unknowns, errors, inapplicable checks and informational presence-only checks are excluded. An empty denominator yields no score. The UI keeps the score off by default and always shows its coverage when enabled. A high score with low coverage or unscored warnings is incomplete information, **not a probability of avoiding compromise**. See [methodology](docs/METHODOLOGY.md).
+The optional score remains **100 × passed / (passed + failed)** among explicitly scoreable checks. New runs use profile `context-v1`: only applicable criteria are eligible; all optional browser headers are excluded, even when present. Warnings, unknowns, errors and unknown/inapplicable criteria never count as confirmed failures. Missing SPF/DMARC with unknown mail use are informational warnings; declared sending makes these low-severity warnings. Syntactically valid permissive SPF `+all` is a medium warning, while demonstrated supported syntax errors remain Failed. An empty denominator yields no score. The UI keeps the score off by default and shows coverage when enabled. A high score with low coverage or unscored warnings is incomplete information, **not a probability of avoiding compromise**.
+
+JSON and SQLite retain **schema version 1**. New optional keys are inside the existing `metadata` and `evidence` dictionaries: `metadata.context`, `metadata.scoring_profile`, and `evidence.applicability` (`state`, `basis`, bilingual `reason`). JSON summary adds `priority_finding_ids`. No mandatory finding field is added. Eligibility is also persisted in `scoreable` for existing consumers. Historical assessments keep original statuses, severity, flags and score calculation; missing historical applicability displays Unknown without rewriting stored evidence. Compare scores only with compatible profiles, context and evaluated criteria. See [methodology and compatibility details](docs/METHODOLOGY.md).
 
 ## Local data and configuration
 

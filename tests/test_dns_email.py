@@ -41,7 +41,7 @@ def test_txt_chunks_joined_with_absolute_query(resolver):
         ([], Status.WARNING),
         (["v=spf1 ~all"], Status.PASSED),
         (["v=spf1 -all"], Status.PASSED),
-        (["v=spf1 +all"], Status.FAILED),
+        (["v=spf1 +all"], Status.WARNING),
         (["v=spf1 ?all"], Status.WARNING),
         (["v=spf1 ~all", "v=spf1 -all"], Status.FAILED),
         (["v=spf1 ip4:banana -all"], Status.FAILED),

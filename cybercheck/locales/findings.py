@@ -194,24 +194,24 @@ CONTEXT = {
 
 REMEDIATIONS = {
     "email.spf": Text(
-        "Keep exactly one v=spf1 TXT record. Inventory every legitimate sender, correct invalid mechanisms, and choose a fail/softfail policy appropriate to your rollout; never use +all.",
-        "Mantieni un solo record TXT v=spf1. Censisci tutti i mittenti legittimi, correggi i meccanismi non validi e scegli fail/softfail in base al rilascio; non usare +all.",
+        "If this hostname sends email, verify authorized sending infrastructure with the mail administrator and review one appropriate SPF policy, correcting observed syntax errors. If it does not send email, assess whether an explicit no-senders policy is appropriate and within your DNS control. SPF does not inherit from parent names; receiving email alone does not establish a sending requirement. Confirm intent before changing a permissive +all policy.",
+        "Se questo host invia email, verifica con l'amministratore l'infrastruttura di invio autorizzata e valuta una policy SPF appropriata, correggendo gli errori di sintassi osservati. Se non invia email, valuta se una policy esplicita senza mittenti sia opportuna e sotto il tuo controllo DNS. SPF non si eredita dai nomi padre; la sola ricezione non implica un requisito di invio. Conferma l'intento prima di cambiare una policy permissiva +all.",
     ),
     "email.spf_lookups": Text(
         "Ask the mail administrator to evaluate representative sender paths against the ten-lookup limit. Remove obsolete includes; avoid blindly flattening provider-managed records.",
         "Chiedi all'amministratore email di valutare percorsi rappresentativi rispetto al limite di dieci lookup. Rimuovi include obsoleti; evita di appiattire alla cieca record gestiti dai provider.",
     ),
     "email.dmarc": Text(
-        "Publish one valid DMARC record. Use aggregate reports to confirm legitimate sender alignment before progressively requesting quarantine/reject enforcement; review pct and inherited sp.",
-        "Pubblica un record DMARC valido. Usa i report aggregati per confermare l'allineamento dei mittenti legittimi prima di richiedere progressivamente quarantine/reject; verifica pct e sp ereditato.",
+        "If this hostname is used as an email author domain, review the applicable DMARC policy and sender alignment with the mail/DNS administrator before changing enforcement. Check inherited policy first; avoid unnecessary duplicate records. For non-senders, consider anti-impersonation policy only after confirming requirements and DNS control. This legacy RFC 7489 check does not establish effective RFC 9989 policy; validate current-standard behavior separately and do not change modern tags or pct solely to satisfy this result.",
+        "Se questo host è usato come dominio autore delle email, verifica con l'amministratore email/DNS la policy DMARC applicabile e l'allineamento dei mittenti prima di cambiare l'applicazione. Controlla prima la policy ereditata; evita duplicati inutili. Per i non mittenti, valuta una policy contro le impersonificazioni solo dopo aver confermato requisiti e controllo DNS. Questa verifica legacy RFC 7489 non accerta la policy effettiva RFC 9989; valida separatamente il comportamento attuale e non modificare tag moderni o pct solo per soddisfare questo risultato.",
     ),
     "email.dkim": Text(
-        "Confirm the exact selector with the mail provider and publish its supplied key. Check DKIM-Signature and Authentication-Results on an authorized test message; rotate revoked or invalid keys.",
-        "Conferma il selettore esatto con il provider e pubblica la chiave fornita. Controlla DKIM-Signature e Authentication-Results di un messaggio di prova autorizzato; ruota chiavi revocate o non valide.",
+        "If this hostname signs outgoing email, confirm the exact active selector with the mail provider and compare its supplied key. Use an authorized message's DKIM-Signature and Authentication-Results to verify signing and alignment. A revoked selector may be intentionally retired; replace it only if still intended for signing. Do not modify keys without the responsible operator's approval.",
+        "Se questo host firma email in uscita, conferma con il provider il selettore attivo esatto e confronta la chiave fornita. Usa DKIM-Signature e Authentication-Results di un messaggio autorizzato per verificare firma e allineamento. Un selettore revocato può essere intenzionalmente ritirato; sostituiscilo solo se ancora destinato alla firma. Non modificare chiavi senza l'approvazione del gestore responsabile.",
     ),
     "dns.mx": Text(
-        "If mail is received, configure the provider's MX records. If no inbound mail is intended, use a single null MX (0 .) without other MX records. Do not change mail routing without confirming service requirements.",
-        "Se ricevi email, configura gli MX del provider. Se non ricevi email, usa un solo null MX (0 .) senza altri MX. Conferma i requisiti del servizio prima di cambiare l'instradamento.",
+        "If this hostname is intended to receive email, verify explicit or implicit mail routing with the mail administrator; missing MX alone does not prove broken delivery. If inbound mail is not intended, consider a single null MX (0 .), without other MX, only after confirming requirements and DNS control. Receiving and sending are separate roles; do not change shared-platform routing without appropriate control.",
+        "Se questo host deve ricevere email, verifica con l'amministratore l'instradamento esplicito o implicito; gli MX assenti non provano da soli una consegna non funzionante. Se la ricezione non è prevista, valuta un solo null MX (0 .), senza altri MX, solo dopo aver confermato requisiti e controllo DNS. Ricezione e invio sono ruoli distinti; non modificare l'instradamento di piattaforme condivise senza il controllo appropriato.",
     ),
     "dns.caa": Text(
         "Review effective parent/CNAME CAA and your certificate issuers before restricting issuance. CAA is optional; avoid blocking automatic certificate renewal.",
@@ -230,28 +230,48 @@ REMEDIATIONS = {
         "Rinnova i certificati prima della scadenza, automatizza il rinnovo e monitora gli errori. Controlla l'orologio se il periodo di validità appare errato.",
     ),
     "headers.hsts": Text(
-        "After HTTPS works consistently, deploy Strict-Transport-Security with a tested positive max-age. Start with a short duration; add includeSubDomains or preload only after reviewing every affected service.",
-        "Quando HTTPS funziona stabilmente, configura Strict-Transport-Security con max-age positivo e testato. Parti con una durata breve; aggiungi includeSubDomains o preload solo dopo aver verificato tutti i servizi coinvolti.",
+        "For browser-facing services, consider HSTS with the application/hosting operator after HTTPS works consistently. Test a short positive max-age before longer durations; includeSubDomains or preload require review of every affected service. Missing HSTS alone does not establish an exploitable vulnerability.",
+        "Per servizi destinati ai browser, valuta HSTS con il gestore applicativo/hosting quando HTTPS funziona stabilmente. Prova un max-age positivo breve prima di durate maggiori; includeSubDomains o preload richiedono la verifica di tutti i servizi coinvolti. HSTS assente non accerta da solo una vulnerabilità sfruttabile.",
     ),
     "headers.nosniff": Text(
-        "Serve correct Content-Type values and set X-Content-Type-Options: nosniff at the application or reverse proxy. Verify script and stylesheet loading.",
-        "Servi Content-Type corretti e imposta X-Content-Type-Options: nosniff nell'applicazione o nel proxy. Verifica il caricamento di script e fogli di stile.",
+        "For browser-consumed responses, review correct Content-Type values and consider X-Content-Type-Options: nosniff with the application/proxy operator. Test script and stylesheet loading; header absence alone does not demonstrate MIME-based exploitation.",
+        "Per risposte usate dai browser, verifica Content-Type corretti e valuta X-Content-Type-Options: nosniff con il gestore applicativo/proxy. Prova il caricamento di script e fogli di stile; l'assenza dell'intestazione non dimostra da sola uno sfruttamento basato sul MIME.",
     ),
     "headers.csp": Text(
-        "Inventory scripts, styles and external resources. Trial a restrictive CSP in report-only mode, then enforce a tested policy using nonces or hashes where appropriate.",
-        "Censisci script, stili e risorse esterne. Prova una CSP restrittiva in modalità report-only, quindi applica una policy testata con nonce o hash dove appropriato.",
+        "For HTML applications, review injection defenses and resource requirements with the application operator. If CSP is appropriate, trial it in report-only mode before enforcing a tested policy, using nonces or hashes where suitable. This header check neither detects injection nor evaluates HTML meta policies or full CSP effectiveness.",
+        "Per applicazioni HTML, verifica con il gestore le difese dalle iniezioni e i requisiti delle risorse. Se CSP è appropriata, provala in modalità report-only prima di applicare una policy testata, con nonce o hash dove adatti. Questa verifica non rileva iniezioni e non valuta policy meta HTML o l'efficacia completa della CSP.",
     ),
     "headers.referrer": Text(
         "Consider Referrer-Policy: strict-origin-when-cross-origin or a stricter tested policy, and avoid placing sensitive data in URLs.",
         "Valuta Referrer-Policy: strict-origin-when-cross-origin o una policy testata più restrittiva, ed evita dati sensibili negli URL.",
     ),
     "headers.permissions": Text(
-        "Identify required browser features and restrict unused sensitive features, for example camera=(), microphone=(), geolocation=(), after compatibility testing.",
-        "Identifica le funzionalità browser necessarie e limita quelle sensibili inutilizzate, ad esempio camera=(), microphone=(), geolocation=(), dopo test di compatibilità.",
+        "If the HTML application uses sensitive browser features, review feature defaults and requirements with the application operator. Consider restricting unused features, for example camera=(), microphone=(), geolocation=(), after compatibility testing. This optional header is not universally required; its presence does not prove effective restrictions.",
+        "Se l'applicazione HTML usa funzionalità browser sensibili, verifica valori predefiniti e requisiti con il gestore applicativo. Valuta restrizioni alle funzionalità inutilizzate, ad esempio camera=(), microphone=(), geolocation=(), dopo test di compatibilità. Questa intestazione facoltativa non è sempre richiesta; la presenza non prova restrizioni efficaci.",
     ),
     "headers.framing": Text(
         "For interactive HTML, configure CSP frame-ancestors with the intended embedding origins. Use 'none' only when embedding is unnecessary; X-Frame-Options DENY/SAMEORIGIN can support older clients.",
         "Per HTML interattivo, configura CSP frame-ancestors con le origini di incorporamento previste. Usa 'none' solo se l'incorporamento non serve; X-Frame-Options DENY/SAMEORIGIN può supportare client meno recenti.",
+    ),
+    "tls.connection": Text(
+        "Review the observed handshake with the HTTPS operator if it was inconclusive. One successful verified handshake does not establish application availability or comprehensive TLS security.",
+        "Verifica l'handshake osservato con il gestore HTTPS se inconcludente. Un handshake verificato riuscito non accerta la disponibilità applicativa o la sicurezza TLS completa.",
+    ),
+    "tls.protocol": Text(
+        "Review the negotiated protocol only as evidence for this connection. If broader TLS support needs assessment, arrange a separately authorized protocol review with the operator; older-version support was not tested here.",
+        "Considera il protocollo negoziato come evidenza solo per questa connessione. Se occorre valutare il supporto TLS completo, concorda con il gestore una verifica dei protocolli autorizzata separatamente; qui il supporto delle versioni precedenti non è stato testato.",
+    ),
+    "http.https": Text(
+        "Review the recorded method, status and connection error with the web operator if needed. Any verified HTTPS response establishes limited connectivity; an HTTP error does not by itself prove the application is unavailable or insecure.",
+        "Verifica se necessario metodo, stato ed errore di connessione registrati con il gestore web. Una risposta HTTPS verificata accerta connettività limitata; un errore HTTP non prova da solo un'applicazione indisponibile o insicura.",
+    ),
+    "http.application": Text(
+        "Check application behavior with the operator using the recorded method and URL. After HEAD 405/501, enable GET fallback only with explicit authorization for GET and its redirects. A 2xx response does not verify login or business functions; response bodies were not inspected.",
+        "Verifica con il gestore il comportamento applicativo usando metodo e URL registrati. Dopo HEAD 405/501, abilita il fallback GET solo con autorizzazione esplicita per GET e relativi redirect. Una risposta 2xx non verifica login o funzioni operative; i corpi delle risposte non sono stati ispezionati.",
+    ),
+    "http.redirect": Text(
+        "If HTTP serves this browser-facing site, review a canonical HTTPS redirect with the web operator. Do not open port 80 merely to clear an inconclusive check; closure can be intentional. Confirm intended routing before changes.",
+        "Se HTTP serve questo sito destinato ai browser, valuta con il gestore un redirect HTTPS canonico. Non aprire la porta 80 solo per eliminare una verifica inconcludente; la chiusura può essere intenzionale. Conferma l'instradamento previsto prima delle modifiche.",
     ),
 }
 

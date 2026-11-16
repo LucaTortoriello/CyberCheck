@@ -32,6 +32,8 @@
   {% if a.metadata.get('synthetic_fixture') %}<p class="notice"><strong>SYNTHETIC TEST FIXTURE — NOT A LIVE ASSESSMENT</strong></p>{% endif %}
   <h2>{{ t('report_scope') }}</h2><p>{{ t('report_scope_body') }}</p>
   <dl><dt>DKIM</dt><dd>{{ a.selectors|join(', ') if a.selectors else t('unknown') }}</dd></dl>
+  <p>{{ t('report_context_note') }}</p>
+  <dl>{% for key in ['sends_email', 'receives_email', 'controls_dns'] %}<dt>{{ t(key) }}</dt><dd>{% set declared = a.metadata.get('context', {}).get(key) %}{{ t('yes' if declared is sameas true else 'no' if declared is sameas false else 'unknown') }}</dd>{% endfor %}</dl>
   <h2>{{ t('executive') }}</h2><p>{{ t('report_executive') }}</p>
   <div class="summary">
     <div class="metric"><b>{{ a.counts.passed }}</b>{{ t('checks_passed') }}</div>
@@ -40,21 +42,21 @@
     <div class="metric"><b>{{ a.counts.unknown + a.counts.error }}</b>{{ t('incomplete') }}</div>
   </div>
   <h3>{{ t('report_confirmed') }}</h3>
-  <ul class="issue-list">{% for f in a.findings if f.status == 'failed' %}<li><a href="#finding-{{ f.id }}">{{ f.check_name.get(language) }}</a> · {{ t(f.severity) }}</li>{% else %}<li>{{ t('no_confirmed') }}</li>{% endfor %}</ul>
+  <ul class="issue-list">{% for f in a.findings if f.status == 'failed' %}<li><a href="#finding-{{ f.id }}">{{ f.check_name.get(language) }}</a> · {{ t(f.severity) }} · {{ t('applicability_' + f.applicability) }}</li>{% else %}<li>{{ t('no_confirmed') }}</li>{% endfor %}</ul>
   <div class="inconclusive"><h3>{{ t('report_inconclusive') }}</h3>
   <ul class="issue-list">{% for f in a.findings if f.status in ['unknown','error'] %}<li><a href="#finding-{{ f.id }}">{{ f.check_name.get(language) }}</a> · {{ t(f.status) }}</li>{% else %}<li>{{ t('no_inconclusive') }}</li>{% endfor %}</ul></div>
   {% if include_score %}<h3>{{ t('health') }}: {{ a.health.score if a.health.score is not none else '—' }}{% if a.health.score is not none %}/100{% endif %}</h3>
-  <p>{{ t('score_formula') }}</p><p>{{ t('coverage', evaluated=a.health.evaluated, excluded=a.health.excluded) }}</p>{% endif %}
+  <p>{{ t(score_formula_key) }}</p><p>{{ t('coverage', evaluated=a.health.evaluated, excluded=a.health.excluded) }}</p>{% endif %}
   <h2>{{ t('summary') }}</h2>
   <table><thead><tr><th>{{ t('category') }}</th><th>{{ t('passed') }}</th><th>{{ t('warning') }}</th><th>{{ t('failed') }}</th><th>{{ t('incomplete') }}</th><th>{{ t('not_applicable') }}</th></tr></thead><tbody>
     {% for category, findings in groups.items() %}<tr><td>{{ t(category) }}</td><td>{{ findings|selectattr('status','equalto','passed')|list|length }}</td><td>{{ findings|selectattr('status','equalto','warning')|list|length }}</td><td>{{ findings|selectattr('status','equalto','failed')|list|length }}</td><td>{{ (findings|selectattr('status','equalto','unknown')|list|length) + (findings|selectattr('status','equalto','error')|list|length) }}</td><td>{{ findings|selectattr('status','equalto','not_applicable')|list|length }}</td></tr>{% endfor %}
   </tbody></table>
   <h2>{{ t('remediation') }}</h2>
-  <ol>{% for f in a.findings if f.status in ['failed','warning'] %}<li><strong>{{ f.check_name.get(language) }}</strong>: {{ f.remediation.get(language) }}</li>{% else %}<li>{{ t('no_attention') }}</li>{% endfor %}</ol>
+  <ol>{% for f in a.findings if f.needs_attention %}<li><strong>{{ f.check_name.get(language) }}</strong> · {{ t('applicability_' + f.applicability) }}: {{ f.remediation.get(language) }}</li>{% else %}<li>{{ t('no_attention') }}</li>{% endfor %}</ol>
   {% for category, findings in groups.items() %}<h2>{{ t(category) }}</h2>
     {% for f in findings %}<article id="finding-{{ f.id }}" class="finding {{ f.status }}">
       <h3>{{ f.check_name.get(language) }}</h3><span class="badge">{{ t(f.status) }} · {{ t(f.severity) }}</span>
-      <p>{{ f.explanation.get(language) }}</p><dl><dt>{{ t('impact') }}</dt><dd>{{ f.business_impact.get(language) }}</dd><dt>{{ t('remediation') }}</dt><dd>{{ f.remediation.get(language) }}</dd></dl>
+      <p>{{ f.explanation.get(language) }}</p><dl><dt>{{ t('applicability') }}</dt><dd>{{ t('applicability_' + f.applicability) }}. {{ f.applicability_reason.get(language) }}</dd><dt>{{ t('impact') }}</dt><dd>{{ f.business_impact.get(language) }}</dd><dt>{{ t('remediation') }}</dt><dd>{{ f.remediation.get(language) }}</dd></dl>
       <strong>{{ t('evidence') }}</strong><pre>{{ f.evidence|tojson(indent=2) }}</pre>
       <small>{{ t('verified') }}: {{ f.timestamp }} · {{ f.check_id }} · {{ f.id }}</small>
       {% for reference in f.references %}<p><a href="{{ reference }}" rel="noreferrer">{{ t('references') }}: {{ reference }}</a></p>{% endfor %}

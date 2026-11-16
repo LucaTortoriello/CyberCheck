@@ -31,8 +31,14 @@ def render_json(assessment: Assessment) -> str:
                 "inconclusive_finding_ids": [
                     f.id for f in assessment.findings if f.status in {"unknown", "error"}
                 ],
+                "priority_finding_ids": [f.id for f in assessment.findings if f.needs_attention],
             },
-            "score_formula": tr("score_formula", "en"),
+            "score_formula": tr(
+                "score_formula_context"
+                if assessment.metadata.get("scoring_profile") == "context-v1"
+                else "score_formula",
+                "en",
+            ),
             "methodology": tr("methodology_body", "en"),
             "disclaimer": tr("disclaimer", "en"),
         },
@@ -58,4 +64,7 @@ def render_html(assessment: Assessment, language: str = "it", *, include_score: 
         t=lambda key, **values: tr(key, language, **values),
         groups=grouped,
         include_score=include_score,
+        score_formula_key="score_formula_context"
+        if assessment.metadata.get("scoring_profile") == "context-v1"
+        else "score_formula",
     )

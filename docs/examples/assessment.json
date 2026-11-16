@@ -12,16 +12,16 @@
       "status": "passed",
       "severity": "informational",
       "explanation": {
-        "en": "Exact-name DNS inventory; NS records can legitimately exist only at the zone apex.",
-        "it": "Inventario DNS del nome esatto; i record NS possono legittimamente esistere solo all'apice della zona."
+        "en": "Exact-name DNS inventory; missing NS at a non-apex hostname or absent IPv6 AAAA records do not by themselves establish a security issue.",
+        "it": "Inventario DNS del nome esatto; NS assenti a un host non apice o record IPv6 AAAA assenti non accertano da soli un problema di sicurezza."
       },
       "business_impact": {
         "en": "DNS records control service discovery and routing; absence alone need not be insecure.",
         "it": "I record DNS controllano instradamento e scoperta dei servizi; un'assenza non indica da sola insicurezza."
       },
       "remediation": {
-        "en": "Review the evidence with the DNS administrator and change only records relevant to your services.",
-        "it": "Esamina le evidenze con l'amministratore DNS e modifica solo i record pertinenti ai tuoi servizi."
+        "en": "Review the evidence with the DNS administrator and change only records relevant to your services. DNS control is unknown; identify the responsible administrator or platform operator before changes.",
+        "it": "Esamina le evidenze con l'amministratore DNS e modifica solo i record pertinenti ai tuoi servizi. Il controllo DNS è sconosciuto; identifica l'amministratore o il gestore della piattaforma responsabile prima delle modifiche."
       },
       "evidence": {
         "A": {
@@ -64,14 +64,22 @@
           "state": "absent",
           "records": [],
           "error": null
+        },
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_scope",
+          "reason": {
+            "en": "Applicable to the explicitly tested criterion and endpoint only; a passed result does not cover untested behavior.",
+            "it": "Applicabile solo al criterio e all'endpoint verificati; un risultato superato non copre comportamenti non testati."
+          }
         }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc1035"
       ],
       "scoreable": false,
-      "id": "12c83ecd-b531-43df-99f7-dd6fda34d96f",
-      "timestamp": "2026-11-09T10:02:51.597464+00:00"
+      "id": "9cdeb2c7-0fe2-4475-bc00-9af136c515e1",
+      "timestamp": "2026-11-16T10:39:18.903216+00:00"
     },
     {
       "check_id": "dns.mx",
@@ -91,8 +99,8 @@
         "it": "I record DNS controllano instradamento e scoperta dei servizi; un'assenza non indica da sola insicurezza."
       },
       "remediation": {
-        "en": "If mail is received, configure the provider's MX records. If no inbound mail is intended, use a single null MX (0 .) without other MX records. Do not change mail routing without confirming service requirements.",
-        "it": "Se ricevi email, configura gli MX del provider. Se non ricevi email, usa un solo null MX (0 .) senza altri MX. Conferma i requisiti del servizio prima di cambiare l'instradamento."
+        "en": "If this hostname is intended to receive email, verify explicit or implicit mail routing with the mail administrator; missing MX alone does not prove broken delivery. If inbound mail is not intended, consider a single null MX (0 .), without other MX, only after confirming requirements and DNS control. Receiving and sending are separate roles; do not change shared-platform routing without appropriate control. DNS control is unknown; identify the responsible administrator or platform operator before changes.",
+        "it": "Se questo host deve ricevere email, verifica con l'amministratore l'instradamento esplicito o implicito; gli MX assenti non provano da soli una consegna non funzionante. Se la ricezione non è prevista, valuta un solo null MX (0 .), senza altri MX, solo dopo aver confermato requisiti e controllo DNS. Ricezione e invio sono ruoli distinti; non modificare l'instradamento di piattaforme condivise senza il controllo appropriato. Il controllo DNS è sconosciuto; identifica l'amministratore o il gestore della piattaforma responsabile prima delle modifiche."
       },
       "evidence": {
         "name": "example.com",
@@ -101,14 +109,22 @@
         "records": [
           "10 mail.example.com."
         ],
-        "error": null
+        "error": null,
+        "applicability": {
+          "state": "unknown",
+          "basis": "unknown",
+          "reason": {
+            "en": "Service requirements are unknown; relevance is conditional. No vulnerability is established by absence alone.",
+            "it": "I requisiti del servizio sono sconosciuti; la rilevanza è condizionale. La sola assenza non dimostra una vulnerabilità."
+          }
+        }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc7505"
       ],
       "scoreable": false,
-      "id": "e489af54-0122-4c94-9784-b7ab843d224d",
-      "timestamp": "2026-11-09T10:02:51.597530+00:00"
+      "id": "dde72786-5f1f-4906-aa43-df956ffe322e",
+      "timestamp": "2026-11-16T10:39:18.903282+00:00"
     },
     {
       "check_id": "dns.caa",
@@ -120,30 +136,38 @@
       "status": "warning",
       "severity": "informational",
       "explanation": {
-        "en": "No CAA at this exact name. Parent/CNAME policies may apply; effective CAA was not evaluated.",
-        "it": "Nessun CAA al nome esatto. Possono valere policy del padre/CNAME; il CAA effettivo non è stato valutato."
+        "en": "No CAA at this exact name. CAA is optional. Parent/CNAME policies may apply; effective CAA was not evaluated.",
+        "it": "Nessun CAA al nome esatto. CAA è facoltativo. Possono valere policy del padre/CNAME; il CAA effettivo non è stato valutato."
       },
       "business_impact": {
         "en": "DNS records control service discovery and routing; absence alone need not be insecure.",
         "it": "I record DNS controllano instradamento e scoperta dei servizi; un'assenza non indica da sola insicurezza."
       },
       "remediation": {
-        "en": "Review effective parent/CNAME CAA and your certificate issuers before restricting issuance. CAA is optional; avoid blocking automatic certificate renewal.",
-        "it": "Verifica CAA ereditato da padre/CNAME e le autorità usate prima di limitare l'emissione. CAA è facoltativo; evita di bloccare il rinnovo automatico."
+        "en": "Review effective parent/CNAME CAA and your certificate issuers before restricting issuance. CAA is optional; avoid blocking automatic certificate renewal. DNS control is unknown; identify the responsible administrator or platform operator before changes.",
+        "it": "Verifica CAA ereditato da padre/CNAME e le autorità usate prima di limitare l'emissione. CAA è facoltativo; evita di bloccare il rinnovo automatico. Il controllo DNS è sconosciuto; identifica l'amministratore o il gestore della piattaforma responsabile prima delle modifiche."
       },
       "evidence": {
         "name": "example.com",
         "record_type": "CAA",
         "state": "absent",
         "records": [],
-        "error": null
+        "error": null,
+        "applicability": {
+          "state": "unknown",
+          "basis": "unknown",
+          "reason": {
+            "en": "CAA is optional. Exact-name presence or absence does not establish the effective inherited issuance policy.",
+            "it": "CAA è facoltativo. La presenza o assenza al nome esatto non accerta la policy di emissione effettiva ereditata."
+          }
+        }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc8659"
       ],
       "scoreable": false,
-      "id": "e88c1b12-cc0a-40a3-b55d-6a0cbbb64d06",
-      "timestamp": "2026-11-09T10:02:51.597544+00:00"
+      "id": "2f6878ca-29fa-4aab-bae6-262839c2e4e1",
+      "timestamp": "2026-11-16T10:39:18.903295+00:00"
     },
     {
       "check_id": "email.spf",
@@ -163,8 +187,8 @@
         "it": "L'autenticazione email può influire sulla resistenza alle impersonificazioni e sulla consegna. Il solo DNS non prova l'autenticazione dei messaggi."
       },
       "remediation": {
-        "en": "Keep exactly one v=spf1 TXT record. Inventory every legitimate sender, correct invalid mechanisms, and choose a fail/softfail policy appropriate to your rollout; never use +all.",
-        "it": "Mantieni un solo record TXT v=spf1. Censisci tutti i mittenti legittimi, correggi i meccanismi non validi e scegli fail/softfail in base al rilascio; non usare +all."
+        "en": "If this hostname sends email, verify authorized sending infrastructure with the mail administrator and review one appropriate SPF policy, correcting observed syntax errors. If it does not send email, assess whether an explicit no-senders policy is appropriate and within your DNS control. SPF does not inherit from parent names; receiving email alone does not establish a sending requirement. Confirm intent before changing a permissive +all policy. DNS control is unknown; identify the responsible administrator or platform operator before changes.",
+        "it": "Se questo host invia email, verifica con l'amministratore l'infrastruttura di invio autorizzata e valuta una policy SPF appropriata, correggendo gli errori di sintassi osservati. Se non invia email, valuta se una policy esplicita senza mittenti sia opportuna e sotto il tuo controllo DNS. SPF non si eredita dai nomi padre; la sola ricezione non implica un requisito di invio. Conferma l'intento prima di cambiare una policy permissiva +all. Il controllo DNS è sconosciuto; identifica l'amministratore o il gestore della piattaforma responsabile prima delle modifiche."
       },
       "evidence": {
         "name": "example.com",
@@ -180,14 +204,22 @@
         "terminal_all_qualifier": "~",
         "modifiers": {},
         "syntax_errors": [],
-        "scope": "Common syntax checks only; no sender-dependent SPF evaluation"
+        "scope": "Common syntax checks only; no sender-dependent SPF evaluation",
+        "applicability": {
+          "state": "unknown",
+          "basis": "unknown",
+          "reason": {
+            "en": "Service requirements are unknown; relevance is conditional. No vulnerability is established by absence alone.",
+            "it": "I requisiti del servizio sono sconosciuti; la rilevanza è condizionale. La sola assenza non dimostra una vulnerabilità."
+          }
+        }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc7208"
       ],
       "scoreable": false,
-      "id": "ac7e308e-126f-491a-8c80-abb837b20266",
-      "timestamp": "2026-11-09T10:02:51.598591+00:00"
+      "id": "96ff12a6-2f96-43e7-b34c-f6c501572bfb",
+      "timestamp": "2026-11-16T10:39:18.904154+00:00"
     },
     {
       "check_id": "email.spf_lookups",
@@ -207,22 +239,30 @@
         "it": "L'autenticazione email può influire sulla resistenza alle impersonificazioni e sulla consegna. Il solo DNS non prova l'autenticazione dei messaggi."
       },
       "remediation": {
-        "en": "Ask the mail administrator to evaluate representative sender paths against the ten-lookup limit. Remove obsolete includes; avoid blindly flattening provider-managed records.",
-        "it": "Chiedi all'amministratore email di valutare percorsi rappresentativi rispetto al limite di dieci lookup. Rimuovi include obsoleti; evita di appiattire alla cieca record gestiti dai provider."
+        "en": "Ask the mail administrator to evaluate representative sender paths against the ten-lookup limit. Remove obsolete includes; avoid blindly flattening provider-managed records. DNS control is unknown; identify the responsible administrator or platform operator before changes.",
+        "it": "Chiedi all'amministratore email di valutare percorsi rappresentativi rispetto al limite di dieci lookup. Rimuovi include obsoleti; evita di appiattire alla cieca record gestiti dai provider. Il controllo DNS è sconosciuto; identifica l'amministratore o il gestore della piattaforma responsabile prima delle modifiche."
       },
       "evidence": {
         "potential_dns_terms": 0,
         "notes": [],
         "visited_policies": [
           "example.com"
-        ]
+        ],
+        "applicability": {
+          "state": "unknown",
+          "basis": "unknown",
+          "reason": {
+            "en": "Service requirements are unknown; relevance is conditional. No vulnerability is established by absence alone.",
+            "it": "I requisiti del servizio sono sconosciuti; la rilevanza è condizionale. La sola assenza non dimostra una vulnerabilità."
+          }
+        }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc7208#section-4.6.4"
       ],
       "scoreable": false,
-      "id": "8fa45def-1ffe-4b83-a03e-1d297b782b63",
-      "timestamp": "2026-11-09T10:02:51.598609+00:00"
+      "id": "5a37c6da-f453-4fda-b678-053dc3c511cf",
+      "timestamp": "2026-11-16T10:39:18.904171+00:00"
     },
     {
       "check_id": "email.dmarc",
@@ -242,8 +282,8 @@
         "it": "L'autenticazione email può influire sulla resistenza alle impersonificazioni e sulla consegna. Il solo DNS non prova l'autenticazione dei messaggi."
       },
       "remediation": {
-        "en": "Publish one valid DMARC record. Use aggregate reports to confirm legitimate sender alignment before progressively requesting quarantine/reject enforcement; review pct and inherited sp.",
-        "it": "Pubblica un record DMARC valido. Usa i report aggregati per confermare l'allineamento dei mittenti legittimi prima di richiedere progressivamente quarantine/reject; verifica pct e sp ereditato."
+        "en": "If this hostname is used as an email author domain, review the applicable DMARC policy and sender alignment with the mail/DNS administrator before changing enforcement. Check inherited policy first; avoid unnecessary duplicate records. For non-senders, consider anti-impersonation policy only after confirming requirements and DNS control. This legacy RFC 7489 check does not establish effective RFC 9989 policy; validate current-standard behavior separately and do not change modern tags or pct solely to satisfy this result. DNS control is unknown; identify the responsible administrator or platform operator before changes.",
+        "it": "Se questo host è usato come dominio autore delle email, verifica con l'amministratore email/DNS la policy DMARC applicabile e l'allineamento dei mittenti prima di cambiare l'applicazione. Controlla prima la policy ereditata; evita duplicati inutili. Per i non mittenti, valuta una policy contro le impersonificazioni solo dopo aver confermato requisiti e controllo DNS. Questa verifica legacy RFC 7489 non accerta la policy effettiva RFC 9989; valida separatamente il comportamento attuale e non modificare tag moderni o pct solo per soddisfare questo risultato. Il controllo DNS è sconosciuto; identifica l'amministratore o il gestore della piattaforma responsabile prima delle modifiche."
       },
       "evidence": {
         "name": "_dmarc.example.com",
@@ -254,7 +294,23 @@
         ],
         "error": null,
         "policy_domain": "example.com",
+        "dmarc_records": [
+          "v=DMARC1; p=none; rua=mailto:reports@example.com"
+        ],
         "inherited": false,
+        "discovery": [
+          {
+            "name": "_dmarc.example.com",
+            "record_type": "TXT",
+            "state": "ok",
+            "records": [
+              "v=DMARC1; p=none; rua=mailto:reports@example.com"
+            ],
+            "error": null
+          }
+        ],
+        "policy_model": "RFC 7489 legacy discovery and percentage semantics",
+        "limitations": "RFC 9989 DNS tree walk, np, psd and t semantics are not implemented",
         "tags": {
           "v": "DMARC1",
           "p": "none",
@@ -263,15 +319,21 @@
         "effective_policy": "none",
         "pct": 100,
         "syntax_errors": [],
-        "policy_model": "RFC 7489 legacy discovery and percentage semantics",
-        "limitations": "RFC 9989 DNS tree walk, np, psd and t semantics are not implemented"
+        "applicability": {
+          "state": "unknown",
+          "basis": "unknown",
+          "reason": {
+            "en": "Service requirements are unknown; relevance is conditional. No vulnerability is established by absence alone.",
+            "it": "I requisiti del servizio sono sconosciuti; la rilevanza è condizionale. La sola assenza non dimostra una vulnerabilità."
+          }
+        }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc7489"
       ],
       "scoreable": false,
-      "id": "480fd1f6-6a0c-40a5-b6c4-58b0f67c9b71",
-      "timestamp": "2026-11-09T10:02:51.620108+00:00"
+      "id": "8edf2887-e9ef-49f7-a587-62fcde0986ab",
+      "timestamp": "2026-11-16T10:39:18.923521+00:00"
     },
     {
       "check_id": "email.dmarc_reporting",
@@ -291,20 +353,28 @@
         "it": "L'autenticazione email può influire sulla resistenza alle impersonificazioni e sulla consegna. Il solo DNS non prova l'autenticazione dei messaggi."
       },
       "remediation": {
-        "en": "Use a monitored aggregate-report mailbox or reporting service. Consider privacy before enabling forensic reports (ruf).",
-        "it": "Usa una casella monitorata per report aggregati o un servizio di analisi. Valuta la privacy prima dei report forensi (ruf)."
+        "en": "If aggregate monitoring is useful, review a monitored reporting destination with the mail/DNS administrator, including external authorization and privacy. Reporting is optional; absence is not an authentication failure. Consider privacy before forensic reports (ruf). DNS control is unknown; identify the responsible administrator or platform operator before changes.",
+        "it": "Se il monitoraggio aggregato è utile, valuta con l'amministratore email/DNS una destinazione monitorata, inclusi autorizzazione esterna e privacy. I report sono facoltativi; l'assenza non è un errore di autenticazione. Valuta la privacy prima dei report forensi (ruf). Il controllo DNS è sconosciuto; identifica l'amministratore o il gestore della piattaforma responsabile prima delle modifiche."
       },
       "evidence": {
         "rua": "mailto:reports@example.com",
         "ruf": null,
-        "policy_domain": "example.com"
+        "policy_domain": "example.com",
+        "applicability": {
+          "state": "unknown",
+          "basis": "unknown",
+          "reason": {
+            "en": "Service requirements are unknown; relevance is conditional. No vulnerability is established by absence alone.",
+            "it": "I requisiti del servizio sono sconosciuti; la rilevanza è condizionale. La sola assenza non dimostra una vulnerabilità."
+          }
+        }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc7489#section-7"
       ],
       "scoreable": false,
-      "id": "88a1d01e-a325-4f5f-86a8-007fe56da79f",
-      "timestamp": "2026-11-09T10:02:51.620231+00:00"
+      "id": "b11b96f3-c54b-4f43-beea-09aa417feb62",
+      "timestamp": "2026-11-16T10:39:18.923628+00:00"
     },
     {
       "check_id": "email.dkim",
@@ -324,16 +394,25 @@
         "it": "L'autenticazione email può influire sulla resistenza alle impersonificazioni e sulla consegna. Il solo DNS non prova l'autenticazione dei messaggi."
       },
       "remediation": {
-        "en": "Get selectors from your mail provider or the s= tag of a DKIM-Signature header.",
-        "it": "Ottieni i selettori dal provider email o dal tag s= dell'intestazione DKIM-Signature."
+        "en": "If this hostname sends email, get selectors from the mail provider or the s= tag of an authorized message's DKIM-Signature header. Without selectors, signing remains untested; do not guess or change DNS to clear this result. DNS control is unknown; identify the responsible administrator or platform operator before changes.",
+        "it": "Se questo host invia email, ottieni i selettori dal provider o dal tag s= di DKIM-Signature di un messaggio autorizzato. Senza selettori la firma resta non testata; non indovinare selettori e non modificare il DNS per eliminare questo risultato. Il controllo DNS è sconosciuto; identifica l'amministratore o il gestore della piattaforma responsabile prima delle modifiche."
       },
-      "evidence": {},
+      "evidence": {
+        "applicability": {
+          "state": "unknown",
+          "basis": "unknown",
+          "reason": {
+            "en": "Service requirements are unknown; relevance is conditional. No vulnerability is established by absence alone.",
+            "it": "I requisiti del servizio sono sconosciuti; la rilevanza è condizionale. La sola assenza non dimostra una vulnerabilità."
+          }
+        }
+      },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc6376"
       ],
       "scoreable": false,
-      "id": "64012012-a1f1-42a6-b629-3c108049e0dc",
-      "timestamp": "2026-11-09T10:02:51.620245+00:00"
+      "id": "a9c42d16-6cf9-42b2-9545-0719c04c23ce",
+      "timestamp": "2026-11-16T10:39:18.923639+00:00"
     },
     {
       "check_id": "tls.connection",
@@ -353,23 +432,33 @@
         "it": "I browser si affidano a certificati attendibili e trasporto cifrato. Il risultato riguarda un endpoint e il trust store locale in questo momento."
       },
       "remediation": {
-        "en": "Review the certificate, DNS name, full intermediate chain, and automatic renewal with the hosting provider.",
-        "it": "Verifica con l'hosting certificato, nome DNS, catena intermedia completa e rinnovo automatico."
+        "en": "Review the observed handshake with the HTTPS operator if it was inconclusive. One successful verified handshake does not establish application availability or comprehensive TLS security.",
+        "it": "Verifica l'handshake osservato con il gestore HTTPS se inconcludente. Un handshake verificato riuscito non accerta la disponibilità applicativa o la sicurezza TLS completa."
       },
       "evidence": {
         "hostname": "example.com",
         "port": 443,
         "verification": "local system trust store",
+        "scope": "Single-endpoint TLS verification; protocol support is not enumerated",
+        "protocol_support_enumerated": false,
         "address": "8.8.8.8",
         "error_type": "TimeoutError",
-        "reason": "network_timeout"
+        "reason": "network_timeout",
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_scope",
+          "reason": {
+            "en": "Applicable to the explicitly tested criterion and endpoint only; a passed result does not cover untested behavior.",
+            "it": "Applicabile solo al criterio e all'endpoint verificati; un risultato superato non copre comportamenti non testati."
+          }
+        }
       },
       "references": [
         "https://docs.python.org/3/library/ssl.html"
       ],
       "scoreable": false,
-      "id": "de1f18c3-d713-4096-bf6f-bbd86b71b105",
-      "timestamp": "2026-11-09T10:02:51.626788+00:00"
+      "id": "fd1df027-3702-489a-9c12-a71bfe7e2adc",
+      "timestamp": "2026-11-16T10:39:18.931932+00:00"
     },
     {
       "check_id": "tls.chain",
@@ -396,16 +485,26 @@
         "hostname": "example.com",
         "port": 443,
         "verification": "local system trust store",
+        "scope": "Single-endpoint TLS verification; protocol support is not enumerated",
+        "protocol_support_enumerated": false,
         "address": "8.8.8.8",
         "error_type": "TimeoutError",
-        "reason": "network_timeout"
+        "reason": "network_timeout",
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_scope",
+          "reason": {
+            "en": "Applicable to the explicitly tested criterion and endpoint only; a passed result does not cover untested behavior.",
+            "it": "Applicabile solo al criterio e all'endpoint verificati; un risultato superato non copre comportamenti non testati."
+          }
+        }
       },
       "references": [
         "https://docs.python.org/3/library/ssl.html"
       ],
       "scoreable": false,
-      "id": "b8d5c6ab-2bd0-481a-87a7-0d0c74fb5b19",
-      "timestamp": "2026-11-09T10:02:51.626802+00:00"
+      "id": "a587a436-97df-4283-8fdb-dce3c4939a2a",
+      "timestamp": "2026-11-16T10:39:18.931943+00:00"
     },
     {
       "check_id": "tls.hostname",
@@ -432,16 +531,26 @@
         "hostname": "example.com",
         "port": 443,
         "verification": "local system trust store",
+        "scope": "Single-endpoint TLS verification; protocol support is not enumerated",
+        "protocol_support_enumerated": false,
         "address": "8.8.8.8",
         "error_type": "TimeoutError",
-        "reason": "network_timeout"
+        "reason": "network_timeout",
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_scope",
+          "reason": {
+            "en": "Applicable to the explicitly tested criterion and endpoint only; a passed result does not cover untested behavior.",
+            "it": "Applicabile solo al criterio e all'endpoint verificati; un risultato superato non copre comportamenti non testati."
+          }
+        }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc9525"
       ],
       "scoreable": false,
-      "id": "69678f15-0fc5-4394-a3f5-fa01791c98e4",
-      "timestamp": "2026-11-09T10:02:51.626810+00:00"
+      "id": "41ea2da7-c735-4dfa-a760-dad3647f9a85",
+      "timestamp": "2026-11-16T10:39:18.931951+00:00"
     },
     {
       "check_id": "tls.validity",
@@ -468,16 +577,26 @@
         "hostname": "example.com",
         "port": 443,
         "verification": "local system trust store",
+        "scope": "Single-endpoint TLS verification; protocol support is not enumerated",
+        "protocol_support_enumerated": false,
         "address": "8.8.8.8",
         "error_type": "TimeoutError",
-        "reason": "network_timeout"
+        "reason": "network_timeout",
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_scope",
+          "reason": {
+            "en": "Applicable to the explicitly tested criterion and endpoint only; a passed result does not cover untested behavior.",
+            "it": "Applicabile solo al criterio e all'endpoint verificati; un risultato superato non copre comportamenti non testati."
+          }
+        }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc5280"
       ],
       "scoreable": false,
-      "id": "c9a8efef-0d3f-47cd-8971-7afd63620443",
-      "timestamp": "2026-11-09T10:02:51.626817+00:00"
+      "id": "c6844afb-412b-4be8-9810-03cb81c200bd",
+      "timestamp": "2026-11-16T10:39:18.931958+00:00"
     },
     {
       "check_id": "tls.protocol",
@@ -497,44 +616,54 @@
         "it": "I browser si affidano a certificati attendibili e trasporto cifrato. Il risultato riguarda un endpoint e il trust store locale in questo momento."
       },
       "remediation": {
-        "en": "Review the certificate, DNS name, full intermediate chain, and automatic renewal with the hosting provider.",
-        "it": "Verifica con l'hosting certificato, nome DNS, catena intermedia completa e rinnovo automatico."
+        "en": "Review the negotiated protocol only as evidence for this connection. If broader TLS support needs assessment, arrange a separately authorized protocol review with the operator; older-version support was not tested here.",
+        "it": "Considera il protocollo negoziato come evidenza solo per questa connessione. Se occorre valutare il supporto TLS completo, concorda con il gestore una verifica dei protocolli autorizzata separatamente; qui il supporto delle versioni precedenti non è stato testato."
       },
       "evidence": {
         "hostname": "example.com",
         "port": 443,
         "verification": "local system trust store",
+        "scope": "Single-endpoint TLS verification; protocol support is not enumerated",
+        "protocol_support_enumerated": false,
         "address": "8.8.8.8",
         "error_type": "TimeoutError",
-        "reason": "network_timeout"
+        "reason": "network_timeout",
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_scope",
+          "reason": {
+            "en": "Applicable to the explicitly tested criterion and endpoint only; a passed result does not cover untested behavior.",
+            "it": "Applicabile solo al criterio e all'endpoint verificati; un risultato superato non copre comportamenti non testati."
+          }
+        }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc8446"
       ],
       "scoreable": false,
-      "id": "05795227-84eb-4718-9ba9-12f061ed9297",
-      "timestamp": "2026-11-09T10:02:51.626825+00:00"
+      "id": "93ebacf5-317e-497e-bfd7-33b5dab58eb9",
+      "timestamp": "2026-11-16T10:39:18.931966+00:00"
     },
     {
       "check_id": "http.https",
       "check_name": {
-        "en": "HTTPS endpoint",
-        "it": "Endpoint HTTPS"
+        "en": "HTTPS connectivity",
+        "it": "Connettività HTTPS"
       },
       "category": "http",
       "status": "passed",
       "severity": "informational",
       "explanation": {
-        "en": "An HTTPS HEAD response was received. HTTP status is evidence of application behavior, not a security rating.",
-        "it": "Ricevuta una risposta HEAD HTTPS. Lo stato HTTP descrive il comportamento applicativo, non un giudizio di sicurezza."
+        "en": "HTTPS connection established and an HTTP response received; this alone does not establish application availability. HEAD returned HTTP 200. GET fallback skipped: HEAD did not return 405/501. ",
+        "it": "Connessione HTTPS stabilita e risposta HTTP ricevuta; questo da solo non dimostra la disponibilità applicativa. HEAD ha restituito HTTP 200. Fallback GET saltato: HEAD non ha restituito 405/501. "
       },
       "business_impact": {
         "en": "Transport behavior affects browser access and exposure of an initial unencrypted request.",
         "it": "Il comportamento del trasporto influisce sull'accesso browser e sull'esposizione della prima richiesta non cifrata."
       },
       "remediation": {
-        "en": "Serve the site over valid HTTPS and redirect port 80 to its HTTPS canonical URL.",
-        "it": "Servi il sito con HTTPS valido e reindirizza la porta 80 al suo URL canonico HTTPS."
+        "en": "Review the recorded method, status and connection error with the web operator if needed. Any verified HTTPS response establishes limited connectivity; an HTTP error does not by itself prove the application is unavailable or insecure.",
+        "it": "Verifica se necessario metodo, stato ed errore di connessione registrati con il gestore web. Una risposta HTTPS verificata accerta connettività limitata; un errore HTTP non prova da solo un'applicazione indisponibile o insicura."
       },
       "evidence": {
         "url": "https://example.com/",
@@ -549,7 +678,8 @@
           {
             "url": "https://example.com/",
             "address": "8.8.8.8",
-            "status_code": 200
+            "status_code": 200,
+            "method": "HEAD"
           }
         ],
         "method": "HEAD",
@@ -557,20 +687,110 @@
           "x-frame-options": [
             "DENY"
           ],
-          "x-content-type-options": [
-            "nosniff"
-          ],
           "content-type": [
             "text/html"
+          ],
+          "x-content-type-options": [
+            "nosniff"
           ]
+        },
+        "http_observation": {
+          "head_status_code": 200,
+          "head_unsupported": false,
+          "get_fallback": {
+            "state": "not_needed"
+          },
+          "security_headers": "evaluated_where_applicable"
+        },
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_scope",
+          "reason": {
+            "en": "Applicable to the explicitly tested criterion and endpoint only; a passed result does not cover untested behavior.",
+            "it": "Applicabile solo al criterio e all'endpoint verificati; un risultato superato non copre comportamenti non testati."
+          }
         }
       },
       "references": [
         "https://www.rfc-editor.org/rfc/rfc9110"
       ],
       "scoreable": false,
-      "id": "6ad45169-0386-49fa-a159-7171389ad1fd",
-      "timestamp": "2026-11-09T10:02:51.627552+00:00"
+      "id": "8ce9f0dd-376b-44b3-96ff-a208d7ee96cb",
+      "timestamp": "2026-11-16T10:39:18.932596+00:00"
+    },
+    {
+      "check_id": "http.application",
+      "check_name": {
+        "en": "HTTP application response",
+        "it": "Risposta HTTP applicativa"
+      },
+      "category": "http",
+      "status": "passed",
+      "severity": "informational",
+      "explanation": {
+        "en": "HEAD returned HTTP 200. GET fallback skipped: HEAD did not return 405/501. A successful application response was observed for this method and URL; full application functionality was not tested. Security headers evaluated where applicable.",
+        "it": "HEAD ha restituito HTTP 200. Fallback GET saltato: HEAD non ha restituito 405/501. Osservata una risposta applicativa riuscita per questo metodo e URL; il funzionamento completo non è stato verificato. Intestazioni di sicurezza valutate dove applicabili."
+      },
+      "business_impact": {
+        "en": "Transport behavior affects browser access and exposure of an initial unencrypted request.",
+        "it": "Il comportamento del trasporto influisce sull'accesso browser e sull'esposizione della prima richiesta non cifrata."
+      },
+      "remediation": {
+        "en": "Check application behavior with the operator using the recorded method and URL. After HEAD 405/501, enable GET fallback only with explicit authorization for GET and its redirects. A 2xx response does not verify login or business functions; response bodies were not inspected.",
+        "it": "Verifica con il gestore il comportamento applicativo usando metodo e URL registrati. Dopo HEAD 405/501, abilita il fallback GET solo con autorizzazione esplicita per GET e relativi redirect. Una risposta 2xx non verifica login o funzioni operative; i corpi delle risposte non sono stati ispezionati."
+      },
+      "evidence": {
+        "url": "https://example.com/",
+        "status_code": 200,
+        "headers": {
+          "content-type": "text/html",
+          "x-content-type-options": "nosniff",
+          "x-frame-options": "DENY"
+        },
+        "address": "8.8.8.8",
+        "hops": [
+          {
+            "url": "https://example.com/",
+            "address": "8.8.8.8",
+            "status_code": 200,
+            "method": "HEAD"
+          }
+        ],
+        "method": "HEAD",
+        "header_values": {
+          "x-frame-options": [
+            "DENY"
+          ],
+          "content-type": [
+            "text/html"
+          ],
+          "x-content-type-options": [
+            "nosniff"
+          ]
+        },
+        "http_observation": {
+          "head_status_code": 200,
+          "head_unsupported": false,
+          "get_fallback": {
+            "state": "not_needed"
+          },
+          "security_headers": "evaluated_where_applicable"
+        },
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_scope",
+          "reason": {
+            "en": "Applicable to the explicitly tested criterion and endpoint only; a passed result does not cover untested behavior.",
+            "it": "Applicabile solo al criterio e all'endpoint verificati; un risultato superato non copre comportamenti non testati."
+          }
+        }
+      },
+      "references": [
+        "https://www.rfc-editor.org/rfc/rfc9110"
+      ],
+      "scoreable": false,
+      "id": "3e6c315c-102f-42a2-8aac-42271e647467",
+      "timestamp": "2026-11-16T10:39:18.932607+00:00"
     },
     {
       "check_id": "headers.hsts",
@@ -582,30 +802,46 @@
       "status": "warning",
       "severity": "low",
       "explanation": {
-        "en": "HSTS is missing, disabled, or malformed. This hardening gap matters for browser HTTPS enforcement; assess rollout before enabling subdomains/preload.",
-        "it": "HSTS assente, disabilitato o malformato. Questa misura serve all'uso browser di HTTPS; valuta l'impatto prima di sottodomini/preload."
+        "en": "HEAD returned HTTP 200. GET fallback skipped: HEAD did not return 405/501. HSTS is missing, disabled, or malformed. This hardening gap matters for browser HTTPS enforcement; assess rollout before enabling subdomains/preload.",
+        "it": "HEAD ha restituito HTTP 200. Fallback GET saltato: HEAD non ha restituito 405/501. HSTS assente, disabilitato o malformato. Questa misura serve all'uso browser di HTTPS; valuta l'impatto prima di sottodomini/preload."
       },
       "business_impact": {
         "en": "Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.",
         "it": "Le intestazioni di difesa browser riducono rischi specifici lato client. La rilevanza dipende da contenuti, applicazione e supporto browser."
       },
       "remediation": {
-        "en": "After HTTPS works consistently, deploy Strict-Transport-Security with a tested positive max-age. Start with a short duration; add includeSubDomains or preload only after reviewing every affected service.",
-        "it": "Quando HTTPS funziona stabilmente, configura Strict-Transport-Security con max-age positivo e testato. Parti con una durata breve; aggiungi includeSubDomains o preload solo dopo aver verificato tutti i servizi coinvolti."
+        "en": "For browser-facing services, consider HSTS with the application/hosting operator after HTTPS works consistently. Test a short positive max-age before longer durations; includeSubDomains or preload require review of every affected service. Missing HSTS alone does not establish an exploitable vulnerability.",
+        "it": "Per servizi destinati ai browser, valuta HSTS con il gestore applicativo/hosting quando HTTPS funziona stabilmente. Prova un max-age positivo breve prima di durate maggiori; includeSubDomains o preload richiedono la verifica di tutti i servizi coinvolti. HSTS assente non accerta da solo una vulnerabilità sfruttabile."
       },
       "evidence": {
         "url": "https://example.com/",
         "method": "HEAD",
         "status_code": 200,
         "content_type": "text/html",
-        "header_value": null
+        "header_value": null,
+        "http_observation": {
+          "head_status_code": 200,
+          "head_unsupported": false,
+          "get_fallback": {
+            "state": "not_needed"
+          },
+          "security_headers": "evaluated_where_applicable"
+        },
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_content_type",
+          "reason": {
+            "en": "Optional browser hardening for the observed HTML response; absence is not proof of exploitation.",
+            "it": "Misura facoltativa di difesa browser per la risposta HTML osservata; l'assenza non prova uno sfruttamento."
+          }
+        }
       },
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security"
       ],
-      "scoreable": true,
-      "id": "9ec80832-9b98-43c7-83a2-c7ca8f764956",
-      "timestamp": "2026-11-09T10:02:51.627577+00:00"
+      "scoreable": false,
+      "id": "2e69b09a-519c-4cea-9b20-79b7b38ca183",
+      "timestamp": "2026-11-16T10:39:18.932629+00:00"
     },
     {
       "check_id": "headers.nosniff",
@@ -617,30 +853,46 @@
       "status": "passed",
       "severity": "informational",
       "explanation": {
-        "en": "nosniff prevents some browser MIME type guessing.",
-        "it": "nosniff impedisce alcune interpretazioni automatiche del tipo MIME."
+        "en": "HEAD returned HTTP 200. GET fallback skipped: HEAD did not return 405/501. nosniff prevents some browser MIME type guessing.",
+        "it": "HEAD ha restituito HTTP 200. Fallback GET saltato: HEAD non ha restituito 405/501. nosniff impedisce alcune interpretazioni automatiche del tipo MIME."
       },
       "business_impact": {
         "en": "Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.",
         "it": "Le intestazioni di difesa browser riducono rischi specifici lato client. La rilevanza dipende da contenuti, applicazione e supporto browser."
       },
       "remediation": {
-        "en": "Serve correct Content-Type values and set X-Content-Type-Options: nosniff at the application or reverse proxy. Verify script and stylesheet loading.",
-        "it": "Servi Content-Type corretti e imposta X-Content-Type-Options: nosniff nell'applicazione o nel proxy. Verifica il caricamento di script e fogli di stile."
+        "en": "For browser-consumed responses, review correct Content-Type values and consider X-Content-Type-Options: nosniff with the application/proxy operator. Test script and stylesheet loading; header absence alone does not demonstrate MIME-based exploitation.",
+        "it": "Per risposte usate dai browser, verifica Content-Type corretti e valuta X-Content-Type-Options: nosniff con il gestore applicativo/proxy. Prova il caricamento di script e fogli di stile; l'assenza dell'intestazione non dimostra da sola uno sfruttamento basato sul MIME."
       },
       "evidence": {
         "url": "https://example.com/",
         "method": "HEAD",
         "status_code": 200,
         "content_type": "text/html",
-        "header_value": "nosniff"
+        "header_value": "nosniff",
+        "http_observation": {
+          "head_status_code": 200,
+          "head_unsupported": false,
+          "get_fallback": {
+            "state": "not_needed"
+          },
+          "security_headers": "evaluated_where_applicable"
+        },
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_content_type",
+          "reason": {
+            "en": "Optional browser hardening for the observed HTML response; absence is not proof of exploitation.",
+            "it": "Misura facoltativa di difesa browser per la risposta HTML osservata; l'assenza non prova uno sfruttamento."
+          }
+        }
       },
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Content-Type-Options"
       ],
-      "scoreable": true,
-      "id": "54a02299-3779-466f-8b24-91717e56d2b9",
-      "timestamp": "2026-11-09T10:02:51.627591+00:00"
+      "scoreable": false,
+      "id": "261b71bb-9332-48d6-b745-1133645dd443",
+      "timestamp": "2026-11-16T10:39:18.932643+00:00"
     },
     {
       "check_id": "headers.referrer",
@@ -652,8 +904,8 @@
       "status": "warning",
       "severity": "low",
       "explanation": {
-        "en": "Referrer policy is absent, unrecognized, or permissive. Modern browser defaults may already limit disclosure.",
-        "it": "Policy referrer assente, non riconosciuta o permissiva. I browser moderni possono già limitare la divulgazione per impostazione predefinita."
+        "en": "HEAD returned HTTP 200. GET fallback skipped: HEAD did not return 405/501. Referrer policy is absent, unrecognized, or permissive. Modern browser defaults may already limit disclosure.",
+        "it": "HEAD ha restituito HTTP 200. Fallback GET saltato: HEAD non ha restituito 405/501. Policy referrer assente, non riconosciuta o permissiva. I browser moderni possono già limitare la divulgazione per impostazione predefinita."
       },
       "business_impact": {
         "en": "Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.",
@@ -668,14 +920,30 @@
         "method": "HEAD",
         "status_code": 200,
         "content_type": "text/html",
-        "header_value": null
+        "header_value": null,
+        "http_observation": {
+          "head_status_code": 200,
+          "head_unsupported": false,
+          "get_fallback": {
+            "state": "not_needed"
+          },
+          "security_headers": "evaluated_where_applicable"
+        },
+        "applicability": {
+          "state": "unknown",
+          "basis": "unknown",
+          "reason": {
+            "en": "Service requirements are unknown; relevance is conditional. No vulnerability is established by absence alone.",
+            "it": "I requisiti del servizio sono sconosciuti; la rilevanza è condizionale. La sola assenza non dimostra una vulnerabilità."
+          }
+        }
       },
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Referrer-Policy"
       ],
       "scoreable": false,
-      "id": "18b87929-ec5f-4a9b-9278-67a821ff76a2",
-      "timestamp": "2026-11-09T10:02:51.627604+00:00"
+      "id": "4bd58fc7-4c83-4a50-8594-39b6270fb41e",
+      "timestamp": "2026-11-16T10:39:18.932656+00:00"
     },
     {
       "check_id": "headers.csp",
@@ -687,30 +955,46 @@
       "status": "warning",
       "severity": "low",
       "explanation": {
-        "en": "No enforcing CSP header found. CSP reduces content injection impact; report-only and HTML meta policies are not equivalent to this header check.",
-        "it": "Nessuna intestazione CSP applicata. CSP riduce l'impatto di contenuti iniettati; report-only e policy meta HTML non equivalgono a questa verifica."
+        "en": "HEAD returned HTTP 200. GET fallback skipped: HEAD did not return 405/501. No enforcing CSP header found. CSP reduces content injection impact; report-only and HTML meta policies are not equivalent to this header check.",
+        "it": "HEAD ha restituito HTTP 200. Fallback GET saltato: HEAD non ha restituito 405/501. Nessuna intestazione CSP applicata. CSP riduce l'impatto di contenuti iniettati; report-only e policy meta HTML non equivalgono a questa verifica."
       },
       "business_impact": {
         "en": "Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.",
         "it": "Le intestazioni di difesa browser riducono rischi specifici lato client. La rilevanza dipende da contenuti, applicazione e supporto browser."
       },
       "remediation": {
-        "en": "Inventory scripts, styles and external resources. Trial a restrictive CSP in report-only mode, then enforce a tested policy using nonces or hashes where appropriate.",
-        "it": "Censisci script, stili e risorse esterne. Prova una CSP restrittiva in modalità report-only, quindi applica una policy testata con nonce o hash dove appropriato."
+        "en": "For HTML applications, review injection defenses and resource requirements with the application operator. If CSP is appropriate, trial it in report-only mode before enforcing a tested policy, using nonces or hashes where suitable. This header check neither detects injection nor evaluates HTML meta policies or full CSP effectiveness.",
+        "it": "Per applicazioni HTML, verifica con il gestore le difese dalle iniezioni e i requisiti delle risorse. Se CSP è appropriata, provala in modalità report-only prima di applicare una policy testata, con nonce o hash dove adatti. Questa verifica non rileva iniezioni e non valuta policy meta HTML o l'efficacia completa della CSP."
       },
       "evidence": {
         "url": "https://example.com/",
         "method": "HEAD",
         "status_code": 200,
         "content_type": "text/html",
-        "header_value": null
+        "header_value": null,
+        "http_observation": {
+          "head_status_code": 200,
+          "head_unsupported": false,
+          "get_fallback": {
+            "state": "not_needed"
+          },
+          "security_headers": "evaluated_where_applicable"
+        },
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_content_type",
+          "reason": {
+            "en": "Optional browser hardening for the observed HTML response; absence is not proof of exploitation.",
+            "it": "Misura facoltativa di difesa browser per la risposta HTML osservata; l'assenza non prova uno sfruttamento."
+          }
+        }
       },
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy"
       ],
       "scoreable": false,
-      "id": "e6e06a8a-dc2d-4aaf-b4db-64392041c3e3",
-      "timestamp": "2026-11-09T10:02:51.627616+00:00"
+      "id": "8d6e1151-4047-40ce-a0f0-f90089eaf4c5",
+      "timestamp": "2026-11-16T10:39:18.932667+00:00"
     },
     {
       "check_id": "headers.permissions",
@@ -722,30 +1006,46 @@
       "status": "warning",
       "severity": "informational",
       "explanation": {
-        "en": "Permissions-Policy is absent. Restrict sensitive browser features only where relevant; defaults vary by feature.",
-        "it": "Permissions-Policy assente. Limita le funzionalità browser sensibili dove necessario; i valori predefiniti variano."
+        "en": "HEAD returned HTTP 200. GET fallback skipped: HEAD did not return 405/501. Permissions-Policy is absent. Restrict sensitive browser features only where relevant; defaults vary by feature.",
+        "it": "HEAD ha restituito HTTP 200. Fallback GET saltato: HEAD non ha restituito 405/501. Permissions-Policy assente. Limita le funzionalità browser sensibili dove necessario; i valori predefiniti variano."
       },
       "business_impact": {
         "en": "Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.",
         "it": "Le intestazioni di difesa browser riducono rischi specifici lato client. La rilevanza dipende da contenuti, applicazione e supporto browser."
       },
       "remediation": {
-        "en": "Identify required browser features and restrict unused sensitive features, for example camera=(), microphone=(), geolocation=(), after compatibility testing.",
-        "it": "Identifica le funzionalità browser necessarie e limita quelle sensibili inutilizzate, ad esempio camera=(), microphone=(), geolocation=(), dopo test di compatibilità."
+        "en": "If the HTML application uses sensitive browser features, review feature defaults and requirements with the application operator. Consider restricting unused features, for example camera=(), microphone=(), geolocation=(), after compatibility testing. This optional header is not universally required; its presence does not prove effective restrictions.",
+        "it": "Se l'applicazione HTML usa funzionalità browser sensibili, verifica valori predefiniti e requisiti con il gestore applicativo. Valuta restrizioni alle funzionalità inutilizzate, ad esempio camera=(), microphone=(), geolocation=(), dopo test di compatibilità. Questa intestazione facoltativa non è sempre richiesta; la presenza non prova restrizioni efficaci."
       },
       "evidence": {
         "url": "https://example.com/",
         "method": "HEAD",
         "status_code": 200,
         "content_type": "text/html",
-        "header_value": null
+        "header_value": null,
+        "http_observation": {
+          "head_status_code": 200,
+          "head_unsupported": false,
+          "get_fallback": {
+            "state": "not_needed"
+          },
+          "security_headers": "evaluated_where_applicable"
+        },
+        "applicability": {
+          "state": "unknown",
+          "basis": "unknown",
+          "reason": {
+            "en": "Service requirements are unknown; relevance is conditional. No vulnerability is established by absence alone.",
+            "it": "I requisiti del servizio sono sconosciuti; la rilevanza è condizionale. La sola assenza non dimostra una vulnerabilità."
+          }
+        }
       },
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Permissions-Policy"
       ],
       "scoreable": false,
-      "id": "b004d56e-eb79-4eee-814f-d62c6e029431",
-      "timestamp": "2026-11-09T10:02:51.627628+00:00"
+      "id": "d3240385-fc3e-407a-a27f-63e90a8f0546",
+      "timestamp": "2026-11-16T10:39:18.932677+00:00"
     },
     {
       "check_id": "headers.framing",
@@ -757,8 +1057,8 @@
       "status": "passed",
       "severity": "informational",
       "explanation": {
-        "en": "A restrictive frame-ancestors or valid X-Frame-Options policy was found. Review allowed origins against business needs.",
-        "it": "Trovata una policy frame-ancestors restrittiva o X-Frame-Options valida. Verifica le origini consentite rispetto alle esigenze applicative."
+        "en": "HEAD returned HTTP 200. GET fallback skipped: HEAD did not return 405/501. A restrictive frame-ancestors or valid X-Frame-Options policy was found. Review allowed origins against business needs.",
+        "it": "HEAD ha restituito HTTP 200. Fallback GET saltato: HEAD non ha restituito 405/501. Trovata una policy frame-ancestors restrittiva o X-Frame-Options valida. Verifica le origini consentite rispetto alle esigenze applicative."
       },
       "business_impact": {
         "en": "Browser defense headers reduce specific client-side risks. Relevance depends on content, application behavior, and browser support.",
@@ -773,14 +1073,30 @@
         "method": "HEAD",
         "status_code": 200,
         "content_type": "text/html",
-        "header_value": "frame-ancestors=[]; X-Frame-Options=DENY"
+        "header_value": "frame-ancestors=[]; X-Frame-Options=DENY",
+        "http_observation": {
+          "head_status_code": 200,
+          "head_unsupported": false,
+          "get_fallback": {
+            "state": "not_needed"
+          },
+          "security_headers": "evaluated_where_applicable"
+        },
+        "applicability": {
+          "state": "unknown",
+          "basis": "unknown",
+          "reason": {
+            "en": "Service requirements are unknown; relevance is conditional. No vulnerability is established by absence alone.",
+            "it": "I requisiti del servizio sono sconosciuti; la rilevanza è condizionale. La sola assenza non dimostra una vulnerabilità."
+          }
+        }
       },
       "references": [
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors"
       ],
       "scoreable": false,
-      "id": "adba8f32-48d2-4bb8-b09c-6030cca2453c",
-      "timestamp": "2026-11-09T10:02:51.627642+00:00"
+      "id": "b5a13f70-40bb-4dfa-b319-21a89a7d8bd4",
+      "timestamp": "2026-11-16T10:39:18.932690+00:00"
     },
     {
       "check_id": "http.redirect",
@@ -800,8 +1116,8 @@
         "it": "Il comportamento del trasporto influisce sull'accesso browser e sull'esposizione della prima richiesta non cifrata."
       },
       "remediation": {
-        "en": "Serve the site over valid HTTPS and redirect port 80 to its HTTPS canonical URL.",
-        "it": "Servi il sito con HTTPS valido e reindirizza la porta 80 al suo URL canonico HTTPS."
+        "en": "If HTTP serves this browser-facing site, review a canonical HTTPS redirect with the web operator. Do not open port 80 merely to clear an inconclusive check; closure can be intentional. Confirm intended routing before changes.",
+        "it": "Se HTTP serve questo sito destinato ai browser, valuta con il gestore un redirect HTTPS canonico. Non aprire la porta 80 solo per eliminare una verifica inconcludente; la chiusura può essere intenzionale. Conferma l'instradamento previsto prima delle modifiche."
       },
       "evidence": {
         "url": "https://example.com/",
@@ -816,12 +1132,14 @@
           {
             "url": "http://example.com/",
             "address": "8.8.8.8",
-            "status_code": 301
+            "status_code": 301,
+            "method": "HEAD"
           },
           {
             "url": "https://example.com/",
             "address": "8.8.8.8",
-            "status_code": 200
+            "status_code": 200,
+            "method": "HEAD"
           }
         ],
         "method": "HEAD",
@@ -829,30 +1147,47 @@
           "x-frame-options": [
             "DENY"
           ],
-          "x-content-type-options": [
-            "nosniff"
-          ],
           "content-type": [
             "text/html"
+          ],
+          "x-content-type-options": [
+            "nosniff"
           ]
+        },
+        "applicability": {
+          "state": "applicable",
+          "basis": "observed_response",
+          "reason": {
+            "en": "An HTTP response established the observed upgrade/plaintext behavior for this URL only.",
+            "it": "Una risposta HTTP ha accertato il comportamento di passaggio a HTTPS o in chiaro solo per questo URL."
+          }
         }
       },
       "references": [
         "https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Strict_Transport_Security_Cheat_Sheet.html"
       ],
       "scoreable": false,
-      "id": "44d8405b-e378-4810-b71c-29e33b2f81ae",
-      "timestamp": "2026-11-09T10:02:51.628183+00:00"
+      "id": "4029e9d4-8b74-455e-8629-94036066d7a7",
+      "timestamp": "2026-11-16T10:39:18.933238+00:00"
     }
   ],
-  "id": "375929c6-7440-48c9-959f-a9fea525991d",
-  "started_at": "2026-11-09T10:02:51.594601+00:00",
-  "completed_at": "2026-11-09T10:02:51.628188+00:00",
+  "id": "e737260d-8b3c-459b-984f-6fad5542f189",
+  "started_at": "2026-11-16T10:39:18.901034+00:00",
+  "completed_at": "2026-11-16T10:39:18.933323+00:00",
   "authorization_confirmed": true,
   "metadata": {
-    "engine_version": "0.2.0",
+    "engine_version": "0.3.0",
     "mode": "public-target-only",
     "http_method": "HEAD",
+    "get_fallback_enabled": false,
+    "context": {
+      "sends_email": null,
+      "receives_email": null,
+      "controls_dns": null,
+      "source": "user_declared",
+      "independently_verified": false
+    },
+    "scoring_profile": "context-v1",
     "dns_queries": 7,
     "http_requests": 3,
     "limits": {
@@ -866,14 +1201,14 @@
   },
   "schema_version": 1,
   "configuration_health": {
-    "score": 100.0,
-    "passed": 1,
-    "evaluated": 1,
-    "excluded": 20
+    "score": null,
+    "passed": 0,
+    "evaluated": 0,
+    "excluded": 22
   },
   "summary": {
     "counts": {
-      "passed": 9,
+      "passed": 10,
       "failed": 0,
       "warning": 6,
       "unknown": 6,
@@ -882,15 +1217,21 @@
     },
     "confirmed_finding_ids": [],
     "inconclusive_finding_ids": [
-      "64012012-a1f1-42a6-b629-3c108049e0dc",
-      "de1f18c3-d713-4096-bf6f-bbd86b71b105",
-      "b8d5c6ab-2bd0-481a-87a7-0d0c74fb5b19",
-      "69678f15-0fc5-4394-a3f5-fa01791c98e4",
-      "c9a8efef-0d3f-47cd-8971-7afd63620443",
-      "05795227-84eb-4718-9ba9-12f061ed9297"
+      "a9c42d16-6cf9-42b2-9545-0719c04c23ce",
+      "fd1df027-3702-489a-9c12-a71bfe7e2adc",
+      "a587a436-97df-4283-8fdb-dce3c4939a2a",
+      "41ea2da7-c735-4dfa-a760-dad3647f9a85",
+      "c6844afb-412b-4be8-9810-03cb81c200bd",
+      "93ebacf5-317e-497e-bfd7-33b5dab58eb9"
+    ],
+    "priority_finding_ids": [
+      "8edf2887-e9ef-49f7-a587-62fcde0986ab",
+      "2e69b09a-519c-4cea-9b20-79b7b38ca183",
+      "4bd58fc7-4c83-4a50-8594-39b6270fb41e",
+      "8d6e1151-4047-40ce-a0f0-f90089eaf4c5"
     ]
   },
-  "score_formula": "100 × passed / (passed + failed), using only explicitly scoreable checks. Warnings, unknown, errors and inapplicable checks are excluded. Missing policies may remain warnings, so read coverage and findings alongside the score. This is not a probability of compromise or a security guarantee.",
-  "methodology": "DNS uses the configured recursive resolver, bounded queries and only supplied DKIM selectors. DMARC uses explicitly labeled legacy RFC 7489 PSL/pct interpretation; current RFC 9989 tree-walk/testing semantics are not implemented. Records with np/psd/t remain inconclusive. Sender alignment and reporting delivery are not tested. SPF checks common syntax and potential lookup paths, not full sender-dependent evaluation. CAA is inspected only at the exact name. One TLS handshake verifies the requested hostname and chain using the local trust store; obsolete protocol support, revocation and CT are not probed. HTTP uses HEAD on ports 80/443, validated public IPs and bounded same-organizational-domain redirects. Bodies and HTML meta policies are not inspected. Headers reflect the final successful response, possibly a CDN. Only one selected IP is sampled. Saved web evidence uses a header allowlist and redacts URL queries, credentials and fragments; paths and DNS records can still be sensitive. Failures and blocked requests are unknown, not confirmed vulnerabilities. Ownership is a user declaration, not independently verified.",
+  "score_formula": "Profile context-v1: 100 × passed / (passed + failed), using explicitly scoreable and applicable checks only. All optional browser headers, warnings, unknowns, errors and findings with unknown or no applicability are excluded. Coverage and profile must accompany comparisons; historical scores use their original profile. This is not a probability of compromise or a security guarantee.",
+  "methodology": "DNS uses the configured recursive resolver, bounded queries and only supplied DKIM selectors. DMARC uses explicitly labeled legacy RFC 7489 PSL/pct interpretation; current RFC 9989 tree-walk/testing semantics are not implemented. Records with np/psd/t remain inconclusive. Sender alignment and reporting delivery are not tested. SPF checks common syntax and potential lookup paths, not full sender-dependent evaluation. CAA is inspected only at the exact name. One TLS handshake verifies the requested hostname and chain using the local trust store; obsolete protocol support, revocation and CT are not probed. HTTP uses HEAD on ports 80/443 and, only with explicit opt-in after HTTPS HEAD 405/501, a GET fallback. HTTPS connectivity does not establish application availability; security headers require a final HTTPS 2xx response. Both methods use validated public IPs and bounded same-organizational-domain redirects. GET can cause application side effects even when only headers are read. Bodies and HTML meta policies are not inspected. Headers reflect the final successful response, possibly a CDN. Only one selected IP is sampled. Saved web evidence uses a header allowlist and redacts URL queries, credentials and fragments; paths and DNS records can still be sensitive. Failures and blocked requests are unknown, not confirmed vulnerabilities. Ownership is a user declaration, not independently verified.",
   "disclaimer": "This assessment is not a penetration test, audit certification, compliance attestation, or guarantee of security. It cannot establish the security of an organization or the probability of compromise. Assess only assets you own or are explicitly authorized to review."
 }

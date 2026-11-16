@@ -54,6 +54,33 @@ class Finding:
     id: str = field(default_factory=lambda: str(uuid4()))
     timestamp: str = field(default_factory=now)
 
+    @property
+    def applicability(self) -> str:
+        details = self.evidence.get("applicability")
+        state = details.get("state") if isinstance(details, dict) else None
+        return state if state in ("applicable", "not_applicable", "unknown") else "unknown"
+
+    @property
+    def applicability_reason(self) -> Text:
+        details = self.evidence.get("applicability")
+        reason = details.get("reason") if isinstance(details, dict) else None
+        return (
+            Text(reason["en"], reason["it"])
+            if isinstance(reason, dict) and all(isinstance(reason.get(key), str) for key in ("en", "it"))
+            else Text(
+                "Applicability was not recorded; service context remains unknown.",
+                "Applicabilità non registrata; il contesto del servizio resta sconosciuto.",
+            )
+        )
+
+    @property
+    def needs_attention(self) -> bool:
+        return (
+            self.status in {Status.FAILED, Status.WARNING}
+            and self.severity != Severity.INFO
+            and self.applicability != "not_applicable"
+        )
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Finding":
         values = dict(data)
@@ -96,7 +123,16 @@ class Assessment:
 
     @property
     def health(self) -> dict[str, int | float | None]:
-        eligible = [f for f in self.findings if f.scoreable and f.status in (Status.PASSED, Status.FAILED)]
+        eligible = [
+            f
+            for f in self.findings
+            if f.scoreable
+            and f.status in (Status.PASSED, Status.FAILED)
+            and (
+                self.metadata.get("scoring_profile") != "context-v1"
+                or (f.applicability == "applicable" and f.category != "headers")
+            )
+        ]
         passed = sum(f.status == Status.PASSED for f in eligible)
         return {
             "score": round(100 * passed / len(eligible), 1) if eligible else None,

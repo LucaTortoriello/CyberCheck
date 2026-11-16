@@ -1,6 +1,28 @@
 """Presentation strings shared by the app and report renderer."""
 
 STRINGS = {
+    "optional_context": (
+        "Optional service context — user declarations, not independently verified. Leave Unknown when unsure. These answers neither authorize GET nor change collected evidence.",
+        "Contesto facoltativo del servizio — dichiarazioni dell'utente, non verificate indipendentemente. Lascia Sconosciuto se incerto. Le risposte non autorizzano GET e non modificano le evidenze raccolte.",
+    ),
+    "report_context_note": (
+        "Service context recorded for this assessment is user-declared, not independently verified. Unknown means no definite declaration was supplied. These declarations do not establish DNS ownership or resistance to impersonation.",
+        "Il contesto del servizio registrato per questo assessment è dichiarato dall'utente, non verificato indipendentemente. Sconosciuto indica che non è stata fornita una dichiarazione definita. Queste dichiarazioni non accertano proprietà DNS o resistenza alle impersonificazioni.",
+    ),
+    "sends_email": ("This hostname is intended to send email", "Questo host è destinato all'invio email"),
+    "receives_email": (
+        "This hostname is intended to receive email",
+        "Questo host è destinato alla ricezione email",
+    ),
+    "controls_dns": ("You directly control DNS changes", "Controlli direttamente le modifiche DNS"),
+    "applicability": ("Applicability", "Applicabilità"),
+    "applicability_applicable": ("Applicable to the stated criterion", "Applicabile al criterio indicato"),
+    "applicability_not_applicable": ("Not applicable to the stated use", "Non applicabile all'uso indicato"),
+    "applicability_unknown": ("Unknown — conditional relevance", "Sconosciuta — rilevanza condizionale"),
+    "score_formula_context": (
+        "Profile context-v1: 100 × passed / (passed + failed), using explicitly scoreable and applicable checks only. All optional browser headers, warnings, unknowns, errors and findings with unknown or no applicability are excluded. Coverage and profile must accompany comparisons; historical scores use their original profile. This is not a probability of compromise or a security guarantee.",
+        "Profilo context-v1: 100 × superati / (superati + falliti), usando solo verifiche esplicitamente conteggiabili e applicabili. Sono esclusi tutte le intestazioni browser facoltative, avvisi, sconosciuti, errori e risultati con applicabilità sconosciuta o assente. Nei confronti considera copertura e profilo; i punteggi storici usano il profilo originale. Non è una probabilità di compromissione né una garanzia di sicurezza.",
+    ),
     "synthetic_notice": (
         "SYNTHETIC TEST FIXTURE — This is not a live assessment.",
         "DATI SINTETICI DI TEST — Questo non è un assessment live.",
@@ -109,8 +131,8 @@ STRINGS = {
     "summary": ("Configuration overview", "Panoramica configurazione"),
     "attention": ("Items to review", "Elementi da esaminare"),
     "no_attention": (
-        "No confirmed findings or warnings in the completed checks. This is not a security guarantee.",
-        "Nessun problema confermato o avviso nelle verifiche completate. Non è una garanzia di sicurezza.",
+        "No priority action selected. Informational and inapplicable observations remain in the finding details. This is not a security guarantee.",
+        "Nessun intervento prioritario selezionato. Le osservazioni informative e non applicabili restano nei dettagli dei risultati. Non è una garanzia di sicurezza.",
     ),
     "scope_note": (
         "Point-in-time, low-impact configuration checks. Unknown results are not failures. This is not a penetration test or certification.",
@@ -184,8 +206,8 @@ STRINGS = {
         "Nessun cambiamento di stato, gravità o evidenze rilevato.",
     ),
     "compare_note": (
-        "Evidence changes are observations, not automatic risk increases. Different selectors and incomplete checks can change coverage.",
-        "Le modifiche alle evidenze sono osservazioni, non aumenti automatici del rischio. Selettori diversi e verifiche incomplete possono modificare la copertura.",
+        "Evidence changes are observations, not automatic risk increases. Different selectors, declared context, applicability and incomplete checks can change coverage. Compare scores only with compatible profiles, context and coverage; historical runs are not reclassified.",
+        "Le modifiche alle evidenze sono osservazioni, non aumenti automatici del rischio. Selettori, contesto dichiarato, applicabilità e verifiche incomplete possono modificare la copertura. Confronta punteggi solo con profili, contesto e copertura compatibili; i risultati storici non sono riclassificati.",
     ),
     "reports_intro": (
         "Export the selected assessment with evidence, recommended actions and methodology. Open HTML in your browser to print or save as PDF.",

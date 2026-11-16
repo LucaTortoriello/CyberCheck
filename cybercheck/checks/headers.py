@@ -118,7 +118,7 @@ def check_headers(response: WebResponse | None, error: dict | str | None = None)
         if active_hsts
         else "HSTS assente, disabilitato o malformato. Questa misura serve all'uso browser di HTTPS; valuta l'impatto prima di sottodomini/preload.",
         hsts,
-        True,
+        False,
     )
     nosniff = h.get("x-content-type-options")
     add(
@@ -132,7 +132,7 @@ def check_headers(response: WebResponse | None, error: dict | str | None = None)
         if nosniff and nosniff.lower() == "nosniff"
         else "Intestazione nosniff valida non trovata; restano necessari tipi MIME corretti.",
         nosniff,
-        True,
+        False,
     )
     referrer = h.get("referrer-policy")
     recognized = {
@@ -214,7 +214,10 @@ def check_headers(response: WebResponse | None, error: dict | str | None = None)
     valid_frames = any(
         bool(tokens)
         and "*" not in tokens
-        and all(token in {"'self'", "'none'"} or re.fullmatch(r"https?://[^\s;]+", token) for token in tokens)
+        and all(
+            token in {"'self'", "'none'"} or ("*" not in token and re.fullmatch(r"https?://[^\s;]+", token))
+            for token in tokens
+        )
         and ("'none'" not in tokens or len(tokens) == 1)
         for tokens in frame_policies
     )

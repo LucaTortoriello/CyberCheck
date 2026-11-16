@@ -6,11 +6,11 @@ CyberCheck observes publicly resolvable DNS and the root web endpoint of one inp
 
 ## Email and DNS
 
-SPF detects policy absence, multiple records, common definite syntax problems, invalid IP-family/network tokens, supported A/MX dual-CIDR/PTR syntax and a permissive `+all` fallback for otherwise unmatched senders. A valid `~all` can be appropriate during rollout; `-all` is not imposed. Unknown modifiers are ignored, including repeated/empty extensions. DNS-only includes/redirects can use `_spf` labels. Sender-dependent macros remain inconclusive, including macros containing an equals-sign delimiter; no macro-driven target expansion is performed. Common syntax passing is not full SPF validity. A static traversal counts potential include/redirect/a/mx/ptr/exists terms up to bounded depth and flags paths exceeding ten. Short-circuit sender evaluation means this is a warning, not a proven runtime permerror. Void lookup counts, MX/PTR fan-out, sender-IP evaluation and include success semantics are not fully implemented. Dependency failures remain unknown for complexity. SPF findings are excluded from the score except explicitly modeled determinate cases such as multiple policies.
+SPF detects policy absence, multiple records, common definite syntax problems, invalid IP-family/network tokens, supported A/MX dual-CIDR/PTR syntax and a permissive `+all` fallback for otherwise unmatched senders. A syntactically valid `+all` is a medium-severity permissiveness Warning, not a syntax Failed result or proof of exploitation. A valid `~all` can be appropriate during rollout; `-all` is not imposed. Unknown modifiers are ignored, including repeated/empty extensions. DNS-only includes/redirects can use `_spf` labels. Sender-dependent macros remain inconclusive, including macros containing an equals-sign delimiter; no macro-driven target expansion is performed. Common syntax passing is not full SPF validity. A static traversal counts potential include/redirect/a/mx/ptr/exists terms up to bounded depth and flags paths exceeding ten. Short-circuit sender evaluation means this is a warning, not a proven runtime permerror. Void lookup counts, MX/PTR fan-out, sender-IP evaluation and include success semantics are not fully implemented. Dependency failures remain unknown for complexity. SPF findings are excluded from the score except explicitly modeled determinate cases such as multiple policies.
 
-DMARC checks the exact `_dmarc` name, then falls back to the organizational domain for absent exact-name DMARC. The bundled public suffix snapshot avoids runtime list downloads. An inherited `sp` policy is respected. The parser checks required tag ordering, duplicate tags, p/sp, alignment modes and the RFC 7489 pct range. `p=none` is monitoring, not a critical vulnerability. Publication and a mailto reporting destination do not prove alignment, report delivery, external-report authorization or receiver behavior. Only supported tags receive semantic validation. Public-suffix-domain-specific policies and newer DMARC discovery extensions are not implemented.
+DMARC checks the exact `_dmarc` name, then falls back to the organizational domain for absent exact-name DMARC. The bundled public suffix snapshot avoids runtime list downloads. An inherited `sp` policy is respected. The parser checks required tag ordering, duplicate tags, p/sp, alignment modes and the RFC 7489 pct range. `p=none` is monitoring, not a critical vulnerability. Publication and a mailto reporting destination do not prove alignment, report delivery, external-report authorization or receiver behavior. Only supported tags receive semantic validation. Modern np/psd/t markers take precedence over legacy-profile errors: legacy syntax diagnostics remain evidence, but the policy result is Unknown. Discovery evidence retains the exact-name and organizational queries, including errors, and marks inheritance only when a policy was found. An absent legacy result does not establish absence under current-standard discovery. Public-suffix-domain-specific policies and newer DMARC discovery extensions are not implemented.
 
-**DMARC standards boundary:** RFC 9989, published in May 2026, supersedes RFC 7489. v0.2 preserves the existing **legacy RFC 7489** discovery/validation profile and explicitly labels that scope in finding text/evidence; legacy syntax/percentage results are not a statement of full current-standard conformance. np/psd/t markers leave the primary policy check Unknown and unscored. Current-standard DNS tree walk and testing semantics are deferred to v0.3; modern receivers can ignore historic pct and use different policy discovery. Do not automatically change a valid modern policy solely because of a legacy-profile finding. Validate against the owner's intended receiver behavior. Version-tag whitespace is recognized so an exact policy is not accidentally skipped in favor of an inherited one.
+**DMARC standards boundary:** RFC 9989, published in May 2026, supersedes RFC 7489. v0.3 preserves the existing **legacy RFC 7489** discovery/validation profile and explicitly labels that scope in finding text/evidence; legacy syntax/percentage results are not a statement of full current-standard conformance. np/psd/t markers leave the primary policy check Unknown and unscored. Current-standard DNS tree walk and testing semantics remain deferred beyond this finding-quality release; modern receivers can ignore historic pct and use different policy discovery. Do not automatically change a valid modern policy solely because of a legacy-profile finding. Validate against the owner's intended receiver behavior. Version-tag whitespace is recognized so an exact policy is not accidentally skipped in favor of an inherited one.
 
 DKIM is unknown without a supplied selector. Only those selectors are queried. An absent key does not establish that all DKIM signing is disabled. A published base64 key is an observation, not cryptographic key validation or verified signature use; RSA structure/bit length, service/granularity restrictions, selector rotation and signing alignment require message-level evidence. Empty p= is a revoked selector, not a domain-wide conclusion.
 
@@ -30,9 +30,9 @@ HSTS uses the first response field, one positive numeric max-age, balanced quoti
 
 Every finding contains a UUID, stable check ID, bilingual name/explanation/impact/remediation, category, status, severity, evidence, UTC timestamp, references and an explicit scoring flag. Unknown, Error and Not applicable are never failures.
 
-The score is `100 * passed / (passed + failed)` restricted to checks marked scoreable and whose current status is Passed or Failed. It is rounded to one decimal place; no denominator means no score. Warning, Unknown, Error and Not applicable are excluded. Current scoreable dimensions include certificate chain, hostname, validity and negotiated modern protocol; HSTS activation and nosniff criteria; and selected determinate policy errors. Presence-only checks and contextual policy preferences remain unscored. Near-expiry warnings are excluded. Coverage (evaluated and excluded counts) must accompany the number.
+The score is `100 * passed / (passed + failed)` restricted to checks marked scoreable and whose current status is Passed or Failed. It is rounded to one decimal place; no denominator means no score. Warning, Unknown, Error and Not applicable are excluded. For new v0.3 runs, metadata selects scoring profile `context-v1`: eligibility additionally requires applicability `applicable`. Scoreable dimensions remain certificate chain, hostname, validity and negotiated modern protocol, plus selected determinate policy errors when applicable. All optional browser headers, including passing HSTS/nosniff, are excluded to prevent optional passes from diluting confirmed failures. Unknown applicability and explicitly inapplicable criteria are excluded; the result status itself is preserved. New-run scoreable flags persist these exclusions for older schema-v1 consumers. Presence-only checks and contextual policy preferences remain unscored. Near-expiry warnings are excluded. Coverage (evaluated and excluded counts) must accompany the number.
 
-This simple score is a diagnostic summary, can be high despite unscored warnings, and is neither a probability of compromise nor an organization-wide rating. Unknown results can change the denominator between assessments. Compare actual findings and coverage before comparing scores. The dashboard and HTML score are opt-in; JSON always includes the formula and computed coverage for machine consumers.
+This simple score is a diagnostic summary, can be high despite unscored warnings, and is neither a probability of compromise nor an organization-wide rating. Unknown results can change the denominator between assessments. Compare actual findings, declared context, applicability, evaluated criteria and scoring profile before comparing scores. Historical runs without context-v1 retain the original eligibility/flags and formula, including any historical HSTS/nosniff passes; they are never reannotated or rescored with the new rules. No historical score is silently rewritten, and a cross-profile score change alone is not a security regression. The dashboard and HTML score are opt-in; JSON always includes the formula and computed coverage for machine consumers.
 
 ## Technical references
 
@@ -44,3 +44,59 @@ This simple score is a diagnostic summary, can be high despite unscored warnings
 - [CAA: RFC 8659](https://www.rfc-editor.org/rfc/rfc8659)
 - [TLS verification: Python ssl documentation](https://docs.python.org/3/library/ssl.html)
 - [OWASP Secure Headers](https://owasp.org/www-project-secure-headers/)
+
+
+## Context and schema-v1 compatibility (v0.3)
+
+Observation is the measured record/response/handshake. A finding interprets only
+that evidence against a stated criterion. Applicability describes relevance to the
+stated service use, independently of status; severity describes the supported
+importance, not proven exploitability. A recommendation is a conditional next step
+for the responsible administrator, not an instruction to change every missing
+optional record.
+
+The optional `AssessmentContext` accepts `sends_email`, `receives_email` and
+`controls_dns` as True/False/None, exposed as yes/no/unknown in CLI and dashboard.
+It never changes queries, raw evidence, authorization, fallback behavior or budgets.
+Metadata records context as user-declared and not independently verified. DNS
+control affects action ownership only; it never proves mail use or applicability.
+There are no provider-name or shared-hosting ownership heuristics.
+
+Email/MX applicability follows declared sending/receiving respectively, defaulting
+to Unknown. A non-sending declaration makes the operational sending criterion NA,
+not the domain immune to spoofing: protective SPF/DMARC policy can remain relevant.
+SPF envelope/HELO, DMARC author and DKIM signing identities may differ and are not
+verified here. MX does not establish a sending identity. No selectors keeps DKIM
+Unknown even with declared sending. Missing SPF/DMARC stay Warning, informational
+by default or low when sending is declared; errors in published supported syntax
+can still be Failed even with unknown or NA operational relevance.
+
+CAA relevance remains conditional because effective policy is not evaluated.
+Missing exact-name NS or AAAA is recorded in inventory without a requirement to
+publish them. TLS/HTTP applicability covers the tested endpoint/criterion only.
+For eligible HTML responses HSTS/nosniff/CSP have applicable optional hardening
+criteria; permissions, framing and referrer relevance remain unknown without
+feature, embedding or privacy requirements. Known non-HTML document checks remain
+NA; ineligible HTTP responses leave header applicability Unknown. Presence-only
+passes never assert policy effectiveness.
+
+No mandatory model fields change. Schema version 1 and SQLite user_version 1 stay:
+
+- `metadata.context`: declaration fields, source, independently_verified=false.
+- `metadata.scoring_profile`: `context-v1` for new engine runs.
+- `evidence.applicability`: state (`applicable`, `not_applicable`, `unknown`),
+  basis (`user_declared`, `observed_scope`, `observed_response`,
+  `observed_content_type`, `unknown`) and bilingual reason (`en`, `it`).
+- JSON summary additionally includes `priority_finding_ids`; existing counts and
+  confirmed/inconclusive IDs retain raw status semantics.
+
+Old readers accept these free-form dictionary additions. Stored scoreable flags
+make new-run eligibility consistent even for the original ratio implementation;
+older interfaces cannot explain the new applicability/profile and should be
+updated for interpretation. Loading old payloads does not inject these keys.
+Historical missing applicability is displayed as Unknown without changing source
+payloads or old score eligibility. Exports retain the original status/evidence
+apart from the existing web-data minimization. HTML/dashboard priority actions
+omit informational and explicitly inapplicable results, while counts and full
+finding details retain them. Failed criteria still appear in the confirmed list
+with applicability, even if no operational action is prioritized.
