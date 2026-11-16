@@ -12,6 +12,8 @@ reduce comparability. Duplicate check IDs are ambiguous, never silently merged.
 Each finding comparison records observation change, status/severity changes,
 applicability state/basis/availability, declared context, score eligibility/profile,
 and check methodology. Engine-version changes are also visible separately.
+Unknown methodology/profile differences are null, rather than a claim that
+unknown rules are equal.
 `differences` contains field paths, each side's presence and each recorded value;
 missing fields and explicit nulls/empty record sets are distinct.
 

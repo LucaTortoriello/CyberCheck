@@ -35,6 +35,7 @@ def test_two_nonconsecutive_saved_assessments_can_be_compared_and_exported(monke
     repo, a, b, c = seed(monkeypatch, tmp_path)
     app = open_history(c.id)
     key = f"comparison_{c.id}"
+    assert any(item.value == c.domain for item in app.caption)
     assert app.selectbox(key=key + "_earlier").value == b.id
     assert app.selectbox(key=key + "_later").value == c.id
     assert not any("other-ta" in option for option in app.selectbox(key=key + "_earlier").options)

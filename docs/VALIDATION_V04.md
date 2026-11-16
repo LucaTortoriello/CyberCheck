@@ -10,7 +10,7 @@ was written before code changes. No live assessment was performed.
 |---|---|
 | Baseline full suite | 265 passed |
 | Full suite with coverage | **345 passed, 0 failed**; 80 added cases |
-| Total statement coverage | **96%** rounded, 1,764 / 1,845 statements |
+| Total statement coverage | **96%** rounded, 1,767 / 1,848 statements |
 | Comparison core coverage | **98%**; comparison UI 95%; comparison report renderers 100% |
 | `ruff check .` | Passed |
 | `ruff format --check .` | Passed |

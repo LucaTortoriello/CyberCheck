@@ -13,6 +13,7 @@ from cybercheck.storage.sqlite import Repository, StorageDataError
 def comparison_view(repository: Repository, active: Assessment, language: str) -> None:
     t = lambda key: ct(key, language)  # noqa: E731
     st.subheader(t("title"))
+    st.caption(active.domain)
     st.write(t("intro"))
     columns = st.columns(2)
     key = f"comparison_{active.id}"

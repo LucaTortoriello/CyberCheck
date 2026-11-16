@@ -73,6 +73,10 @@ def _metadata(a: Assessment) -> dict:
     return a.metadata if isinstance(a.metadata, dict) else {}
 
 
+def _known_difference(left: Any, right: Any) -> bool | None:
+    return left != right if left is not None and right is not None else None
+
+
 def methodology(a: Assessment) -> str | None:
     metadata = _metadata(a)
     explicit = metadata.get("methodology_version")
@@ -494,8 +498,8 @@ def _compare_finding(
         and bool((old or new) and (old or new).category in {"email", "dns"}),
         "assessment_context_changed": _context(earlier) != _context(later),
         "scoring_eligibility_changed": changed("scoreable"),
-        "scoring_profile_changed": _profile(earlier) != _profile(later),
-        "methodology_changed": methodology(earlier) != methodology(later),
+        "scoring_profile_changed": _known_difference(_profile(earlier), _profile(later)),
+        "methodology_changed": _known_difference(methodology(earlier), methodology(later)),
         "engine_version_changed": _metadata(earlier).get("engine_version")
         != _metadata(later).get("engine_version"),
     }

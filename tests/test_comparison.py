@@ -414,7 +414,9 @@ def test_unknown_methodology_does_not_fabricate_equivalent_rules(version):
     a, b = pair()
     a.metadata["engine_version"] = version
     a.metadata.pop("methodology_version")
-    assert "methodology_unknown" in codes(compare_assessments(a, b).limitations)
+    result = compare_assessments(a, b)
+    assert "methodology_unknown" in codes(result.limitations)
+    assert result.findings[0]["dimensions"]["methodology_changed"] is None
 
 
 def test_absent_context_is_not_equal_to_explicit_unknown_context():
